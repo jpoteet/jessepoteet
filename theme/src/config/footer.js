@@ -9,62 +9,29 @@ export const footerSocials = [
     url: 'https://youtube.com/@jessepoteet',
     icon: "mdi:youtube",
   },
+  {
+    name: 'Instagram.com',
+    url: 'https://instagram.com/jpoteet',
+    icon: "mdi:instagram",
+  },
 ]
 
 export const footerLists = [
 	{
-		title: 'Landing Pages',
+		title: 'Projects',
 		items: [
 			{
-				title: 'Landing Page 1',
-				slug: '/landing-pages/landing-1',
+				title: 'Alpine Apparel Co',
+				slug: 'https://alpineapparelco.com',
 			},
 			{
-				title: 'Landing Page 2',
-				slug: '/landing-pages/landing-2',
-			},
-      // {
-			// 	title: 'Landing Page 3',
-			// 	slug: '/landing-pages/landing-3',
-			// },
-		],
-	},
-	{
-		title: 'Company',
-		items: [
-			{
-				title: 'About',
-				slug: '/company/about',
+				title: 'Startup Screen Printing',
+				slug: 'https://startupscreenprinting.com',
 			},
 			{
-				title: 'Blog',
-				slug: '/blog',
+				title: 'The Print Crew',
+				slug: 'https://theprintcrew.com',
 			},
-			{
-				title: 'Contact',
-				slug: '/company/contact',
-			},
-		],
-	},
-	{
-		title: 'Theme',
-		items: [
-			{
-				title: 'Get Started',
-				slug: '/theme/get-started',
-			},
-			{
-				title: 'Style Guide',
-				slug: '/theme/style-guide',
-			},
-      {
-        title: 'Theme Setup',
-        slug: '/theme/theme-setup',
-      },
-      {
-        title: 'Customizing Odyssey',
-        slug: '/theme/customizing-odyssey',
-      }
 		],
 	},
 ];
