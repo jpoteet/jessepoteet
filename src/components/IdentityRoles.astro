@@ -1,0 +1,119 @@
+---
+import { identityRoles } from '@/config/personal';
+
+interface Props {
+  onDark?: boolean;
+}
+
+const { onDark = false } = Astro.props;
+---
+
+<div class:list={['identity-roles', onDark && 'identity-roles--on-dark']} aria-label="A few of the hats Jesse wears">
+  <ul class="identity-roles__stack" aria-hidden="true">
+    {
+      identityRoles.map((role, i) => (
+        <li class="identity-roles__item" style={`--i: ${i}; --n: ${identityRoles.length}`}>
+          {role}
+        </li>
+      ))
+    }
+  </ul>
+  <ul class="identity-roles__wrap">
+    {
+      identityRoles.map((role) => (
+        <li class="identity-roles__chip">{role}</li>
+      ))
+    }
+  </ul>
+</div>
+
+<style>
+  .identity-roles {
+    position: relative;
+  }
+
+  /* Animated stack for motion-ok viewports */
+  .identity-roles__stack {
+    position: relative;
+    height: 1.6em;
+    margin: 0;
+    padding: 0;
+    list-style: none;
+    overflow: hidden;
+  }
+
+  .identity-roles__item {
+    position: absolute;
+    inset: 0 auto auto 0;
+    font-family: var(--font-display);
+    font-size: clamp(1.15rem, 2.2vw, 1.45rem);
+    font-weight: 600;
+    letter-spacing: -0.02em;
+    line-height: 1.35;
+    opacity: 0;
+    transform: translateY(0.35em);
+    animation: identity-cycle calc(var(--n) * 2.4s) ease-in-out infinite;
+    animation-delay: calc(var(--i) * 2.4s);
+  }
+
+  @keyframes identity-cycle {
+    0%,
+    4% {
+      opacity: 0;
+      transform: translateY(0.35em);
+    }
+    8%,
+    18% {
+      opacity: 1;
+      transform: translateY(0);
+    }
+    24%,
+    100% {
+      opacity: 0;
+      transform: translateY(-0.35em);
+    }
+  }
+
+  /* Always-visible wrap for screen readers / reduced motion / small screens preference */
+  .identity-roles__wrap {
+    display: none;
+    flex-wrap: wrap;
+    gap: 0.5rem 0.65rem;
+    margin: 0;
+    padding: 0;
+    list-style: none;
+  }
+
+  .identity-roles__chip {
+    font-size: 0.8rem;
+    font-weight: 600;
+    letter-spacing: 0.02em;
+    color: var(--color-ink-muted);
+    border-bottom: 1px solid color-mix(in oklab, var(--color-line) 80%, transparent);
+    padding-bottom: 0.1rem;
+  }
+
+  .dark .identity-roles__chip {
+    color: var(--color-dark-muted);
+    border-bottom-color: var(--color-dark-line);
+  }
+
+  .identity-roles--on-dark .identity-roles__item {
+    color: var(--color-hero-ink);
+  }
+
+  .identity-roles--on-dark .identity-roles__chip {
+    color: var(--color-hero-muted);
+    border-bottom-color: rgb(255 255 255 / 0.2);
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .identity-roles__stack {
+      display: none;
+    }
+
+    .identity-roles__wrap {
+      display: flex;
+    }
+  }
+</style>

@@ -1,0 +1,55 @@
+---
+import { Image } from 'astro:assets';
+import fishingPhoto from '@/assets/images/jesse-fly-fishing.jpg';
+import { offTheClock } from '@/config/personal';
+
+interface Props {
+  compact?: boolean;
+}
+
+const { compact = false } = Astro.props;
+---
+
+<section
+  class:list={['border-y border-[var(--color-line)] bg-[var(--color-canvas-elevated)] dark:border-[var(--color-dark-line)] dark:bg-[var(--color-dark-elevated)]', compact && '']}
+  aria-labelledby="off-clock-heading"
+>
+  <div class="site-shell section-pad">
+    <div class="grid items-center gap-10 lg:grid-cols-[1.05fr_0.95fr] lg:gap-14">
+      <div class="reveal order-2 lg:order-1">
+        <p class="eyebrow">{offTheClock.eyebrow}</p>
+        <h2 id="off-clock-heading" class="mt-3 max-w-xl font-display text-3xl font-semibold sm:text-4xl">
+          {offTheClock.heading}
+        </h2>
+        <p class="mt-4 max-w-xl text-base leading-relaxed text-[var(--color-ink-muted)] dark:text-[var(--color-dark-muted)] sm:text-lg">
+          {offTheClock.lead}
+        </p>
+        <ul class="mt-8 space-y-5">
+          {
+            offTheClock.lines.map((line) => (
+              <li class="rule pt-5">
+                <h3 class="font-display text-lg font-semibold">{line.title}</h3>
+                <p class="mt-1 text-sm leading-relaxed text-[var(--color-ink-muted)] dark:text-[var(--color-dark-muted)] sm:text-base">
+                  {line.body}
+                </p>
+              </li>
+            ))
+          }
+        </ul>
+      </div>
+      <figure class="reveal reveal-delay-1 order-1 lg:order-2">
+        <Image
+          src={fishingPhoto}
+          alt="Jesse fly fishing in a mountain river"
+          widths={[480, 768, 1024, 1440]}
+          sizes="(max-width: 1024px) 100vw, 42vw"
+          class="h-auto w-full rounded-lg object-cover shadow-sm"
+          quality={80}
+        />
+        <figcaption class="mt-3 text-xs text-[var(--color-ink-muted)] dark:text-[var(--color-dark-muted)]">
+          Prefer rivers to meetings. Not sorry.
+        </figcaption>
+      </figure>
+    </div>
+  </div>
+</section>
