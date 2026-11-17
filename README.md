@@ -75,21 +75,17 @@ n8n should log the row to Airtable and email Jesse. The form UI shows a friendly
 
 | File | Purpose |
 | --- | --- |
-| `src/config/site.ts` | Site name, tagline, email mailto placeholder, newsletter URL, Now page date |
-| `src/config/brands.ts` | Standalone brands (Alpine, Operator Stack), PrintPro Strategies family, beliefs, press, Alpine proof |
+| `src/config/site.ts` | Site name, tagline, newsletter URL |
+| `src/config/brands.ts` | Standalone brands (Alpine, Operator Stack), PrintPro Strategies family, beliefs, press |
 | `src/config/contact.ts` | Request types, work-with-me paths, speaker bios and topics |
-| `src/config/social.ts` | Social links + Person JSON-LD `sameAs` |
+| `src/config/social.ts` | Person JSON-LD `sameAs` (verified brand URLs only) |
 | `src/config/nav.ts` | Main nav |
-| `src/content/writing/` | Writing collection (`draft: true` posts are excluded from pages and RSS) |
+| `src/content/writing/` | Writing collection |
 | `functions/api/contact.ts` | Contact form API → n8n webhook |
 
-Newsletter CTA currently points to `https://news.startupscreenprinting.com` via `NEWSLETTER_URL`.
+Newsletter CTA points to `https://news.startupscreenprinting.com` via `NEWSLETTER_URL`.
 
-## Logos and photos
-
-- Logos: drop files under `public/images/logos/` (see that folder’s README). Monograms show until files exist.
-- Photos: `public/images/photos/jesse-hero.jpg` and `jesse-about.jpg` (replace anytime).
-- Default Open Graph image: `public/images/og-default.png` (1200×630).
+Default Open Graph image: `public/images/og-default.png` (1200×630). Optional logo files can later drop into `public/images/logos/` (monograms show until then).
 
 ## License
 

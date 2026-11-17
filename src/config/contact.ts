@@ -59,7 +59,7 @@ export const talkTopics = [
   },
   {
     title: 'Building something that serves your family',
-    body: 'How operators and creators design for profit, freedom, and repeatable work instead of endless hustle. [JESSE: confirm or swap talk topic]',
+    body: 'How operators and creators design for profit, freedom, and repeatable work instead of endless hustle.',
   },
 ] as const;
 

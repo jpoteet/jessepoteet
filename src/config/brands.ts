@@ -1,17 +1,14 @@
 /**
  * Brand and venture data for the home grid and /work page.
- * Drop logo files under public/images/logos/ using the paths below.
+ * Only include known facts and verified URLs on rendered pages.
  */
 export type BrandLink = {
   id: string;
   name: string;
   monogram: string;
-  /** Path under /public for a logo file Jesse can drop in later. */
   logoPath: string;
   url: string | null;
-  urlTodo?: string;
   blurb: string;
-  /** Problem this brand solves (used on home "What I'm building"). */
   problem: string;
 };
 
@@ -19,7 +16,6 @@ export type StandaloneBrand = BrandLink & {
   audience?: string;
 };
 
-/** Child brands grouped under PrintPro Strategies. */
 export type PrintProChild = BrandLink & {
   kind: 'education' | 'software';
 };
@@ -50,6 +46,7 @@ export const operatorStack: StandaloneBrand = {
   audience: 'Owner-run small businesses',
 };
 
+/** Education brands with verified URLs or safe name-only mentions. */
 export const printProEducation: PrintProChild[] = [
   {
     id: 'ssp',
@@ -62,43 +59,14 @@ export const printProEducation: PrintProChild[] = [
     problem: 'Print shop owners stay stuck on the press and never get time to run the business.',
     kind: 'education',
   },
-  {
-    id: 'print-crew',
-    name: 'The Print Crew',
-    monogram: 'PC',
-    logoPath: '/images/logos/the-print-crew.svg',
-    url: null,
-    urlTodo: '[JESSE: The Print Crew URL]',
-    // [JESSE: confirm The Print Crew one-liner]
-    blurb: 'Print education community under PrintPro Strategies. [JESSE: confirm The Print Crew one-liner]',
-    problem: 'Owners need peers and practical help, not another lonely Facebook thread. [JESSE: confirm The Print Crew problem]',
-    kind: 'education',
-  },
-  {
-    id: 'print-growth-experience',
-    name: 'Print Growth Experience',
-    monogram: 'PG',
-    logoPath: '/images/logos/print-growth-experience.svg',
-    url: null,
-    urlTodo: '[JESSE: Print Growth Experience URL]',
-    // [JESSE: confirm Print Growth Experience one-liner]
-    blurb: 'Growth program for print shop owners. [JESSE: confirm Print Growth Experience one-liner]',
-    problem: 'Shops want growth with a clear path, not random tips. [JESSE: confirm Print Growth Experience problem]',
-    kind: 'education',
-  },
-  {
-    id: 'screen-printing-toolbox',
-    name: 'Screen Printing Toolbox',
-    monogram: 'ST',
-    logoPath: '/images/logos/screen-printing-toolbox.svg',
-    url: null,
-    urlTodo: '[JESSE: Screen Printing Toolbox URL]',
-    // [JESSE: confirm Screen Printing Toolbox one-liner]
-    blurb: 'Tools and resources for screen printers. [JESSE: confirm Screen Printing Toolbox one-liner]',
-    problem: 'Printers waste time hunting for checklists, templates, and shop resources. [JESSE: confirm Screen Printing Toolbox problem]',
-    kind: 'education',
-  },
 ];
+
+/** Named under PrintPro without public URLs in this repo (no invented blurbs on cards). */
+export const printProEducationNames = [
+  'The Print Crew',
+  'Print Growth Experience',
+  'Screen Printing Toolbox',
+] as const;
 
 export const printProSoftware: PrintProChild[] = [
   {
@@ -117,9 +85,8 @@ export const printProSoftware: PrintProChild[] = [
     monogram: 'GK',
     logoPath: '/images/logos/groupkit.svg',
     url: 'https://getgroupkit.com',
-    // [JESSE: confirm GroupKit product description]
-    blurb: 'Software for the print and apparel industry. [JESSE: confirm GroupKit product description]',
-    problem: 'Group and team orders are messy to organize. [JESSE: confirm GroupKit problem]',
+    blurb: 'A PrintPro Strategies software product.',
+    problem: 'Built for operators who need better software in the print and apparel world.',
     kind: 'software',
   },
   {
@@ -128,9 +95,8 @@ export const printProSoftware: PrintProChild[] = [
     monogram: 'PK',
     logoPath: '/images/logos/packed.svg',
     url: 'https://packed.ink',
-    // [JESSE: confirm Packed product description]
-    blurb: 'Software for the print and apparel industry. [JESSE: confirm Packed product description]',
-    problem: 'Print and apparel shops need better tooling for [JESSE: confirm Packed problem].',
+    blurb: 'A PrintPro Strategies software product.',
+    problem: 'Built for operators who need better software in the print and apparel world.',
     kind: 'software',
   },
 ];
@@ -142,16 +108,15 @@ export const printProStrategies = {
   monogram: 'PP',
   logoPath: '/images/logos/printpro-strategies.svg',
   url: null as string | null,
-  urlTodo: '[JESSE: PrintPro Strategies URL]',
   blurb:
     "Parent company for Jesse's print education brands and print-shop software.",
   problem:
     'Print shop owners need education and software in one place, not a pile of disconnected tips and tools.',
   education: printProEducation,
+  educationAlso: printProEducationNames,
   software: printProSoftware,
 };
 
-/** Top-level entries shown as their own cards on home and work. */
 export const standaloneBrands: StandaloneBrand[] = [alpineApparel, operatorStack];
 
 export const allBrandLinks: BrandLink[] = [
@@ -163,7 +128,6 @@ export const allBrandLinks: BrandLink[] = [
     monogram: printProStrategies.monogram,
     logoPath: printProStrategies.logoPath,
     url: printProStrategies.url,
-    urlTodo: printProStrategies.urlTodo,
     blurb: printProStrategies.blurb,
     problem: printProStrategies.problem,
   },
@@ -171,7 +135,6 @@ export const allBrandLinks: BrandLink[] = [
   ...printProSoftware,
 ];
 
-/** Paths Jesse can drop logo files into (documented in README and logos README). */
 export const logoDropPaths = allBrandLinks.map((b) => ({
   brand: b.name,
   path: `public${b.logoPath}`,
@@ -196,21 +159,4 @@ export const beliefs = [
   },
 ] as const;
 
-export const pressMentions = [
-  {
-    name: 'The Apparelist',
-    href: null as string | null,
-    todo: '[JESSE: The Apparelist feature link]',
-  },
-  {
-    name: 'ScreenPrinting.com',
-    href: null as string | null,
-    todo: '[JESSE: ScreenPrinting.com feature link]',
-  },
-] as const;
-
-export const alpineProof = {
-  headline: 'Quote time cut from 30 minutes to under 5',
-  detail:
-    'At Alpine Apparel Co, better quoting process turned a half-hour grind into a few minutes so the team can focus on printing and people.',
-} as const;
+export const pressMentions = ['The Apparelist', 'ScreenPrinting.com'] as const;

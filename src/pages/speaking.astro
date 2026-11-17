@@ -1,12 +1,11 @@
 ---
 import BaseLayout from '@/layouts/BaseLayout.astro';
-import PhotoSlot from '@/components/PhotoSlot.astro';
 import { speakerBios, talkTopics } from '@/config/contact';
 ---
 
 <BaseLayout
   title="Speaking"
-  description="Speaker kit for Jesse Poteet: bios, headshot, talk topics, and booking form."
+  description="Speaker kit for Jesse Poteet: bios, talk topics, and booking form."
 >
   <article class="site-shell section-pad max-w-3xl">
     <div class="reveal">
@@ -22,13 +21,12 @@ import { speakerBios, talkTopics } from '@/config/contact';
     </div>
 
     <section class="reveal rule mt-14 pt-10">
-      <h2 class="font-display text-2xl font-semibold">Headshot</h2>
-      <div class="mt-5 max-w-sm">
-        <PhotoSlot label="Jesse Poteet headshot" src="/images/photos/jesse-hero.jpg" aspect="square" />
+      <div class="rounded-lg border border-[var(--color-line)] bg-[var(--color-canvas-elevated)] px-6 py-8 dark:border-[var(--color-dark-line)] dark:bg-[var(--color-dark-elevated)]">
+        <p class="font-display text-5xl font-semibold">JP</p>
+        <p class="mt-3 text-sm text-[var(--color-ink-muted)] dark:text-[var(--color-dark-muted)]">
+          Jesse Poteet · Castle Rock, Colorado
+        </p>
       </div>
-      <p class="mt-3 text-sm text-[var(--color-ink-muted)] dark:text-[var(--color-dark-muted)]">
-        [JESSE: high-res speaker headshot path if different from site photo]
-      </p>
     </section>
 
     <section class="reveal rule mt-12 pt-10">

@@ -1,24 +1,19 @@
 ---
 import BaseLayout from '@/layouts/BaseLayout.astro';
-import { NOW_UPDATED } from '@/config/site';
 ---
 
 <BaseLayout
   title="Now"
   description="What Jesse Poteet is focused on right now."
+  noindex
 >
-  <article class="mx-auto max-w-3xl px-5 py-14 sm:px-8 sm:py-20">
-    <p class="text-xs font-semibold uppercase tracking-[0.14em] text-[var(--color-sage)] dark:text-[var(--color-dark-muted)]">
-      Now
-    </p>
+  <article class="site-shell section-pad max-w-3xl">
+    <p class="eyebrow">Now</p>
     <h1 class="mt-3 font-display text-4xl font-semibold sm:text-5xl">What I am focused on</h1>
-    <p class="mt-3 text-sm text-[var(--color-ink-muted)] dark:text-[var(--color-dark-muted)]">
-      Last updated: {NOW_UPDATED}
-    </p>
 
     <div class="mt-10 space-y-6 text-base leading-relaxed text-[var(--color-ink-muted)] dark:text-[var(--color-dark-muted)] sm:text-lg">
       <p>
-        This page is a living snapshot, not a résumé. Here is where attention is going right now:
+        A living snapshot, not a résumé. Attention is going here:
       </p>
       <ul class="list-disc space-y-3 pl-5">
         <li>
@@ -28,17 +23,14 @@ import { NOW_UPDATED } from '@/config/site';
           Teaching through PrintPro Strategies brands, especially Startup Screen Printing, so more owners can get off the press.
         </li>
         <li>
-          Building Operator Stack for owner-run shops that need real systems, not another software login.
+          Building Operator Stack for owner-run businesses that need real systems, not another software login.
         </li>
         <li>
           Improving Pricely so print shops can quote with more confidence and less guesswork.
         </li>
-        <li>
-          [JESSE: current personal or seasonal focus]
-        </li>
       </ul>
       <p>
-        If one of those lines matches what you need, <a class="font-semibold text-[var(--color-clay)] dark:text-[var(--color-dark-clay)]" href="/contact">say hello</a>.
+        If one of those lines matches what you need, <a class="font-semibold text-[var(--color-accent)] dark:text-[var(--color-dark-accent)]" href="/contact">say hello</a>.
       </p>
     </div>
   </article>

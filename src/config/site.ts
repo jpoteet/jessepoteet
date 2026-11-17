@@ -10,11 +10,7 @@ export const SITE = {
   author: 'Jesse Poteet',
   location: 'Castle Rock, Colorado',
   ogImage: '/images/og-default.png',
-  emailMailto: 'mailto:[JESSE: contact email]',
-  emailDisplay: '[JESSE: contact email]',
 } as const;
 
-/** Newsletter signup destination (Startup Screen Printing for now). */
+/** Newsletter signup destination (Startup Screen Printing). */
 export const NEWSLETTER_URL = 'https://news.startupscreenprinting.com';
-
-export const NOW_UPDATED = '[JESSE: now page date]';

@@ -19,10 +19,8 @@ const audience = 'audience' in brand ? brand.audience : undefined;
 >
   <div class="flex items-start gap-4">
     <div
-      class="flex h-12 w-12 shrink-0 items-center justify-center rounded-md bg-[var(--color-pine)] font-display text-sm font-semibold tracking-wide text-[var(--color-canvas)] dark:bg-[var(--color-dark-pine)] dark:text-[var(--color-dark-canvas)]"
+      class="flex h-12 w-12 shrink-0 items-center justify-center rounded-md bg-[var(--color-accent)] font-display text-sm font-semibold tracking-wide text-white dark:bg-[var(--color-dark-accent)] dark:text-[var(--color-dark-canvas)]"
       aria-hidden="true"
-      data-logo-path={brand.logoPath}
-      title={`Logo placeholder. Drop file at public${brand.logoPath}`}
     >
       {brand.monogram}
     </div>
@@ -30,12 +28,7 @@ const audience = 'audience' in brand ? brand.audience : undefined;
       <h3 class="font-display text-xl font-semibold text-[var(--color-ink)] dark:text-[var(--color-dark-ink)] sm:text-2xl">
         {
           href ? (
-            <a
-              href={href}
-              class="after:absolute after:inset-0"
-              rel="noopener noreferrer"
-              target="_blank"
-            >
+            <a href={href} class="after:absolute after:inset-0" rel="noopener noreferrer" target="_blank">
               {brand.name}
             </a>
           ) : (
@@ -45,7 +38,7 @@ const audience = 'audience' in brand ? brand.audience : undefined;
       </h3>
       {
         audience && !compact && (
-          <p class="mt-1 text-xs font-medium uppercase tracking-[0.12em] text-[var(--color-sage)] dark:text-[var(--color-dark-muted)]">
+          <p class="mt-1 text-xs font-medium uppercase tracking-[0.12em] text-[var(--color-ink-muted)] dark:text-[var(--color-dark-muted)]">
             {audience}
           </p>
         )
@@ -62,17 +55,13 @@ const audience = 'audience' in brand ? brand.audience : undefined;
     {brand.blurb}
   </p>
 
-  <p class="mt-auto pt-2 text-sm font-semibold text-[var(--color-clay)] dark:text-[var(--color-dark-clay)]">
-    {
-      href ? (
+  {
+    href && (
+      <p class="mt-auto pt-2 text-sm font-semibold text-[var(--color-accent)] dark:text-[var(--color-dark-accent)]">
         <span class="inline-flex items-center gap-1.5 transition group-hover:gap-2.5">
           Visit site <span aria-hidden="true">→</span>
         </span>
-      ) : (
-        <span class="font-normal text-[var(--color-ink-muted)] dark:text-[var(--color-dark-muted)]">
-          {brand.urlTodo ?? 'URL coming soon'}
-        </span>
-      )
-    }
-  </p>
+      </p>
+    )
+  }
 </article>
