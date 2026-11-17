@@ -25,7 +25,7 @@ export const alpineApparel: StandaloneBrand = {
   name: 'Alpine Apparel Co',
   monogram: 'AA',
   logoPath: '/images/logos/alpine-apparel-co.svg',
-  url: 'https://alpineapparelco.com',
+  url: 'https://jpoteet.us/alpine',
   blurb:
     'Premium water-based screen printing, plus DTF and embroidery, from Castle Rock. Built for small businesses, nonprofits, schools, trades, and emerging brands.',
   problem:
@@ -53,7 +53,7 @@ export const printProEducation: PrintProChild[] = [
     name: 'Startup Screen Printing',
     monogram: 'SS',
     logoPath: '/images/logos/startup-screen-printing.svg',
-    url: 'https://startupscreenprinting.com',
+    url: 'https://jpoteet.us/ssp',
     blurb:
       'YouTube, newsletter, podcast, coaching, and courses for print shop owners. Mission: get every print shop owner off the press.',
     problem: 'Print shop owners stay stuck on the press and never get time to run the business.',

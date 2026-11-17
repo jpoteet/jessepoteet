@@ -1,8 +1,12 @@
 ---
+import { Image } from 'astro:assets';
 import { getCollection } from 'astro:content';
 import BaseLayout from '@/layouts/BaseLayout.astro';
 import NewsletterCTA from '@/components/NewsletterCTA.astro';
 import QuoteComparison from '@/components/QuoteComparison.astro';
+import IdentityRoles from '@/components/IdentityRoles.astro';
+import OffTheClock from '@/components/OffTheClock.astro';
+import fishingPhoto from '@/assets/images/jesse-fly-fishing.jpg';
 import { SITE } from '@/config/site';
 import {
   alpineApparel,
@@ -21,35 +25,44 @@ const posts = (await getCollection('writing', ({ data }) => data.draft !== true)
 
 <BaseLayout
   title="Home"
-  description="Jesse Poteet helps owner-run businesses, creators, and leaders get off the treadmill. Systems, operations, and marketing automation from Castle Rock, Colorado."
+  description="Jesse Poteet helps owner-run businesses, creators, and leaders get off the treadmill. Systems, faith, family, and a little river time. Castle Rock, Colorado."
 >
   <section class="bg-[var(--color-hero)] text-[var(--color-hero-ink)]">
-    <div class="site-shell grid items-center gap-10 py-16 sm:py-20 lg:grid-cols-[1.2fr_0.8fr] lg:gap-16 lg:py-24">
+    <div class="site-shell grid items-center gap-10 py-14 sm:py-18 lg:grid-cols-[1.15fr_0.85fr] lg:gap-14 lg:py-20">
       <div class="reveal">
         <p class="text-[0.7rem] font-semibold uppercase tracking-[0.18em] text-[var(--color-hero-muted)]">
           {SITE.name} · Castle Rock, Colorado
         </p>
-        <h1 class="mt-5 max-w-2xl text-balance font-display text-4xl font-semibold tracking-tight sm:text-5xl lg:text-6xl">
+        <div class="mt-5">
+          <IdentityRoles onDark />
+        </div>
+        <h1 class="mt-6 max-w-2xl text-balance font-display text-4xl font-semibold tracking-tight sm:text-5xl lg:text-[3.35rem]">
           I help owner-run businesses get off the treadmill and back to building something that serves their family.
         </h1>
         <p class="mt-6 max-w-xl text-base leading-relaxed text-[var(--color-hero-muted)] sm:text-lg">
-          For owners, operators, and creators who need the business to run without them in every bottleneck. Background in design and production, including running a print shop since 2013, plus enterprise marketing automation for brands like Qualcomm, CVS/Aetna, Honeywell, and Mastercard.
+          For owners, operators, and creators who are tired of being every bottleneck. Day job in marketing automation for brands like Qualcomm, CVS/Aetna, Honeywell, and Mastercard. Side gigs include Alpine Apparel Co, Operator Stack, and teaching through Startup Screen Printing. Nights and weekends: rivers, recipes, and sawdust.
         </p>
         <div class="mt-8 flex flex-wrap gap-3">
           <a href="/speaking" class="btn-on-dark">Book me to speak</a>
-          <a href="/contact?type=operator-stack" class="btn-on-dark-ghost">Get a process review</a>
+          <a href="/contact?type=operator-stack" class="btn-on-dark-ghost">Grab a process review</a>
         </div>
       </div>
-      <div class="reveal reveal-delay-1 hidden lg:block">
-        <div class="rounded-lg border border-white/15 bg-white/5 p-8">
-          <p class="font-display text-5xl font-semibold tracking-tight">JP</p>
-          <p class="mt-6 text-sm leading-relaxed text-[var(--color-hero-muted)]">
-            Designer. Operator. Systems builder. Helping leaders reclaim time without lowering the bar.
-          </p>
-          <p class="mt-8 text-xs font-semibold uppercase tracking-[0.16em] text-white/50">
-            Faith · Family · Entrepreneurship
-          </p>
-        </div>
+      <div class="reveal reveal-delay-1">
+        <figure class="overflow-hidden rounded-lg">
+          <Image
+            src={fishingPhoto}
+            alt="Jesse fly fishing in a mountain river"
+            widths={[400, 640, 900, 1200]}
+            sizes="(max-width: 1024px) 100vw, 38vw"
+            class="aspect-[5/4] h-auto w-full object-cover"
+            quality={78}
+            loading="eager"
+            fetchpriority="high"
+          />
+          <figcaption class="mt-3 text-xs text-[var(--color-hero-muted)]">
+            Proof that I leave the building sometimes.
+          </figcaption>
+        </figure>
       </div>
     </div>
   </section>
@@ -60,6 +73,9 @@ const posts = (await getCollection('writing', ({ data }) => data.draft !== true)
       <h2 id="believe-heading" class="mt-3 font-display text-3xl font-semibold sm:text-4xl">
         A short filter for how I build and advise
       </h2>
+      <p class="mt-3 text-[var(--color-ink-muted)] dark:text-[var(--color-dark-muted)]">
+        Serious about the work. Not so serious that we forget why we started.
+      </p>
     </div>
     <ul class="mt-12 grid gap-6 sm:grid-cols-2">
       {
@@ -87,12 +103,15 @@ const posts = (await getCollection('writing', ({ data }) => data.draft !== true)
         <ul class="mt-6 flex flex-wrap gap-3">
           {
             pressMentions.map((name) => (
-              <li class="border border-[var(--color-line)] bg-[var(--color-canvas)] px-5 py-3 font-display text-lg font-semibold tracking-tight text-[var(--color-ink-muted)] grayscale dark:border-[var(--color-dark-line)] dark:bg-[var(--color-dark-canvas)] dark:text-[var(--color-dark-muted)]">
+              <li class="border border-[var(--color-line)] bg-[var(--color-canvas)] px-5 py-3 font-display text-lg font-semibold tracking-tight text-[var(--color-ink-muted)] dark:border-[var(--color-dark-line)] dark:bg-[var(--color-dark-canvas)] dark:text-[var(--color-dark-muted)]">
                 {name}
               </li>
             ))
           }
         </ul>
+        <p class="mt-4 text-sm text-[var(--color-ink-muted)] dark:text-[var(--color-dark-muted)]">
+          Plain text on purpose. The work still counts.
+        </p>
       </div>
     </div>
   </section>
@@ -167,7 +186,7 @@ const posts = (await getCollection('writing', ({ data }) => data.draft !== true)
         Brands with a job to do
       </h2>
       <p class="mt-3 text-[var(--color-ink-muted)] dark:text-[var(--color-dark-muted)]">
-        Education and software under PrintPro, a production company in Alpine, and Operator Stack for owner-run teams.
+        Education and software under PrintPro, a production company in Alpine, and Operator Stack for owner-run teams. The side gigs I actually love.
       </p>
     </div>
 
@@ -254,6 +273,8 @@ const posts = (await getCollection('writing', ({ data }) => data.draft !== true)
     </p>
   </section>
 
+  <OffTheClock />
+
   <section class="border-t border-[var(--color-line)] dark:border-[var(--color-dark-line)]" aria-labelledby="ideas-heading">
     <div class="site-shell section-pad">
       <div class="reveal flex flex-wrap items-end justify-between gap-4">
@@ -289,8 +310,8 @@ const posts = (await getCollection('writing', ({ data }) => data.draft !== true)
       </ul>
       <p class="mt-4 text-sm text-[var(--color-ink-muted)] dark:text-[var(--color-dark-muted)]">
         Videos live on
-        <a class="font-semibold text-[var(--color-accent)] dark:text-[var(--color-dark-accent)]" href="https://startupscreenprinting.com" rel="noopener noreferrer">
-          startupscreenprinting.com
+        <a class="font-semibold text-[var(--color-accent)] dark:text-[var(--color-dark-accent)]" href="https://jpoteet.us/ssp" rel="noopener noreferrer">
+          Startup Screen Printing
         </a>.
       </p>
     </div>
@@ -301,6 +322,9 @@ const posts = (await getCollection('writing', ({ data }) => data.draft !== true)
       <div class="reveal max-w-2xl">
         <p class="eyebrow">Work with me</p>
         <h2 id="wwm-heading" class="mt-3 font-display text-3xl font-semibold sm:text-4xl">Three clear doors</h2>
+        <p class="mt-3 text-[var(--color-ink-muted)] dark:text-[var(--color-dark-muted)]">
+          Pick one. Or send a note that says "I am not sure which door" and we will figure it out.
+        </p>
       </div>
       <ol class="mt-12 grid gap-6 md:grid-cols-3">
         {
@@ -325,7 +349,7 @@ const posts = (await getCollection('writing', ({ data }) => data.draft !== true)
       <div class="reveal mt-12">
         <NewsletterCTA
           heading="Stay in the loop"
-          body="Practical notes for owners who want off the treadmill. Published through Startup Screen Printing."
+          body="Practical notes for owners who want off the treadmill. A little personality included. Published through Startup Screen Printing."
         />
       </div>
     </div>
