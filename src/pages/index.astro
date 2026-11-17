@@ -3,15 +3,16 @@ import { getCollection } from 'astro:content';
 import BaseLayout from '@/layouts/BaseLayout.astro';
 import NewsletterCTA from '@/components/NewsletterCTA.astro';
 import PhotoSlot from '@/components/PhotoSlot.astro';
-import { SITE, NEWSLETTER_URL } from '@/config/site';
+import QuoteComparison from '@/components/QuoteComparison.astro';
+import { SITE } from '@/config/site';
 import {
   alpineApparel,
-  alpineProof,
   beliefs,
   operatorStack,
   pressMentions,
   printProStrategies,
 } from '@/config/brands';
+import { caseStudies, processSteps } from '@/config/expertise';
 import { workWithMePaths } from '@/config/contact';
 
 const posts = (await getCollection('writing', ({ data }) => data.draft !== true))
@@ -21,54 +22,47 @@ const posts = (await getCollection('writing', ({ data }) => data.draft !== true)
 
 <BaseLayout
   title="Home"
-  description="Jesse Poteet helps owner-run businesses get off the treadmill. Designer, printer, and systems builder in Castle Rock, Colorado."
+  description="Jesse Poteet helps owner-run businesses, creators, and leaders get off the treadmill. Systems, operations, and marketing automation from Castle Rock, Colorado."
 >
-  <!-- 1. Hero: point of view + credibility -->
-  <section class="mx-auto max-w-5xl px-5 pb-16 pt-14 sm:px-8 sm:pt-20">
-    <div class="grid items-end gap-10 lg:grid-cols-[1.2fr_0.8fr]">
-      <div class="fade-up">
-        <p class="font-display text-3xl font-semibold tracking-tight text-[var(--color-pine)] dark:text-[var(--color-dark-pine)] sm:text-4xl md:text-5xl">
-          {SITE.name}
+  <!-- Dark editorial hero -->
+  <section class="bg-[var(--color-hero)] text-[var(--color-hero-ink)]">
+    <div class="site-shell grid items-center gap-10 py-16 sm:py-20 lg:grid-cols-[1.15fr_0.85fr] lg:gap-14 lg:py-24">
+      <div class="reveal">
+        <p class="text-[0.7rem] font-semibold uppercase tracking-[0.18em] text-[var(--color-hero-muted)]">
+          {SITE.name} · Castle Rock, Colorado
         </p>
-        <h1 class="mt-5 max-w-2xl text-balance text-2xl font-medium leading-snug text-[var(--color-ink)] dark:text-[var(--color-dark-ink)] sm:text-3xl md:text-[2rem] md:leading-snug">
+        <h1 class="mt-5 max-w-2xl text-balance font-display text-4xl font-semibold tracking-tight sm:text-5xl lg:text-6xl">
           I help owner-run businesses get off the treadmill and back to building something that serves their family.
         </h1>
-        <p class="mt-6 max-w-2xl text-base leading-relaxed text-[var(--color-ink-muted)] dark:text-[var(--color-dark-muted)] sm:text-lg">
-          25+ years in graphic design. Running a print shop since 2013 (formerly Director of Art and Production at a commercial print shop). Enterprise marketing automation for brands like Qualcomm, CVS/Aetna, Honeywell, and Mastercard.
+        <p class="mt-6 max-w-xl text-base leading-relaxed text-[var(--color-hero-muted)] sm:text-lg">
+          For owners, operators, and creators who need the business to run without them in every bottleneck. Background in design and production (including running a print shop since 2013), plus enterprise marketing automation for brands like Qualcomm, CVS/Aetna, Honeywell, and Mastercard.
         </p>
         <div class="mt-8 flex flex-wrap gap-3">
-          <a
-            href="#work-with-me"
-            class="inline-flex items-center rounded-md bg-[var(--color-pine)] px-5 py-3 text-sm font-semibold text-white transition hover:bg-[var(--color-pine-deep)] dark:bg-[var(--color-dark-pine)] dark:text-[var(--color-dark-canvas)]"
-          >
-            Work with me
-          </a>
-          <a
-            href="#building"
-            class="inline-flex items-center rounded-md border border-[var(--color-line)] bg-[var(--color-canvas-elevated)] px-5 py-3 text-sm font-semibold text-[var(--color-ink)] transition hover:border-[var(--color-sage)] dark:border-[var(--color-dark-line)] dark:bg-[var(--color-dark-elevated)] dark:text-[var(--color-dark-ink)]"
-          >
-            What I am building
-          </a>
+          <a href="/speaking" class="btn-on-dark">Book me to speak</a>
+          <a href="/contact?type=operator-stack" class="btn-on-dark-ghost">Get a process review</a>
         </div>
       </div>
-      <div class="fade-up fade-up-delay-1">
-        <PhotoSlot label="Jesse Poteet" src="/images/photos/jesse-hero.jpg" aspect="portrait" />
+      <div class="reveal reveal-delay-1 mx-auto w-full max-w-md lg:mx-0 lg:justify-self-end">
+        <PhotoSlot label="Jesse Poteet headshot" src="/images/photos/jesse-hero.jpg" aspect="portrait" class="border-0 shadow-sm" />
+        <p class="mt-3 text-center text-xs text-[var(--color-hero-muted)] lg:text-left">
+          [JESSE: confirm headshot crop for hero]
+        </p>
       </div>
     </div>
   </section>
 
-  <div class="soft-divider mx-auto max-w-5xl"></div>
-
-  <!-- 2. What I believe -->
-  <section class="mx-auto max-w-5xl px-5 py-16 sm:px-8" aria-labelledby="believe-heading">
-    <h2 id="believe-heading" class="font-display text-3xl font-semibold sm:text-4xl">What I believe</h2>
-    <p class="mt-3 max-w-2xl text-[var(--color-ink-muted)] dark:text-[var(--color-dark-muted)]">
-      A short filter for how I build companies and advise owners.
-    </p>
-    <ul class="mt-10 grid gap-8 sm:grid-cols-2">
+  <!-- Beliefs -->
+  <section class="site-shell section-pad" aria-labelledby="believe-heading">
+    <div class="reveal max-w-2xl">
+      <p class="eyebrow">What I believe</p>
+      <h2 id="believe-heading" class="mt-3 font-display text-3xl font-semibold sm:text-4xl">
+        A short filter for how I build and advise
+      </h2>
+    </div>
+    <ul class="mt-12 grid gap-6 sm:grid-cols-2">
       {
-        beliefs.map((item) => (
-          <li class="border-t border-[var(--color-line)] pt-5 dark:border-[var(--color-dark-line)]">
+        beliefs.map((item, i) => (
+          <li class:list={['reveal panel p-6', i === 1 && 'reveal-delay-1', i === 2 && 'reveal-delay-2', i === 3 && 'reveal-delay-3']}>
             <h3 class="font-display text-xl font-semibold">{item.title}</h3>
             <p class="mt-2 text-[var(--color-ink-muted)] dark:text-[var(--color-dark-muted)]">{item.body}</p>
           </li>
@@ -77,253 +71,266 @@ const posts = (await getCollection('writing', ({ data }) => data.draft !== true)
     </ul>
   </section>
 
-  <!-- 3. What I'm building -->
-  <section id="building" class="scroll-mt-24 mx-auto max-w-5xl px-5 pb-16 sm:px-8" aria-labelledby="building-heading">
-    <h2 id="building-heading" class="font-display text-3xl font-semibold sm:text-4xl">What I am building</h2>
-    <p class="mt-3 max-w-2xl text-[var(--color-ink-muted)] dark:text-[var(--color-dark-muted)]">
-      Not a link dump. Each brand exists because owners kept hitting the same wall.
-    </p>
-
-    <div class="mt-12 space-y-12">
-      <article class="border-t border-[var(--color-line)] pt-8 dark:border-[var(--color-dark-line)]">
-        <div class="flex items-start gap-4">
-          <div
-            class="flex h-12 w-12 shrink-0 items-center justify-center rounded-md bg-[var(--color-pine)] font-display text-sm font-semibold text-[var(--color-canvas)] dark:bg-[var(--color-dark-pine)] dark:text-[var(--color-dark-canvas)]"
-            aria-hidden="true"
-          >
-            {printProStrategies.monogram}
-          </div>
-          <div>
-            <h3 class="font-display text-2xl font-semibold">{printProStrategies.name}</h3>
-            <p class="mt-1 text-xs font-medium uppercase tracking-[0.12em] text-[var(--color-sage)] dark:text-[var(--color-dark-muted)]">
-              {printProStrategies.legalName}
-            </p>
-            <p class="mt-3 max-w-2xl text-[var(--color-ink-muted)] dark:text-[var(--color-dark-muted)]">
-              <span class="font-semibold text-[var(--color-ink)] dark:text-[var(--color-dark-ink)]">Problem:</span>
-              {' '}{printProStrategies.problem}
-            </p>
-          </div>
+  <!-- Proof: story card + featured -->
+  <section class="border-y border-[var(--color-line)] bg-[var(--color-canvas-elevated)] dark:border-[var(--color-dark-line)] dark:bg-[var(--color-dark-elevated)]">
+    <div class="site-shell section-pad grid gap-10 lg:grid-cols-[1.1fr_0.9fr] lg:items-start">
+      <div class="reveal">
+        <p class="eyebrow">Proof</p>
+        <h2 class="mt-3 font-display text-3xl font-semibold sm:text-4xl">What changes when the owner is not the bottleneck</h2>
+        <div class="mt-8">
+          <QuoteComparison />
         </div>
-
-        <div class="mt-8 grid gap-8 lg:grid-cols-2">
-          <div>
-            <h4 class="text-xs font-semibold uppercase tracking-[0.14em] text-[var(--color-sage)] dark:text-[var(--color-dark-muted)]">
-              Education
-            </h4>
-            <ul class="mt-4 space-y-4">
-              {
-                printProStrategies.education.map((child) => (
-                  <li class="border-t border-[var(--color-line)]/80 pt-4 dark:border-[var(--color-dark-line)]">
-                    <p class="font-display text-lg font-semibold">
-                      {child.url ? (
-                        <a href={child.url} rel="noopener noreferrer" target="_blank" class="hover:text-[var(--color-clay)] dark:hover:text-[var(--color-dark-clay)]">
-                          {child.name}
-                        </a>
-                      ) : (
-                        child.name
-                      )}
-                    </p>
-                    <p class="mt-1 text-sm text-[var(--color-ink-muted)] dark:text-[var(--color-dark-muted)]">
-                      <span class="font-medium text-[var(--color-ink)] dark:text-[var(--color-dark-ink)]">Problem:</span> {child.problem}
-                    </p>
-                  </li>
-                ))
-              }
-            </ul>
-          </div>
-          <div>
-            <h4 class="text-xs font-semibold uppercase tracking-[0.14em] text-[var(--color-sage)] dark:text-[var(--color-dark-muted)]">
-              Software
-            </h4>
-            <ul class="mt-4 space-y-4">
-              {
-                printProStrategies.software.map((child) => (
-                  <li class="border-t border-[var(--color-line)]/80 pt-4 dark:border-[var(--color-dark-line)]">
-                    <p class="font-display text-lg font-semibold">
-                      {child.url ? (
-                        <a href={child.url} rel="noopener noreferrer" target="_blank" class="hover:text-[var(--color-clay)] dark:hover:text-[var(--color-dark-clay)]">
-                          {child.name}
-                        </a>
-                      ) : (
-                        child.name
-                      )}
-                    </p>
-                    <p class="mt-1 text-sm text-[var(--color-ink-muted)] dark:text-[var(--color-dark-muted)]">
-                      <span class="font-medium text-[var(--color-ink)] dark:text-[var(--color-dark-ink)]">Problem:</span> {child.problem}
-                    </p>
-                  </li>
-                ))
-              }
-            </ul>
-          </div>
-        </div>
-      </article>
-
-      <div class="grid gap-10 sm:grid-cols-2">
-        {
-          [alpineApparel, operatorStack].map((brand) => (
-            <article class="border-t border-[var(--color-line)] pt-6 dark:border-[var(--color-dark-line)]">
-              <div class="flex items-start gap-4">
-                <div
-                  class="flex h-12 w-12 shrink-0 items-center justify-center rounded-md bg-[var(--color-pine)] font-display text-sm font-semibold text-[var(--color-canvas)] dark:bg-[var(--color-dark-pine)] dark:text-[var(--color-dark-canvas)]"
-                  aria-hidden="true"
-                >
-                  {brand.monogram}
-                </div>
-                <div>
-                  <h3 class="font-display text-2xl font-semibold">
-                    {brand.url ? (
-                      <a href={brand.url} rel="noopener noreferrer" target="_blank" class="hover:text-[var(--color-clay)] dark:hover:text-[var(--color-dark-clay)]">
-                        {brand.name}
-                      </a>
-                    ) : (
-                      brand.name
-                    )}
-                  </h3>
-                  <p class="mt-3 text-[var(--color-ink-muted)] dark:text-[var(--color-dark-muted)]">
-                    <span class="font-semibold text-[var(--color-ink)] dark:text-[var(--color-dark-ink)]">Problem:</span> {brand.problem}
-                  </p>
-                  <p class="mt-2 text-sm text-[var(--color-ink-muted)] dark:text-[var(--color-dark-muted)]">{brand.blurb}</p>
-                </div>
-              </div>
-            </article>
-          ))
-        }
       </div>
-    </div>
-
-    <p class="mt-8">
-      <a href="/work" class="text-sm font-semibold text-[var(--color-clay)] dark:text-[var(--color-dark-clay)]">
-        Full ventures map →
-      </a>
-    </p>
-  </section>
-
-  <div class="soft-divider mx-auto max-w-5xl"></div>
-
-  <!-- 4. Proof -->
-  <section class="mx-auto max-w-5xl px-5 py-16 sm:px-8" aria-labelledby="proof-heading">
-    <h2 id="proof-heading" class="font-display text-3xl font-semibold sm:text-4xl">Proof</h2>
-    <div class="mt-10 grid gap-10 lg:grid-cols-[1fr_1.1fr]">
-      <div class="border-t border-[var(--color-line)] pt-6 dark:border-[var(--color-dark-line)]">
-        <h3 class="text-xs font-semibold uppercase tracking-[0.14em] text-[var(--color-sage)] dark:text-[var(--color-dark-muted)]">
-          As featured in
-        </h3>
-        <ul class="mt-5 space-y-4">
+      <div class="reveal reveal-delay-1">
+        <p class="eyebrow">As featured in</p>
+        <ul class="mt-6 grid gap-3">
           {
             pressMentions.map((item) => (
-              <li class="flex items-center gap-4">
-                <div class="flex h-12 w-28 items-center justify-center rounded-md border border-dashed border-[var(--color-sage)]/50 bg-[var(--color-canvas-elevated)] px-2 text-center text-xs font-semibold text-[var(--color-ink-muted)] dark:border-[var(--color-dark-muted)]/40 dark:bg-[var(--color-dark-elevated)] dark:text-[var(--color-dark-muted)]">
+              <li class="flex items-center justify-between gap-4 border border-[var(--color-line)] bg-[var(--color-canvas)] px-5 py-4 grayscale dark:border-[var(--color-dark-line)] dark:bg-[var(--color-dark-canvas)]">
+                <span class="font-display text-lg font-semibold tracking-tight text-[var(--color-ink-muted)] dark:text-[var(--color-dark-muted)]">
                   {item.name}
-                </div>
-                <div>
-                  {item.href ? (
-                    <a href={item.href} class="font-semibold text-[var(--color-clay)] dark:text-[var(--color-dark-clay)]" rel="noopener noreferrer">
-                      {item.name}
-                    </a>
-                  ) : (
-                    <p class="font-semibold">{item.name}</p>
-                  )}
-                  <p class="text-xs text-[var(--color-ink-muted)] dark:text-[var(--color-dark-muted)]">{item.todo}</p>
-                </div>
+                </span>
+                <span class="text-xs text-[var(--color-ink-muted)]/80 dark:text-[var(--color-dark-muted)]">{item.todo}</span>
               </li>
             ))
           }
         </ul>
       </div>
-      <blockquote class="border-t border-[var(--color-line)] pt-6 dark:border-[var(--color-dark-line)]">
-        <p class="font-display text-2xl font-semibold text-balance sm:text-3xl">{alpineProof.headline}</p>
-        <p class="mt-4 text-[var(--color-ink-muted)] dark:text-[var(--color-dark-muted)]">{alpineProof.detail}</p>
-        <p class="mt-3 text-sm font-medium text-[var(--color-sage)] dark:text-[var(--color-dark-muted)]">
-          Alpine Apparel Co
-        </p>
-      </blockquote>
     </div>
   </section>
 
-  <!-- 5. Ideas -->
-  <section class="mx-auto max-w-5xl px-5 pb-16 sm:px-8" aria-labelledby="ideas-heading">
-    <div class="flex flex-wrap items-end justify-between gap-4">
-      <div>
-        <h2 id="ideas-heading" class="font-display text-3xl font-semibold">Ideas</h2>
-        <p class="mt-2 text-[var(--color-ink-muted)] dark:text-[var(--color-dark-muted)]">
-          Latest writing here. Videos live on Startup Screen Printing for now.
-        </p>
-      </div>
-      <a href="/writing" class="text-sm font-semibold text-[var(--color-clay)] dark:text-[var(--color-dark-clay)]">
-        All writing →
-      </a>
+  <!-- How I help a business run without you -->
+  <section class="site-shell section-pad" aria-labelledby="process-heading">
+    <div class="reveal max-w-2xl">
+      <p class="eyebrow">Method</p>
+      <h2 id="process-heading" class="mt-3 font-display text-3xl font-semibold sm:text-4xl">
+        How I help a business run without you
+      </h2>
+      <p class="mt-3 text-[var(--color-ink-muted)] dark:text-[var(--color-dark-muted)]">
+        Simple on purpose. Whether you run a shop, a crew, a studio, or a growing brand, the pattern is the same.
+      </p>
     </div>
-    <ul class="mt-8 space-y-5">
+    <ol class="mt-12 grid gap-6 md:grid-cols-2 xl:grid-cols-4">
       {
-        posts.map((post) => (
-          <li class="border-t border-[var(--color-line)] pt-5 dark:border-[var(--color-dark-line)]">
-            <a href={`/writing/${post.id}/`} class="group block">
-              <time
-                datetime={post.data.pubDate.toISOString()}
-                class="text-xs font-medium uppercase tracking-[0.12em] text-[var(--color-sage)] dark:text-[var(--color-dark-muted)]"
-              >
-                {post.data.pubDate.toLocaleDateString('en-US', {
-                  year: 'numeric',
-                  month: 'long',
-                  day: 'numeric',
-                })}
-              </time>
-              <h3 class="mt-2 font-display text-xl font-semibold group-hover:text-[var(--color-clay)] dark:group-hover:text-[var(--color-dark-clay)]">
-                {post.data.title}
-              </h3>
-              <p class="mt-1 text-sm text-[var(--color-ink-muted)] dark:text-[var(--color-dark-muted)]">
-                {post.data.description}
-              </p>
-            </a>
-          </li>
-        ))
-      }
-    </ul>
-    <p class="mt-6 text-sm text-[var(--color-ink-muted)] dark:text-[var(--color-dark-muted)]">
-      Videos:
-      <a class="font-semibold text-[var(--color-clay)] dark:text-[var(--color-dark-clay)]" href="https://startupscreenprinting.com" rel="noopener noreferrer">
-        startupscreenprinting.com
-      </a>
-      · <span class="opacity-70">[JESSE: featured video links]</span>
-    </p>
-  </section>
-
-  <!-- 6. Work with me -->
-  <section id="work-with-me" class="scroll-mt-24 mx-auto max-w-5xl px-5 pb-16 sm:px-8" aria-labelledby="wwm-heading">
-    <h2 id="wwm-heading" class="font-display text-3xl font-semibold sm:text-4xl">Work with me</h2>
-    <p class="mt-3 max-w-2xl text-[var(--color-ink-muted)] dark:text-[var(--color-dark-muted)]">
-      Three clear doors. Pick the one that fits.
-    </p>
-    <ol class="mt-10 grid gap-8 md:grid-cols-3">
-      {
-        workWithMePaths.map((path, index) => (
-          <li class="border-t border-[var(--color-line)] pt-5 dark:border-[var(--color-dark-line)]">
-            <p class="text-xs font-semibold uppercase tracking-[0.14em] text-[var(--color-sage)] dark:text-[var(--color-dark-muted)]">
-              {String(index + 1).padStart(2, '0')}
-            </p>
-            <h3 class="mt-3 font-display text-xl font-semibold">{path.title}</h3>
-            <p class="mt-2 text-sm leading-relaxed text-[var(--color-ink-muted)] dark:text-[var(--color-dark-muted)]">
-              {path.description}
-            </p>
-            <a
-              href={path.href}
-              class="mt-4 inline-flex text-sm font-semibold text-[var(--color-clay)] dark:text-[var(--color-dark-clay)]"
-              rel={'external' in path && path.external ? 'noopener noreferrer' : undefined}
-            >
-              {path.cta} <span class="ml-1" aria-hidden="true">→</span>
-            </a>
+        processSteps.map((step, i) => (
+          <li class:list={['reveal panel p-5', i === 1 && 'reveal-delay-1', i === 2 && 'reveal-delay-2', i === 3 && 'reveal-delay-3']}>
+            <p class="font-display text-sm font-semibold text-[var(--color-accent)] dark:text-[var(--color-dark-accent)]">{step.step}</p>
+            <h3 class="mt-3 font-display text-xl font-semibold">{step.title}</h3>
+            <p class="mt-2 text-sm leading-relaxed text-[var(--color-ink-muted)] dark:text-[var(--color-dark-muted)]">{step.body}</p>
           </li>
         ))
       }
     </ol>
   </section>
 
-  <section class="mx-auto max-w-5xl px-5 pb-20 sm:px-8">
-    <NewsletterCTA
+  <!-- Selected work / case studies -->
+  <section class="border-y border-[var(--color-line)] bg-[var(--color-canvas-elevated)] dark:border-[var(--color-dark-line)] dark:bg-[var(--color-dark-elevated)]" aria-labelledby="cases-heading">
+    <div class="site-shell section-pad">
+      <div class="reveal max-w-2xl">
+        <p class="eyebrow">Selected work</p>
+        <h2 id="cases-heading" class="mt-3 font-display text-3xl font-semibold sm:text-4xl">
+          Problem, build, result
+        </h2>
+        <p class="mt-3 text-[var(--color-ink-muted)] dark:text-[var(--color-dark-muted)]">
+          Examples across production, systems, software, and education. Print is where the story started, not the only place it applies.
+        </p>
+      </div>
+      <div class="mt-12 grid gap-6 lg:grid-cols-2">
+        {
+          caseStudies.map((item, i) => (
+            <article class:list={['reveal panel p-6', i % 2 === 1 && 'reveal-delay-1']}>
+              <p class="eyebrow">{item.eyebrow}</p>
+              <h3 class="mt-2 font-display text-2xl font-semibold">{item.name}</h3>
+              <dl class="mt-5 space-y-4 text-sm">
+                <div>
+                  <dt class="font-semibold">Problem</dt>
+                  <dd class="mt-1 text-[var(--color-ink-muted)] dark:text-[var(--color-dark-muted)]">{item.problem}</dd>
+                </div>
+                <div>
+                  <dt class="font-semibold">What I built</dt>
+                  <dd class="mt-1 text-[var(--color-ink-muted)] dark:text-[var(--color-dark-muted)]">{item.built}</dd>
+                </div>
+                <div>
+                  <dt class="font-semibold">Result</dt>
+                  <dd class="mt-1 text-[var(--color-ink-muted)] dark:text-[var(--color-dark-muted)]">{item.result}</dd>
+                </div>
+              </dl>
+            </article>
+          ))
+        }
+      </div>
+    </div>
+  </section>
+
+  <!-- What I'm building (brands, condensed) -->
+  <section id="building" class="site-shell section-pad scroll-mt-24" aria-labelledby="building-heading">
+    <div class="reveal max-w-2xl">
+      <p class="eyebrow">What I am building</p>
+      <h2 id="building-heading" class="mt-3 font-display text-3xl font-semibold sm:text-4xl">
+        Brands with a job to do
+      </h2>
+      <p class="mt-3 text-[var(--color-ink-muted)] dark:text-[var(--color-dark-muted)]">
+        Not a link dump. Education and software under PrintPro, a production company in Alpine, and Operator Stack for owner-run teams.
+      </p>
+    </div>
+
+    <div class="reveal mt-12 panel p-6 sm:p-8">
+      <div class="flex flex-wrap items-baseline justify-between gap-3">
+        <h3 class="font-display text-2xl font-semibold">{printProStrategies.name}</h3>
+        <p class="text-xs font-medium uppercase tracking-[0.12em] text-[var(--color-ink-muted)]">{printProStrategies.legalName}</p>
+      </div>
+      <p class="mt-3 max-w-3xl text-[var(--color-ink-muted)] dark:text-[var(--color-dark-muted)]">
+        <span class="font-semibold text-[var(--color-ink)] dark:text-[var(--color-dark-ink)]">Problem:</span>
+        {printProStrategies.problem}
+      </p>
+      <div class="mt-8 grid gap-8 lg:grid-cols-2">
+        <div>
+          <p class="eyebrow">Education</p>
+          <ul class="mt-4 space-y-3">
+            {
+              printProStrategies.education.map((child) => (
+                <li class="rule pt-3">
+                  <p class="font-semibold">
+                    {child.url ? (
+                      <a href={child.url} rel="noopener noreferrer" target="_blank" class="hover:text-[var(--color-accent)] dark:hover:text-[var(--color-dark-accent)]">
+                        {child.name}
+                      </a>
+                    ) : (
+                      child.name
+                    )}
+                  </p>
+                  <p class="mt-1 text-sm text-[var(--color-ink-muted)] dark:text-[var(--color-dark-muted)]">{child.problem}</p>
+                </li>
+              ))
+            }
+          </ul>
+        </div>
+        <div>
+          <p class="eyebrow">Software</p>
+          <ul class="mt-4 space-y-3">
+            {
+              printProStrategies.software.map((child) => (
+                <li class="rule pt-3">
+                  <p class="font-semibold">
+                    {child.url ? (
+                      <a href={child.url} rel="noopener noreferrer" target="_blank" class="hover:text-[var(--color-accent)] dark:hover:text-[var(--color-dark-accent)]">
+                        {child.name}
+                      </a>
+                    ) : (
+                      child.name
+                    )}
+                  </p>
+                  <p class="mt-1 text-sm text-[var(--color-ink-muted)] dark:text-[var(--color-dark-muted)]">{child.problem}</p>
+                </li>
+              ))
+            }
+          </ul>
+        </div>
+      </div>
+    </div>
+
+    <div class="mt-6 grid gap-6 sm:grid-cols-2">
+      {
+        [alpineApparel, operatorStack].map((brand, i) => (
+          <article class:list={['reveal panel p-6', i === 1 && 'reveal-delay-1']}>
+            <h3 class="font-display text-2xl font-semibold">
+              {brand.url ? (
+                <a href={brand.url} rel="noopener noreferrer" target="_blank" class="hover:text-[var(--color-accent)] dark:hover:text-[var(--color-dark-accent)]">
+                  {brand.name}
+                </a>
+              ) : (
+                brand.name
+              )}
+            </h3>
+            <p class="mt-3 text-sm text-[var(--color-ink-muted)] dark:text-[var(--color-dark-muted)]">
+              <span class="font-semibold text-[var(--color-ink)] dark:text-[var(--color-dark-ink)]">Problem:</span> {brand.problem}
+            </p>
+          </article>
+        ))
+      }
+    </div>
+    <p class="mt-8">
+      <a href="/work" class="text-sm font-semibold text-[var(--color-accent)] dark:text-[var(--color-dark-accent)]">Full ventures map →</a>
+    </p>
+  </section>
+
+  <!-- Ideas -->
+  <section class="border-t border-[var(--color-line)] dark:border-[var(--color-dark-line)]" aria-labelledby="ideas-heading">
+    <div class="site-shell section-pad">
+      <div class="reveal flex flex-wrap items-end justify-between gap-4">
+        <div>
+          <p class="eyebrow">Ideas</p>
+          <h2 id="ideas-heading" class="mt-3 font-display text-3xl font-semibold">Latest writing</h2>
+        </div>
+        <a href="/writing" class="text-sm font-semibold text-[var(--color-accent)] dark:text-[var(--color-dark-accent)]">All writing →</a>
+      </div>
+      <ul class="mt-10 space-y-0">
+        {
+          posts.map((post) => (
+            <li class="reveal rule py-6">
+              <a href={`/writing/${post.id}/`} class="group block">
+                <time
+                  datetime={post.data.pubDate.toISOString()}
+                  class="text-xs font-medium uppercase tracking-[0.12em] text-[var(--color-ink-muted)] dark:text-[var(--color-dark-muted)]"
+                >
+                  {post.data.pubDate.toLocaleDateString('en-US', {
+                    year: 'numeric',
+                    month: 'long',
+                    day: 'numeric',
+                  })}
+                </time>
+                <h3 class="mt-2 font-display text-2xl font-semibold group-hover:text-[var(--color-accent)] dark:group-hover:text-[var(--color-dark-accent)]">
+                  {post.data.title}
+                </h3>
+                <p class="mt-1 text-[var(--color-ink-muted)] dark:text-[var(--color-dark-muted)]">{post.data.description}</p>
+              </a>
+            </li>
+          ))
+        }
+      </ul>
+      <p class="mt-4 text-sm text-[var(--color-ink-muted)] dark:text-[var(--color-dark-muted)]">
+        Videos:
+        <a class="font-semibold text-[var(--color-accent)] dark:text-[var(--color-dark-accent)]" href="https://startupscreenprinting.com" rel="noopener noreferrer">
+          startupscreenprinting.com
+        </a>
+        · <span class="opacity-70">[JESSE: featured video links]</span>
+      </p>
+    </div>
+  </section>
+
+  <!-- Work with me -->
+  <section id="work-with-me" class="scroll-mt-24 border-t border-[var(--color-line)] bg-[var(--color-canvas-elevated)] dark:border-[var(--color-dark-line)] dark:bg-[var(--color-dark-elevated)]" aria-labelledby="wwm-heading">
+    <div class="site-shell section-pad">
+      <div class="reveal max-w-2xl">
+        <p class="eyebrow">Work with me</p>
+        <h2 id="wwm-heading" class="mt-3 font-display text-3xl font-semibold sm:text-4xl">Three clear doors</h2>
+      </div>
+      <ol class="mt-12 grid gap-6 md:grid-cols-3">
+        {
+          workWithMePaths.map((path, index) => (
+            <li class:list={['reveal panel p-6', index === 1 && 'reveal-delay-1', index === 2 && 'reveal-delay-2']}>
+              <p class="eyebrow">{String(index + 1).padStart(2, '0')}</p>
+              <h3 class="mt-3 font-display text-xl font-semibold">{path.title}</h3>
+              <p class="mt-2 text-sm leading-relaxed text-[var(--color-ink-muted)] dark:text-[var(--color-dark-muted)]">
+                {path.description}
+              </p>
+              <a
+                href={path.href}
+                class="mt-5 inline-flex text-sm font-semibold text-[var(--color-accent)] dark:text-[var(--color-dark-accent)]"
+                rel={'external' in path && path.external ? 'noopener noreferrer' : undefined}
+              >
+                {path.cta} <span class="ml-1" aria-hidden="true">→</span>
+              </a>
+            </li>
+          ))
+        }
+      </ol>
+      <div class="reveal mt-12">
+        <NewsletterCTA
       heading="Stay in the loop"
-      body="The Startup Screen Printing newsletter is the steady drip of practical notes for owners who want off the treadmill."
+      body="Practical notes for owners who want off the treadmill. Published through Startup Screen Printing."
     />
-    <p class="sr-only">{NEWSLETTER_URL}</p>
+      </div>
+    </div>
   </section>
 </BaseLayout>

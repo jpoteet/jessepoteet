@@ -6,16 +6,16 @@ import ThemeToggle from './ThemeToggle.astro';
 const pathname = Astro.url.pathname;
 ---
 
-<header class="relative z-40 border-b border-[var(--color-line)]/70 bg-[var(--color-canvas)]/85 backdrop-blur-md dark:border-[var(--color-dark-line)]/80 dark:bg-[var(--color-dark-canvas)]/85">
-  <div class="mx-auto flex max-w-5xl items-center justify-between gap-4 px-5 py-4 sm:px-8">
+<header class="relative z-40 border-b border-[var(--color-line)] bg-[var(--color-canvas-elevated)]/90 backdrop-blur-md dark:border-[var(--color-dark-line)] dark:bg-[var(--color-dark-canvas)]/90">
+  <div class="site-shell flex items-center justify-between gap-4 py-4">
     <a
       href="/"
-      class="font-display text-xl font-semibold tracking-tight text-[var(--color-pine)] transition hover:text-[var(--color-clay)] dark:text-[var(--color-dark-pine)] dark:hover:text-[var(--color-dark-clay)] sm:text-2xl"
+      class="font-display text-xl font-semibold tracking-tight text-[var(--color-ink)] transition hover:text-[var(--color-accent)] dark:text-[var(--color-dark-ink)] dark:hover:text-[var(--color-dark-accent)] sm:text-2xl"
     >
       {SITE.name}
     </a>
 
-    <nav class="hidden items-center gap-1 md:flex" aria-label="Primary">
+    <nav class="hidden items-center gap-0.5 md:flex" aria-label="Primary">
       {
         mainNav.map((item) => {
           const active = pathname === item.href || pathname.startsWith(`${item.href}/`);
@@ -25,7 +25,7 @@ const pathname = Astro.url.pathname;
               class:list={[
                 'rounded-md px-3 py-2 text-sm font-medium transition',
                 active
-                  ? 'text-[var(--color-pine)] dark:text-[var(--color-dark-pine)]'
+                  ? 'text-[var(--color-accent)] dark:text-[var(--color-dark-accent)]'
                   : 'text-[var(--color-ink-muted)] hover:text-[var(--color-ink)] dark:text-[var(--color-dark-muted)] dark:hover:text-[var(--color-dark-ink)]',
               ]}
               aria-current={active ? 'page' : undefined}

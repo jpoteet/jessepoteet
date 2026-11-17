@@ -4,7 +4,7 @@ export const SITE = {
   tagline:
     'I help owner-run businesses get off the treadmill and back to building something that serves their family.',
   description:
-    'Jesse Poteet helps owner-run businesses get off the treadmill. Designer, printer, and systems builder behind Alpine Apparel Co, Operator Stack, and PrintPro Strategies. Castle Rock, Colorado.',
+    'Jesse Poteet helps owner-run businesses, creators, and leaders get off the treadmill. Systems, operations, and marketing automation. Castle Rock, Colorado.',
   url: 'https://jessepoteet.com',
   locale: 'en_US',
   author: 'Jesse Poteet',

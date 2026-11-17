@@ -2,6 +2,7 @@
 import BaseHead from '@/components/BaseHead.astro';
 import Header from '@/components/Header.astro';
 import Footer from '@/components/Footer.astro';
+import ScrollReveal from '@/components/ScrollReveal.astro';
 
 interface Props {
   title?: string;
@@ -9,6 +10,8 @@ interface Props {
   image?: string;
   type?: 'website' | 'article';
   noindex?: boolean;
+  /** Hide the site header chrome when the page paints its own hero band. */
+  transparentHeader?: boolean;
 }
 
 const { title, description, image, type, noindex } = Astro.props;
@@ -22,7 +25,7 @@ const { title, description, image, type, noindex } = Astro.props;
   <body class="flex min-h-screen flex-col antialiased">
     <a
       href="#main"
-      class="sr-only focus:not-sr-only focus:absolute focus:left-4 focus:top-4 focus:z-50 focus:rounded-md focus:bg-[var(--color-clay)] focus:px-4 focus:py-2 focus:text-white"
+      class="sr-only focus:not-sr-only focus:absolute focus:left-4 focus:top-4 focus:z-50 focus:rounded-md focus:bg-[var(--color-accent)] focus:px-4 focus:py-2 focus:text-white"
     >
       Skip to content
     </a>
@@ -31,5 +34,6 @@ const { title, description, image, type, noindex } = Astro.props;
       <slot />
     </main>
     <Footer />
+    <ScrollReveal />
   </body>
 </html>

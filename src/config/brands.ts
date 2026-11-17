@@ -46,7 +46,7 @@ export const operatorStack: StandaloneBrand = {
   blurb:
     'Done-for-you systems for owner-run small businesses with 2 to 30 people. Print and apparel shops, sign shops, small manufacturers, contractors, and home services. Starts with a free 30-minute process review.',
   problem:
-    'Owner-run shops with 2 to 30 people are stuck in the day-to-day and need systems that do not require the owner for every decision.',
+    'Owner-run businesses with 2 to 30 people are stuck in the day-to-day and need systems that do not require the owner for every decision.',
   audience: 'Owner-run small businesses',
 };
 
@@ -184,7 +184,7 @@ export const beliefs = [
   },
   {
     title: 'Profit over revenue',
-    body: 'Big top-line numbers mean little if the shop is not healthy underneath.',
+    body: 'Big top-line numbers mean little if the business is not healthy underneath.',
   },
   {
     title: 'Systems over hustle',
