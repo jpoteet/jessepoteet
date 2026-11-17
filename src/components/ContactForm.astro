@@ -1,0 +1,206 @@
+---
+import { REQUEST_TYPES, resolveRequestType } from '@/config/contact';
+
+interface Props {
+  /** Prefill from ?type= query param */
+  initialType?: string | null;
+}
+
+const { initialType } = Astro.props;
+const selectedType = resolveRequestType(initialType);
+---
+
+<form
+  id="contact-form"
+  class="space-y-5"
+  method="POST"
+  action="/api/contact"
+  novalidate
+>
+  <div class="grid gap-5 sm:grid-cols-2">
+    <label class="block sm:col-span-2">
+      <span class="text-sm font-semibold">Request type</span>
+      <select
+        name="requestType"
+        id="requestType"
+        required
+        class="mt-1.5 w-full rounded-md border border-[var(--color-line)] bg-[var(--color-canvas-elevated)] px-3 py-2.5 text-[var(--color-ink)] dark:border-[var(--color-dark-line)] dark:bg-[var(--color-dark-elevated)] dark:text-[var(--color-dark-ink)]"
+      >
+        <option value="" disabled selected={!selectedType}>Select one</option>
+        {
+          REQUEST_TYPES.map((type) => (
+            <option value={type.value} selected={selectedType === type.value}>
+              {type.label}
+            </option>
+          ))
+        }
+      </select>
+    </label>
+
+    <label class="block">
+      <span class="text-sm font-semibold">Name</span>
+      <input
+        type="text"
+        name="name"
+        required
+        autocomplete="name"
+        class="mt-1.5 w-full rounded-md border border-[var(--color-line)] bg-[var(--color-canvas-elevated)] px-3 py-2.5 dark:border-[var(--color-dark-line)] dark:bg-[var(--color-dark-elevated)]"
+      />
+    </label>
+
+    <label class="block">
+      <span class="text-sm font-semibold">Email</span>
+      <input
+        type="email"
+        name="email"
+        required
+        autocomplete="email"
+        class="mt-1.5 w-full rounded-md border border-[var(--color-line)] bg-[var(--color-canvas-elevated)] px-3 py-2.5 dark:border-[var(--color-dark-line)] dark:bg-[var(--color-dark-elevated)]"
+      />
+    </label>
+
+    <label class="block sm:col-span-2">
+      <span class="text-sm font-semibold">Show or event name</span>
+      <input
+        type="text"
+        name="showOrEvent"
+        class="mt-1.5 w-full rounded-md border border-[var(--color-line)] bg-[var(--color-canvas-elevated)] px-3 py-2.5 dark:border-[var(--color-dark-line)] dark:bg-[var(--color-dark-elevated)]"
+      />
+    </label>
+
+    <label class="block sm:col-span-2">
+      <span class="text-sm font-semibold">Link</span>
+      <input
+        type="url"
+        name="link"
+        placeholder="https://"
+        class="mt-1.5 w-full rounded-md border border-[var(--color-line)] bg-[var(--color-canvas-elevated)] px-3 py-2.5 dark:border-[var(--color-dark-line)] dark:bg-[var(--color-dark-elevated)]"
+      />
+    </label>
+
+    <label class="block">
+      <span class="text-sm font-semibold">Proposed date</span>
+      <input
+        type="text"
+        name="proposedDate"
+        placeholder="Flexible is fine"
+        class="mt-1.5 w-full rounded-md border border-[var(--color-line)] bg-[var(--color-canvas-elevated)] px-3 py-2.5 dark:border-[var(--color-dark-line)] dark:bg-[var(--color-dark-elevated)]"
+      />
+    </label>
+
+    <label class="block">
+      <span class="text-sm font-semibold">Audience size</span>
+      <input
+        type="text"
+        name="audienceSize"
+        placeholder="Approx. listeners or attendees"
+        class="mt-1.5 w-full rounded-md border border-[var(--color-line)] bg-[var(--color-canvas-elevated)] px-3 py-2.5 dark:border-[var(--color-dark-line)] dark:bg-[var(--color-dark-elevated)]"
+      />
+    </label>
+
+    <label class="block sm:col-span-2">
+      <span class="text-sm font-semibold">Message</span>
+      <textarea
+        name="message"
+        required
+        rows="5"
+        class="mt-1.5 w-full rounded-md border border-[var(--color-line)] bg-[var(--color-canvas-elevated)] px-3 py-2.5 dark:border-[var(--color-dark-line)] dark:bg-[var(--color-dark-elevated)]"
+      ></textarea>
+    </label>
+  </div>
+
+  <input type="hidden" name="pageUrl" id="pageUrl" value={Astro.url.href} />
+
+  <!-- Honeypot: leave empty -->
+  <div class="absolute left-[-9999px] top-auto h-0 w-0 overflow-hidden" aria-hidden="true">
+    <label>
+      Company website
+      <input type="text" name="companyWebsite" tabindex="-1" autocomplete="off" />
+    </label>
+  </div>
+
+  <div id="form-status" class="hidden text-sm" role="status" aria-live="polite"></div>
+
+  <button
+    type="submit"
+    id="contact-submit"
+    class="inline-flex items-center rounded-md bg-[var(--color-pine)] px-5 py-3 text-sm font-semibold text-white transition hover:bg-[var(--color-pine-deep)] dark:bg-[var(--color-dark-pine)] dark:text-[var(--color-dark-canvas)]"
+  >
+    Send message
+  </button>
+</form>
+
+<script>
+  const form = document.getElementById('contact-form') as HTMLFormElement | null;
+  const status = document.getElementById('form-status');
+  const submit = document.getElementById('contact-submit') as HTMLButtonElement | null;
+
+  const pageUrlInput = document.getElementById('pageUrl') as HTMLInputElement | null;
+  if (pageUrlInput) {
+    pageUrlInput.value = window.location.href;
+  }
+
+  form?.addEventListener('submit', async (event) => {
+    event.preventDefault();
+    if (!form || !status || !submit) return;
+
+    if (pageUrlInput) {
+      pageUrlInput.value = window.location.href;
+    }
+
+    status.classList.remove('hidden');
+    status.textContent = 'Sending…';
+    status.className = 'text-sm text-[var(--color-ink-muted)] dark:text-[var(--color-dark-muted)]';
+    submit.disabled = true;
+
+    try {
+      const body = new FormData(form);
+      const response = await fetch('/api/contact', {
+        method: 'POST',
+        body,
+      });
+
+      const result = await response.json().catch(() => ({} as Record<string, unknown>));
+
+      if (!response.ok) {
+        const errors = Array.isArray(result.errors)
+          ? result.errors.join(' ')
+          : typeof result.message === 'string'
+            ? result.message
+            : typeof result.error === 'string'
+              ? result.error
+              : 'Something went wrong. Please try again.';
+        status.textContent = errors;
+        status.className = 'text-sm text-red-700 dark:text-red-300';
+        submit.disabled = false;
+        return;
+      }
+
+      status.textContent =
+        typeof result.message === 'string'
+          ? result.message
+          : 'Thanks. Your message is on its way. Jesse will follow up soon.';
+      status.className = 'text-sm font-medium text-[var(--color-pine)] dark:text-[var(--color-dark-pine)]';
+      form.reset();
+
+      if (pageUrlInput) {
+        pageUrlInput.value = window.location.href;
+      }
+
+      const params = new URLSearchParams(window.location.search);
+      const type = params.get('type');
+      if (type) {
+        const select = form.querySelector('#requestType') as HTMLSelectElement | null;
+        if (select) {
+          const option = Array.from(select.options).find((o) => o.value === type);
+          if (option) select.value = type;
+        }
+      }
+    } catch {
+      status.textContent = 'Network error. Try again in a moment, or email Jesse directly.';
+      status.className = 'text-sm text-red-700 dark:text-red-300';
+    } finally {
+      submit.disabled = false;
+    }
+  });
+</script>

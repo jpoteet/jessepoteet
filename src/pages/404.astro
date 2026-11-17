@@ -1,0 +1,27 @@
+---
+import BaseLayout from '@/layouts/BaseLayout.astro';
+---
+
+<BaseLayout title="Page not found" description="That page is missing." noindex>
+  <div class="mx-auto max-w-3xl px-5 py-24 text-center sm:px-8">
+    <p class="text-xs font-semibold uppercase tracking-[0.14em] text-[var(--color-sage)]">404</p>
+    <h1 class="mt-3 font-display text-4xl font-semibold">That page wandered off</h1>
+    <p class="mt-4 text-[var(--color-ink-muted)] dark:text-[var(--color-dark-muted)]">
+      Try the home page or the work map.
+    </p>
+    <div class="mt-8 flex flex-wrap justify-center gap-3">
+      <a
+        href="/"
+        class="inline-flex rounded-md bg-[var(--color-pine)] px-5 py-3 text-sm font-semibold text-white dark:bg-[var(--color-dark-pine)] dark:text-[var(--color-dark-canvas)]"
+      >
+        Home
+      </a>
+      <a
+        href="/work"
+        class="inline-flex rounded-md border border-[var(--color-line)] px-5 py-3 text-sm font-semibold dark:border-[var(--color-dark-line)]"
+      >
+        Work
+      </a>
+    </div>
+  </div>
+</BaseLayout>

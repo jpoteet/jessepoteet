@@ -1,0 +1,67 @@
+---
+import type { BrandLink, StandaloneBrand } from '@/config/brands';
+
+interface Props {
+  brand: BrandLink | StandaloneBrand;
+  compact?: boolean;
+}
+
+const { brand, compact = false } = Astro.props;
+const href = brand.url ?? undefined;
+const audience = 'audience' in brand ? brand.audience : undefined;
+---
+
+<article
+  class:list={[
+    'group relative flex h-full flex-col border-t border-[var(--color-line)] pt-6 dark:border-[var(--color-dark-line)]',
+    compact ? 'gap-3' : 'gap-4',
+  ]}
+>
+  <div class="flex items-start gap-4">
+    <div
+      class="flex h-12 w-12 shrink-0 items-center justify-center rounded-md bg-[var(--color-accent)] font-display text-sm font-semibold tracking-wide text-white dark:bg-[var(--color-dark-accent)] dark:text-[var(--color-dark-canvas)]"
+      aria-hidden="true"
+    >
+      {brand.monogram}
+    </div>
+    <div class="min-w-0">
+      <h3 class="font-display text-xl font-semibold text-[var(--color-ink)] dark:text-[var(--color-dark-ink)] sm:text-2xl">
+        {
+          href ? (
+            <a href={href} class="after:absolute after:inset-0" rel="noopener noreferrer" target="_blank">
+              {brand.name}
+            </a>
+          ) : (
+            brand.name
+          )
+        }
+      </h3>
+      {
+        audience && !compact && (
+          <p class="mt-1 text-xs font-medium uppercase tracking-[0.12em] text-[var(--color-ink-muted)] dark:text-[var(--color-dark-muted)]">
+            {audience}
+          </p>
+        )
+      }
+    </div>
+  </div>
+
+  <p
+    class:list={[
+      'text-[var(--color-ink-muted)] dark:text-[var(--color-dark-muted)]',
+      compact ? 'text-sm' : 'text-base leading-relaxed',
+    ]}
+  >
+    {brand.blurb}
+  </p>
+
+  {
+    href && (
+      <p class="mt-auto pt-2 text-sm font-semibold text-[var(--color-accent)] dark:text-[var(--color-dark-accent)]">
+        <span class="inline-flex items-center gap-1.5 transition group-hover:gap-2.5">
+          Visit site <span aria-hidden="true">→</span>
+        </span>
+      </p>
+    )
+  }
+</article>

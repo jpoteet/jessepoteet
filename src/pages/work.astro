@@ -1,0 +1,61 @@
+---
+import BaseLayout from '@/layouts/BaseLayout.astro';
+import PrintProGroup from '@/components/PrintProGroup.astro';
+import { alpineApparel, operatorStack } from '@/config/brands';
+---
+
+<BaseLayout
+  title="Work"
+  description="Ventures and brands from Jesse Poteet: Alpine Apparel Co, Operator Stack, and PrintPro Strategies (education and software)."
+>
+  <div class="site-shell section-pad">
+    <header class="reveal max-w-2xl">
+      <p class="eyebrow">Work / Ventures</p>
+      <h1 class="mt-3 font-display text-4xl font-semibold sm:text-5xl">What I am building</h1>
+      <p class="mt-4 text-lg text-[var(--color-ink-muted)] dark:text-[var(--color-dark-muted)]">
+        Alpine and Operator Stack stand alone. Print education and print-shop software sit under PrintPro Strategies. Each one exists to solve a specific owner problem.
+      </p>
+    </header>
+
+    <section id="alpine" class="reveal rule scroll-mt-24 mt-12 pt-12">
+      <h2 class="font-display text-2xl font-semibold sm:text-3xl">{alpineApparel.name}</h2>
+      <p class="mt-2 max-w-2xl text-[var(--color-ink-muted)] dark:text-[var(--color-dark-muted)]">
+        <span class="font-semibold text-[var(--color-ink)] dark:text-[var(--color-dark-ink)]">Problem:</span>
+        {alpineApparel.problem}
+      </p>
+      <p class="mt-3 max-w-2xl text-sm text-[var(--color-ink-muted)] dark:text-[var(--color-dark-muted)]">{alpineApparel.blurb}</p>
+      <p class="mt-4">
+        <a href={alpineApparel.url!} class="text-sm font-semibold text-[var(--color-accent)] dark:text-[var(--color-dark-accent)]" rel="noopener noreferrer">
+          alpineapparelco.com →
+        </a>
+      </p>
+    </section>
+
+    <section id="systems" class="reveal rule scroll-mt-24 mt-12 pt-12">
+      <h2 class="font-display text-2xl font-semibold sm:text-3xl">{operatorStack.name}</h2>
+      <p class="mt-2 max-w-2xl text-[var(--color-ink-muted)] dark:text-[var(--color-dark-muted)]">
+        <span class="font-semibold text-[var(--color-ink)] dark:text-[var(--color-dark-ink)]">Problem:</span>
+        {operatorStack.problem}
+      </p>
+      <p class="mt-3 max-w-2xl text-sm text-[var(--color-ink-muted)] dark:text-[var(--color-dark-muted)]">{operatorStack.blurb}</p>
+      <p class="mt-4 flex flex-wrap gap-4">
+        <a href={operatorStack.url!} class="text-sm font-semibold text-[var(--color-accent)] dark:text-[var(--color-dark-accent)]" rel="noopener noreferrer">
+          operatorstack.io →
+        </a>
+        <a href="/contact?type=operator-stack" class="text-sm font-semibold text-[var(--color-accent)] dark:text-[var(--color-dark-accent)]">
+          Request a free 30-minute process review →
+        </a>
+      </p>
+    </section>
+
+    <section class="reveal rule scroll-mt-24 mt-12 pt-12">
+      <h2 class="font-display text-2xl font-semibold sm:text-3xl">PrintPro Strategies</h2>
+      <p class="mt-2 max-w-2xl text-[var(--color-ink-muted)] dark:text-[var(--color-dark-muted)]">
+        Parent company for print education brands and software built for print shops.
+      </p>
+      <div class="mt-8">
+        <PrintProGroup />
+      </div>
+    </section>
+  </div>
+</BaseLayout>

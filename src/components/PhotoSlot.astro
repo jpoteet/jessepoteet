@@ -1,0 +1,50 @@
+---
+interface Props {
+  label: string;
+  aspect?: 'portrait' | 'landscape' | 'square';
+  pathHint?: string;
+  /** Public path to a real photo when available. */
+  src?: string;
+  class?: string;
+}
+
+const { label, aspect = 'landscape', pathHint, src, class: className } = Astro.props;
+
+const aspectClass =
+  aspect === 'portrait' ? 'aspect-[3/4]' : aspect === 'square' ? 'aspect-square' : 'aspect-[16/10]';
+---
+
+<figure
+  class:list={[
+    'overflow-hidden rounded-md',
+    src
+      ? 'border border-[var(--color-line)] bg-[var(--color-photo-slot)] dark:border-[var(--color-dark-line)]'
+      : 'border border-dashed border-[var(--color-sage)]/40 bg-[var(--color-photo-slot)] dark:border-[var(--color-dark-muted)]/40 dark:bg-[var(--color-dark-elevated)]',
+    aspectClass,
+    className,
+  ]}
+>
+  {
+    src ? (
+      <img
+        src={src}
+        alt={label}
+        class="h-full w-full object-cover"
+        width={aspect === 'portrait' ? 900 : 1200}
+        height={aspect === 'portrait' ? 1200 : 750}
+        loading="eager"
+        decoding="async"
+      />
+    ) : (
+      <div class="flex h-full w-full flex-col items-center justify-center gap-2 px-4 text-center">
+        <span class="text-xs font-semibold uppercase tracking-[0.14em] text-[var(--color-sage)] dark:text-[var(--color-dark-muted)]">
+          Photo
+        </span>
+        <figcaption class="max-w-xs text-sm text-[var(--color-ink-muted)] dark:text-[var(--color-dark-muted)]">
+          {label}
+          {pathHint && <span class="mt-1 block text-xs opacity-70">{pathHint}</span>}
+        </figcaption>
+      </div>
+    )
+  }
+</figure>

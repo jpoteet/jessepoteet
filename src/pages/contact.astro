@@ -1,0 +1,80 @@
+---
+import BaseLayout from '@/layouts/BaseLayout.astro';
+import ContactForm from '@/components/ContactForm.astro';
+import { NEWSLETTER_URL } from '@/config/site';
+import { workWithMePaths } from '@/config/contact';
+import { alpineApparel, operatorStack, printProStrategies } from '@/config/brands';
+
+const typeParam = Astro.url.searchParams.get('type');
+
+const contactBrands = [
+  alpineApparel,
+  operatorStack,
+  ...printProStrategies.education,
+  ...printProStrategies.software,
+].filter((b) => Boolean(b.url));
+---
+
+<BaseLayout
+  title="Work with me"
+  description="Contact Jesse Poteet for podcasts, speaking, Operator Stack projects, or press."
+>
+  <div class="site-shell section-pad max-w-3xl">
+    <header>
+      <p class="eyebrow">Contact</p>
+      <h1 class="mt-3 font-display text-4xl font-semibold sm:text-5xl">Work with me</h1>
+      <p class="mt-4 text-lg text-[var(--color-ink-muted)] dark:text-[var(--color-dark-muted)]">
+        Tell me what you are putting together. Podcasts, talks, Operator Stack projects, and press all start here.
+      </p>
+    </header>
+
+    <div class="mt-8 grid gap-4 sm:grid-cols-3">
+      {
+        workWithMePaths.map((path) => (
+          <a
+            href={path.href}
+            class="border-t border-[var(--color-line)] pt-4 text-sm dark:border-[var(--color-dark-line)]"
+            rel={'external' in path && path.external ? 'noopener noreferrer' : undefined}
+          >
+            <span class="font-display text-base font-semibold">{path.title}</span>
+          </a>
+        ))
+      }
+    </div>
+
+    <div class="relative mt-12 border-t border-[var(--color-line)] pt-10 dark:border-[var(--color-dark-line)]">
+      <ContactForm initialType={typeParam} />
+    </div>
+
+    <div class="mt-14 space-y-6 border-t border-[var(--color-line)] pt-8 text-sm text-[var(--color-ink-muted)] dark:border-[var(--color-dark-line)] dark:text-[var(--color-dark-muted)]">
+      <p>
+        Newsletter:
+        <a class="font-semibold text-[var(--color-accent)] dark:text-[var(--color-dark-accent)]" href={NEWSLETTER_URL} rel="noopener noreferrer">
+          news.startupscreenprinting.com
+        </a>
+      </p>
+      <div>
+        <p class="font-semibold text-[var(--color-ink)] dark:text-[var(--color-dark-ink)]">Brand sites</p>
+        <ul class="mt-2 space-y-1">
+          {
+            contactBrands.map((brand) => (
+              <li>
+                {brand.name}:{' '}
+                <a href={brand.url!} class="font-semibold text-[var(--color-accent)] dark:text-[var(--color-dark-accent)]" rel="noopener noreferrer">
+                  {brand.url!.replace(/^https?:\/\//, '')}
+                </a>
+              </li>
+            ))
+          }
+        </ul>
+      </div>
+      <p class="text-xs opacity-80">
+        Prefill this form with <code class="rounded bg-[var(--color-photo-slot)] px-1 dark:bg-[var(--color-dark-elevated)]">?type=podcast</code>,
+        <code class="rounded bg-[var(--color-photo-slot)] px-1 dark:bg-[var(--color-dark-elevated)]">speaking</code>,
+        <code class="rounded bg-[var(--color-photo-slot)] px-1 dark:bg-[var(--color-dark-elevated)]">operator-stack</code>,
+        <code class="rounded bg-[var(--color-photo-slot)] px-1 dark:bg-[var(--color-dark-elevated)]">press</code>, or
+        <code class="rounded bg-[var(--color-photo-slot)] px-1 dark:bg-[var(--color-dark-elevated)]">other</code>.
+      </p>
+    </div>
+  </div>
+</BaseLayout>
