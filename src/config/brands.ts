@@ -46,6 +46,19 @@ export const operatorStack: StandaloneBrand = {
   audience: 'Owner-run small businesses',
 };
 
+export const gathered: StandaloneBrand = {
+  id: 'gathered',
+  name: 'Gathered',
+  monogram: 'G',
+  logoPath: '/images/logos/gathered.svg',
+  url: 'https://news.gatheredjourney.com/',
+  blurb:
+    'A weekly reflection for husbands and fathers who are building something meaningful and want to stay grounded in faith, family, and identity along the way. Newsletter and community on Beehiiv.',
+  problem:
+    'Husbands and fathers who are building something meaningful still need a weekly place to stay grounded in faith, family, and identity.',
+  audience: 'Husbands and fathers',
+};
+
 /** Education brands with verified URLs or safe name-only mentions. */
 export const printProEducation: PrintProChild[] = [
   {
@@ -117,11 +130,12 @@ export const printProStrategies = {
   software: printProSoftware,
 };
 
-export const standaloneBrands: StandaloneBrand[] = [alpineApparel, operatorStack];
+export const standaloneBrands: StandaloneBrand[] = [alpineApparel, operatorStack, gathered];
 
 export const allBrandLinks: BrandLink[] = [
   alpineApparel,
   operatorStack,
+  gathered,
   {
     id: printProStrategies.id,
     name: printProStrategies.name,

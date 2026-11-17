@@ -11,6 +11,7 @@ import { SITE } from '@/config/site';
 import {
   alpineApparel,
   beliefs,
+  gathered,
   operatorStack,
   pressMentions,
   printProStrategies,
@@ -144,7 +145,7 @@ const featuredPost = posts[0];
         Brands with a job to do
       </h2>
       <p class="mt-3 text-[var(--color-ink-muted)] dark:text-[var(--color-dark-muted)]">
-        Education and software under PrintPro, a production company in Alpine, and Operator Stack for owner-run teams. The side gigs I actually love.
+        PrintPro for education and software, Alpine on the presses, Operator Stack for owner-run teams, and Gathered for faith and family. The side gigs I actually love.
       </p>
     </div>
 
@@ -206,10 +207,10 @@ const featuredPost = posts[0];
       </div>
     </div>
 
-    <div class="mt-6 grid gap-6 sm:grid-cols-2">
+    <div class="mt-6 grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
       {
-        [alpineApparel, operatorStack].map((brand, i) => (
-          <article class:list={['reveal panel p-6', i === 1 && 'reveal-delay-1']}>
+        [alpineApparel, operatorStack, gathered].map((brand, i) => (
+          <article class:list={['reveal panel p-6', i === 1 && 'reveal-delay-1', i === 2 && 'reveal-delay-2']}>
             <h3 class="font-display text-2xl font-semibold">
               {brand.url ? (
                 <a href={brand.url} rel="noopener noreferrer" target="_blank" class="hover:text-[var(--color-accent)] dark:hover:text-[var(--color-dark-accent)]">
@@ -322,8 +323,10 @@ const featuredPost = posts[0];
       </ol>
       <div class="reveal mt-12">
         <NewsletterCTA
-          heading="Stay in the loop"
-          body="Practical notes for owners who want off the treadmill. A little personality included. Published through Startup Screen Printing."
+          heading="Stay grounded while you build"
+          body="Gathered is a weekly reflection for husbands and fathers who are building something meaningful. Faith, family, and identity in one short note."
+          cta="Join Gathered"
+          showOwnerSecondary
         />
       </div>
     </div>

@@ -1,24 +1,53 @@
 ---
-import { NEWSLETTER_URL } from '@/config/site';
+import {
+  NEWSLETTER_URL,
+  NEWSLETTER_NAME,
+  OPERATOR_STACK_NEWSLETTER_URL,
+  OPERATOR_STACK_NEWSLETTER_NAME,
+} from '@/config/site';
 
 interface Props {
   heading?: string;
   body?: string;
+  cta?: string;
+  /** When true, add a secondary line for business owners toward Operator Stack. */
+  showOwnerSecondary?: boolean;
 }
 
 const {
-  heading = 'Practical notes for owners who want off the treadmill',
-  body = 'Published through Startup Screen Printing. Useful if you run a shop, a crew, or any owner-led business that still depends on you for everything.',
+  heading = 'A weekly note for the long road',
+  body =
+    'Gathered is a weekly reflection for husbands and fathers who are building something meaningful and want to stay grounded in faith, family, and identity along the way.',
+  cta = `Join ${NEWSLETTER_NAME}`,
+  showOwnerSecondary = false,
 } = Astro.props;
 ---
 
 <aside class="rounded-lg bg-[var(--color-hero)] px-6 py-10 text-[var(--color-hero-ink)] sm:px-10">
   <div class="max-w-xl">
-    <h2 class="font-display text-2xl font-semibold sm:text-3xl">{heading}</h2>
+    <p class="text-[0.7rem] font-semibold uppercase tracking-[0.16em] text-[var(--color-hero-muted)]">
+      {NEWSLETTER_NAME}
+    </p>
+    <h2 class="mt-3 font-display text-2xl font-semibold sm:text-3xl">{heading}</h2>
     <p class="mt-3 text-base leading-relaxed text-[var(--color-hero-muted)]">{body}</p>
     <a href={NEWSLETTER_URL} class="btn-on-dark mt-6" rel="noopener noreferrer">
-      Jump on the list
+      {cta}
       <span class="ml-2" aria-hidden="true">→</span>
     </a>
+    {
+      showOwnerSecondary && (
+        <p class="mt-6 text-sm leading-relaxed text-[var(--color-hero-muted)]">
+          Running an owner-led business? The{' '}
+          <a
+            href={OPERATOR_STACK_NEWSLETTER_URL}
+            class="font-semibold text-white underline-offset-4 hover:underline"
+            rel="noopener noreferrer"
+          >
+            {OPERATOR_STACK_NEWSLETTER_NAME} newsletter
+          </a>{' '}
+          is the practical lane for systems and getting off the treadmill.
+        </p>
+      )
+    }
   </div>
 </aside>
