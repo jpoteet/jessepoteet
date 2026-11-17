@@ -16,3 +16,7 @@ export const SITE = {
 export const NEWSLETTER_URL = 'https://news.gatheredjourney.com/';
 export const NEWSLETTER_NAME = 'Gathered';
 
+/** Operator Stack newsletter for business owners (verified https://news.operatorstack.io/). */
+export const OPERATOR_STACK_NEWSLETTER_URL = 'https://news.operatorstack.io/';
+export const OPERATOR_STACK_NEWSLETTER_NAME = 'Operator Stack';
+
