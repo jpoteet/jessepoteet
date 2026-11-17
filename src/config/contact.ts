@@ -36,10 +36,11 @@ export const workWithMePaths = [
   },
   {
     id: 'newsletter',
-    title: 'Follow the newsletter',
-    description: 'Practical notes for operators who want off the treadmill, published through Startup Screen Printing.',
+    title: 'Join Gathered',
+    description:
+      'A weekly reflection for husbands and fathers who are building something meaningful and want to stay grounded in faith, family, and identity.',
     href: NEWSLETTER_URL,
-    cta: 'Join the list',
+    cta: 'Get the weekly note',
     external: true,
   },
 ] as const;

@@ -3,11 +3,12 @@ import BaseLayout from '@/layouts/BaseLayout.astro';
 import ContactForm from '@/components/ContactForm.astro';
 import { NEWSLETTER_URL } from '@/config/site';
 import { workWithMePaths } from '@/config/contact';
-import { alpineApparel, operatorStack, printProStrategies } from '@/config/brands';
+import { alpineApparel, gathered, operatorStack, printProStrategies } from '@/config/brands';
 
 const typeParam = Astro.url.searchParams.get('type');
 
 const contactBrands = [
+  gathered,
   alpineApparel,
   operatorStack,
   ...printProStrategies.education,
@@ -48,9 +49,9 @@ const contactBrands = [
 
     <div class="mt-14 space-y-6 border-t border-[var(--color-line)] pt-8 text-sm text-[var(--color-ink-muted)] dark:border-[var(--color-dark-line)] dark:text-[var(--color-dark-muted)]">
       <p>
-        Newsletter:
+        Newsletter (Gathered):
         <a class="font-semibold text-[var(--color-accent)] dark:text-[var(--color-dark-accent)]" href={NEWSLETTER_URL} rel="noopener noreferrer">
-          news.startupscreenprinting.com
+          news.gatheredjourney.com
         </a>
       </p>
       <div>

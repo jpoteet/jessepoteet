@@ -1,5 +1,6 @@
 ---
 import BaseLayout from '@/layouts/BaseLayout.astro';
+import NewsletterCTA from '@/components/NewsletterCTA.astro';
 import { speakerBios, talkTopics } from '@/config/contact';
 ---
 
@@ -68,5 +69,13 @@ import { speakerBios, talkTopics } from '@/config/contact';
         <a href="/contact?type=press" class="btn-on-dark-ghost">Press / media</a>
       </div>
     </section>
+
+    <div class="reveal mt-12">
+      <NewsletterCTA
+        heading="Prefer the quieter inbox version?"
+        body="If a talk is not the right fit yet, Gathered is the weekly note for husbands and fathers building something meaningful."
+        cta="Join Gathered"
+      />
+    </div>
   </article>
 </BaseLayout>

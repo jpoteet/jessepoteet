@@ -12,5 +12,7 @@ export const SITE = {
   ogImage: '/images/og-default.png',
 } as const;
 
-/** Newsletter signup destination (Startup Screen Printing). */
-export const NEWSLETTER_URL = 'https://news.startupscreenprinting.com';
+/** Personal newsletter signup (Gathered on Beehiiv). Root URL; /subscribe not separately verified. */
+export const NEWSLETTER_URL = 'https://news.gatheredjourney.com/';
+export const NEWSLETTER_NAME = 'Gathered';
+

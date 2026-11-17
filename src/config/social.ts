@@ -17,6 +17,7 @@ export const socialLinks: SocialLink[] = [
 
 /** Brand destinations used in footers and contact. */
 export const brandShortLinks: SocialLink[] = [
+  { id: 'gathered', label: 'Gathered', href: 'https://news.gatheredjourney.com/' },
   { id: 'ssp', label: 'Startup Screen Printing', href: 'https://jpoteet.us/ssp' },
   { id: 'alpine', label: 'Alpine Apparel Co', href: 'https://jpoteet.us/alpine' },
 ];
@@ -26,6 +27,7 @@ export const brandSameAs = [
   'https://jpoteet.us/instagram',
   'https://jpoteet.us/twitter',
   'https://jpoteet.us/patreon',
+  'https://news.gatheredjourney.com/',
   'https://jpoteet.us/ssp',
   'https://jpoteet.us/alpine',
   'https://operatorstack.io',
