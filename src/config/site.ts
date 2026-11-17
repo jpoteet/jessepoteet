@@ -1,0 +1,20 @@
+export const SITE = {
+  name: 'Jesse Poteet',
+  title: 'Jesse Poteet',
+  tagline:
+    'I help owner-run businesses get off the treadmill and back to building something that serves their family.',
+  description:
+    'Jesse Poteet helps owner-run businesses get off the treadmill. Designer, printer, and systems builder behind Alpine Apparel Co, Operator Stack, and PrintPro Strategies. Castle Rock, Colorado.',
+  url: 'https://jessepoteet.com',
+  locale: 'en_US',
+  author: 'Jesse Poteet',
+  location: 'Castle Rock, Colorado',
+  ogImage: '/images/og-default.png',
+  emailMailto: 'mailto:[JESSE: contact email]',
+  emailDisplay: '[JESSE: contact email]',
+} as const;
+
+/** Newsletter signup destination (Startup Screen Printing for now). */
+export const NEWSLETTER_URL = 'https://news.startupscreenprinting.com';
+
+export const NOW_UPDATED = '[JESSE: now page date]';

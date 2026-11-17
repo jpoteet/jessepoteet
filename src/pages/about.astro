@@ -1,0 +1,72 @@
+---
+import BaseLayout from '@/layouts/BaseLayout.astro';
+import PhotoSlot from '@/components/PhotoSlot.astro';
+import NewsletterCTA from '@/components/NewsletterCTA.astro';
+---
+
+<BaseLayout
+  title="About"
+  description="About Jesse Poteet: designer and printer in Castle Rock, Colorado, building brands that create freedom for family life."
+>
+  <article class="mx-auto max-w-3xl px-5 py-14 sm:px-8 sm:py-20">
+    <p class="text-xs font-semibold uppercase tracking-[0.14em] text-[var(--color-sage)] dark:text-[var(--color-dark-muted)]">
+      About
+    </p>
+    <h1 class="mt-3 font-display text-4xl font-semibold sm:text-5xl">The short version</h1>
+    <p class="mt-5 text-lg leading-relaxed text-[var(--color-ink-muted)] dark:text-[var(--color-dark-muted)]">
+      I live in Castle Rock, Colorado. I am a Christian. My priorities are faith, family, then entrepreneurship. I design, print, and build systems so owner-run businesses can grow without burning out the person who started them.
+    </p>
+
+    <div class="my-10">
+      <PhotoSlot
+        label="Jesse Poteet"
+        src="/images/photos/jesse-about.jpg"
+        aspect="landscape"
+      />
+    </div>
+
+    <section class="prose-custom space-y-5 text-base leading-relaxed text-[var(--color-ink)] dark:text-[var(--color-dark-ink)] sm:text-lg">
+      <h2 class="font-display text-2xl font-semibold sm:text-3xl">The work</h2>
+      <p>
+        I have spent 25+ years in graphic design. I have been in screen printing since 2013, including time as Director of Art and Production at a commercial print shop. That shop-floor experience still shapes how I build tools and teach.
+      </p>
+      <p>
+        On the consulting side, I work as a Lead Technical Consultant in enterprise marketing automation: Marketo, HubSpot, Klaviyo, CRM, email development, and APIs. Brands I have supported include Qualcomm, CVS/Aetna, Honeywell, and Mastercard. I do not name my employer here. If you need that detail, ask.
+      </p>
+      <p>
+        My shop work lives at Alpine Apparel Co. Systems for owner-run teams live at Operator Stack. Print education and print-shop software live under PrintPro Strategies, including Startup Screen Printing, The Print Crew, Print Growth Experience, Screen Printing Toolbox, Pricely, GroupKit, and Packed.
+      </p>
+
+      <h2 class="pt-4 font-display text-2xl font-semibold sm:text-3xl">Values</h2>
+      <ul class="list-disc space-y-2 pl-5 text-[var(--color-ink-muted)] dark:text-[var(--color-dark-muted)]">
+        <li>Businesses that create freedom for family life</li>
+        <li>Profitability over revenue</li>
+        <li>Repeatable systems over manual effort</li>
+        <li>Transparent pricing</li>
+        <li>AI that cuts repetitive work while keeping human judgment</li>
+      </ul>
+
+      <h2 class="pt-4 font-display text-2xl font-semibold sm:text-3xl">Faith and family</h2>
+      <p class="text-[var(--color-ink-muted)] dark:text-[var(--color-dark-muted)]">
+        Faith comes first. Family is close behind. I am married to Kristie, and we have kids Bristol and Callan.
+        <span class="block mt-2 text-sm opacity-80">[JESSE: confirm family mention]</span>
+      </p>
+      <p class="text-[var(--color-ink-muted)] dark:text-[var(--color-dark-muted)]">
+        Outside of work I enjoy camping, fly fishing, cooking, and Bible study.
+      </p>
+
+      <h2 class="pt-4 font-display text-2xl font-semibold sm:text-3xl">Press</h2>
+      <p class="text-[var(--color-ink-muted)] dark:text-[var(--color-dark-muted)]">
+        Featured in <em>The Apparelist</em> and ScreenPrinting.com.
+        <span class="block mt-2 text-sm opacity-80">[JESSE: press links]</span>
+      </p>
+    </section>
+
+    <div class="mt-14">
+      <NewsletterCTA
+        heading="Want the practical version in your inbox?"
+        body="Join the Startup Screen Printing newsletter for notes on running a shop without living on the press."
+      />
+    </div>
+  </article>
+</BaseLayout>

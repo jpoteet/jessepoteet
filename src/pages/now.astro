@@ -1,0 +1,45 @@
+---
+import BaseLayout from '@/layouts/BaseLayout.astro';
+import { NOW_UPDATED } from '@/config/site';
+---
+
+<BaseLayout
+  title="Now"
+  description="What Jesse Poteet is focused on right now."
+>
+  <article class="mx-auto max-w-3xl px-5 py-14 sm:px-8 sm:py-20">
+    <p class="text-xs font-semibold uppercase tracking-[0.14em] text-[var(--color-sage)] dark:text-[var(--color-dark-muted)]">
+      Now
+    </p>
+    <h1 class="mt-3 font-display text-4xl font-semibold sm:text-5xl">What I am focused on</h1>
+    <p class="mt-3 text-sm text-[var(--color-ink-muted)] dark:text-[var(--color-dark-muted)]">
+      Last updated: {NOW_UPDATED}
+    </p>
+
+    <div class="mt-10 space-y-6 text-base leading-relaxed text-[var(--color-ink-muted)] dark:text-[var(--color-dark-muted)] sm:text-lg">
+      <p>
+        This page is a living snapshot, not a résumé. Here is where attention is going right now:
+      </p>
+      <ul class="list-disc space-y-3 pl-5">
+        <li>
+          Growing Alpine Apparel Co as a premium water-based shop in Castle Rock, with DTF and embroidery alongside the presses.
+        </li>
+        <li>
+          Teaching through PrintPro Strategies brands, especially Startup Screen Printing, so more owners can get off the press.
+        </li>
+        <li>
+          Building Operator Stack for owner-run shops that need real systems, not another software login.
+        </li>
+        <li>
+          Improving Pricely so print shops can quote with more confidence and less guesswork.
+        </li>
+        <li>
+          [JESSE: current personal or seasonal focus]
+        </li>
+      </ul>
+      <p>
+        If one of those lines matches what you need, <a class="font-semibold text-[var(--color-clay)] dark:text-[var(--color-dark-clay)]" href="/contact">say hello</a>.
+      </p>
+    </div>
+  </article>
+</BaseLayout>

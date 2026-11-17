@@ -1,16 +1,31 @@
 {
-	"name": "odyssey-theme",
-	"version": "2.0.2",
-	"private": false,
-	"repository": {
-		"type": "git",
-		"url": "git@github.com:littlesticksdev/odyssey-theme"
-	},
-	"scripts": {
-		"dev": "astro dev",
-		"start": "astro dev",
-		"build": "astro build",
-		"preview": "astro preview",
-		"format": "npx prettier -w ."
-	}
+  "name": "jessepoteet",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "description": "Jesse Poteet personal hub — brands, writing, and ways to work together",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/jpoteet/jessepoteet.git"
+  },
+  "scripts": {
+    "dev": "astro dev",
+    "start": "astro dev",
+    "build": "astro build",
+    "preview": "astro preview",
+    "astro": "astro"
+  },
+  "bugs": {
+    "url": "https://github.com/jpoteet/jessepoteet/issues"
+  },
+  "homepage": "https://jessepoteet.com",
+  "dependencies": {
+    "@astrojs/mdx": "^8.1.6",
+    "@astrojs/rss": "^4.0.19",
+    "@astrojs/sitemap": "^3.7.5",
+    "@tailwindcss/vite": "^4.3.5",
+    "astro": "^7.4.12",
+    "sharp": "^0.35.5",
+    "tailwindcss": "^4.3.5"
+  }
 }

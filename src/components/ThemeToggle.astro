@@ -1,0 +1,30 @@
+---
+---
+
+<button
+  type="button"
+  id="theme-toggle"
+  class="inline-flex h-10 w-10 items-center justify-center rounded-md border border-[var(--color-line)] bg-[var(--color-canvas-elevated)] text-[var(--color-ink-muted)] transition hover:border-[var(--color-sage)] hover:text-[var(--color-ink)] dark:border-[var(--color-dark-line)] dark:bg-[var(--color-dark-elevated)] dark:text-[var(--color-dark-muted)] dark:hover:text-[var(--color-dark-ink)]"
+  aria-label="Toggle dark mode"
+>
+  <span class="sr-only">Toggle dark mode</span>
+  <svg class="h-5 w-5 dark:hidden" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" aria-hidden="true">
+    <path stroke-linecap="round" stroke-linejoin="round" d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z" />
+  </svg>
+  <svg class="hidden h-5 w-5 dark:block" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" aria-hidden="true">
+    <circle cx="12" cy="12" r="4" />
+    <path stroke-linecap="round" d="M12 2v2M12 20v2M4.93 4.93l1.41 1.41M17.66 17.66l1.41 1.41M2 12h2M20 12h2M4.93 19.07l1.41-1.41M17.66 6.34l1.41-1.41" />
+  </svg>
+</button>
+
+<script>
+  const button = document.getElementById('theme-toggle');
+  button?.addEventListener('click', () => {
+    const root = document.documentElement;
+    const next = root.classList.contains('dark') ? 'light' : 'dark';
+    root.classList.toggle('dark', next === 'dark');
+    try {
+      localStorage.setItem('theme', next);
+    } catch (_) {}
+  });
+</script>
