@@ -21,41 +21,18 @@ export const processSteps = [
   },
 ] as const;
 
-/** Only include a result when it is a known fact. */
-export const caseStudies = [
-  {
-    id: 'alpine-quoting',
-    name: 'Alpine Apparel Co',
-    eyebrow: 'Owner-run production business',
-    problem: 'Estimates ate half an hour and pulled the owner back into every quote.',
-    built: 'A clearer quoting process so the team could answer customers without waiting on Jesse.',
-    result: 'Quote time dropped from about 30 minutes to under 5.',
-  },
-  {
-    id: 'operator-stack',
-    name: 'Operator Stack',
-    eyebrow: 'Done-for-you systems',
-    problem: 'Owner-run businesses with 2 to 30 people stay stuck in day-to-day work.',
-    built: 'Process reviews and systems for print and apparel, sign shops, small manufacturers, contractors, and home services.',
-  },
-  {
-    id: 'pricely',
-    name: 'Pricely',
-    eyebrow: 'Software product',
-    problem: 'Owners guess at pricing and lose margin or time on every estimate.',
-    built: 'A pricing and quoting tool for print shops.',
-  },
-  {
-    id: 'ssp',
-    name: 'Startup Screen Printing',
-    eyebrow: 'Education',
-    problem: 'Operators stay trapped in production and never get space to lead.',
-    built: 'YouTube, newsletter, podcast, coaching, and courses with one mission: get every print shop owner off the press.',
-  },
-] as const;
-
-export const alpineQuoteProof = {
+/**
+ * Featured outcome stories. Only include entries with a known, verified result.
+ * Incomplete problem/build pairs without a result stay out of the UI.
+ */
+export const featuredAlpineStory = {
+  id: 'alpine-quoting',
+  name: 'Alpine Apparel Co',
+  eyebrow: 'Featured story',
   headline: 'Quote time: 30 minutes to under 5',
+  problem: 'Estimates ate about 30 minutes and pulled the owner back into every quote.',
+  built: 'A clearer quoting process so the team could answer customers without waiting on Jesse.',
+  result: 'Quote time dropped from about 30 minutes to under 5.',
   story:
     'At Alpine Apparel Co, estimates used to take about 30 minutes and pull the owner into every quote. After we rebuilt the quoting path, the team can answer customers in under 5 minutes.',
   beforeLabel: 'Before: ~30 minutes per quote',
@@ -63,3 +40,6 @@ export const alpineQuoteProof = {
   beforeWidth: 100,
   afterWidth: 17,
 } as const;
+
+/** @deprecated Prefer featuredAlpineStory. Kept name for any leftover imports during edits. */
+export const alpineQuoteProof = featuredAlpineStory;
