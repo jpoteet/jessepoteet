@@ -62,9 +62,11 @@ const placeholders = [
           <button type="submit" class="avail-ask-go" data-ask-go>Find it</button>
         </div>
       </div>
-      <div class="avail-ask-thread" data-ask-thread hidden aria-live="polite"></div>
-      <p class="avail-ask-msg" data-ask-msg hidden></p>
-      <div class="avail-ask-chips" data-ask-chips hidden></div>
+      <div class="avail-ask-convo" data-ask-convo hidden>
+        <div class="avail-ask-thread" data-ask-thread aria-live="polite"></div>
+        <p class="avail-ask-msg" data-ask-msg hidden></p>
+        <div class="avail-ask-chips" data-ask-chips hidden></div>
+      </div>
     </form>
 
     <div class="avail-meta-row avail-enter" style="--enter-delay: 220ms" aria-live="polite">
@@ -286,9 +288,21 @@ const placeholders = [
     const askForm = root.querySelector('[data-ask-form]') as HTMLFormElement;
     const askInput = root.querySelector('[data-ask-input]') as HTMLInputElement;
     const askGo = root.querySelector('[data-ask-go]') as HTMLButtonElement | null;
+    const askConvo = root.querySelector('[data-ask-convo]') as HTMLElement;
     const askChips = root.querySelector('[data-ask-chips]') as HTMLElement;
     const askThread = root.querySelector('[data-ask-thread]') as HTMLElement;
     const askMsg = root.querySelector('[data-ask-msg]') as HTMLElement;
+
+    function setConvoOpen(open: boolean) {
+      askConvo.hidden = !open;
+      if (!open) {
+        askThread.innerHTML = '';
+        askChips.hidden = true;
+        askChips.innerHTML = '';
+        askMsg.hidden = true;
+        askMsg.textContent = '';
+      }
+    }
     const funlineEl = root.querySelector('[data-funline]') as HTMLElement | null;
     const funLines = [
       'Leave a little room for the river. 🌲',
@@ -353,17 +367,17 @@ const placeholders = [
     /** Rebuild committed history only (no per-token remount). */
     function renderAskThread() {
       if (!askHistory.length) {
-        askThread.hidden = true;
-        askThread.innerHTML = '';
+        if (!askChips.children.length) setConvoOpen(false);
+        else askThread.innerHTML = '';
         return;
       }
-      askThread.hidden = false;
+      setConvoOpen(true);
       const visible = askHistory.slice(-4);
       askThread.innerHTML = visible.map((turn) => turnHtml(turn)).join('');
     }
 
     function appendUserBubble(text: string) {
-      askThread.hidden = false;
+      setConvoOpen(true);
       // Trim to last 3 committed turns before adding the new user bubble.
       const keep = askHistory.slice(0, -1).slice(-3);
       askThread.innerHTML =
@@ -711,7 +725,10 @@ const placeholders = [
             mobileDayKey = todayKey;
           }
           btn.remove();
-          if (!askChips.children.length) askChips.hidden = true;
+          if (!askChips.children.length) {
+            askChips.hidden = true;
+            if (!askHistory.length) setConvoOpen(false);
+          }
           flashPanel();
           render({ animateHero: true, markBest: true, animateCards: true });
         });
@@ -734,6 +751,7 @@ const placeholders = [
           label: result.timeOfDay === 'morning' ? 'Morning' : 'Afternoon',
         });
       }
+      setConvoOpen(true);
       askChips.hidden = false;
       askChips.innerHTML = chips
         .map(
@@ -774,6 +792,7 @@ const placeholders = [
       if (!result.ok) {
         askChips.hidden = true;
         askChips.innerHTML = '';
+        setConvoOpen(true);
         askMsg.hidden = false;
         askMsg.textContent = result.message || 'Could not understand that ask.';
         await typeAssistantReply(
