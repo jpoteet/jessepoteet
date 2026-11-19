@@ -1,6 +1,6 @@
 import * as chrono from 'chrono-node';
 import type { TimeOfDayFilter, WindowPreset } from './types';
-import { dateKeyInZone } from './time';
+import { addDaysInZone, dateKeyInZone, startOfDayInZone } from './time';
 
 export type ParsedAsk = {
   ok: true;
@@ -43,7 +43,12 @@ export function parseAvailabilityAsk(
   const durations = opts.durations ?? DURATION_CANDIDATES;
   const zone = opts.visitorTimeZone;
 
-  const durationMinutes = detectDuration(lower, durations);
+  // Default to 30 when the user says "anything" / "sometime" without a length.
+  const durationMinutes =
+    detectDuration(lower, durations) ||
+    (/\b(anything|anytime|any time|sometime|whenever|quick)\b/.test(lower)
+      ? pick(30, durations)
+      : null);
   if (!durationMinutes) {
     return {
       ok: false,
@@ -157,15 +162,47 @@ function detectWindow(
   if (/this\s+week/.test(lower)) {
     return { preset: 'this-week', label: 'This week' };
   }
-  if (/next\s+week/.test(lower) || /sometime\s+next\s+week/.test(lower)) {
+  if (
+    (/next\s+week/.test(lower) || /sometime\s+next\s+week/.test(lower)) &&
+    !/next\s+\d+\s+weeks?/.test(lower)
+  ) {
     return { preset: 'next-week', label: 'Next week' };
+  }
+
+  // "next 3 weeks" / "sometime in the next 3 weeks" / "coming weeks"
+  const weeksMatch = lower.match(
+    /(?:sometime\s+in\s+the\s+)?next\s+(\d{1,2})\s+weeks?/,
+  );
+  if (weeksMatch || /next\s+few\s+weeks|coming\s+weeks/.test(lower)) {
+    const n = weeksMatch ? Math.min(8, Math.max(1, Number(weeksMatch[1]))) : 3;
+    const startKey = dateKeyInZone(now, zone);
+    const endKey = dateKeyInZone(
+      addDaysInZone(startOfDayInZone(now, zone), n * 7, zone),
+      zone,
+    );
+    return {
+      preset: 'custom',
+      label: `Next ${n} week${n === 1 ? '' : 's'}`,
+      rangeStartKey: startKey,
+      rangeEndKey: endKey,
+    };
+  }
+
+  if (/\btomorrow\b/.test(lower)) {
+    const key = dateKeyInZone(addDaysInZone(startOfDayInZone(now, zone), 1, zone), zone);
+    return {
+      preset: 'custom',
+      label: 'Tomorrow',
+      rangeStartKey: key,
+      rangeEndKey: key,
+    };
   }
 
   // Prefer chrono with forwardDate so "next Tuesday" lands in the future.
   const results = chrono.parse(original, now, { forwardDate: true });
   if (!results.length) {
     // Default soft fallback when duration+tod exist but no date words
-    if (/soon|whenever|anytime|any time/.test(lower)) {
+    if (/soon|whenever|anytime|any time|anything|sometime/.test(lower)) {
       return { preset: 'this-week', label: 'This week' };
     }
     return { preset: 'this-week', label: 'This week' };

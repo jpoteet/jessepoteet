@@ -6,8 +6,10 @@
 import { BOOKING_LINKS, resolveBookingMode } from '../src/config/availability';
 import { eventsToMergedBusy, mergeBusyIntervals } from '../src/lib/availability/busy';
 import { buildMockAvailabilityResponse } from '../src/lib/availability/mock';
+import { parseAvailabilityAsk } from '../src/lib/availability/parseQuery';
 import { generateSlots, nextOpening } from '../src/lib/availability/slots';
 import { zonedLocalToUtc } from '../src/lib/availability/time';
+import { localAskFallback, validateAskResult } from '../functions/_lib/ask';
 
 let failed = 0;
 function assert(cond: unknown, msg: string) {
@@ -113,6 +115,62 @@ assert(
     (resolveBookingMode('ois') as { url: string }).url !== BOOKING_LINKS.aa,
   'ois never falls back to aa',
 );
+
+const askZone = 'America/Denver';
+const askNow = new Date('2026-11-19T16:00:00.000Z');
+const threeWeeks = parseAvailabilityAsk('30 minutes sometime in the next 3 weeks', {
+  visitorTimeZone: askZone,
+  now: askNow,
+});
+assert(threeWeeks.ok, 'next 3 weeks ask parses');
+if (threeWeeks.ok) {
+  assert(threeWeeks.durationMinutes === 30, 'next 3 weeks keeps 30 min');
+  assert(threeWeeks.windowPreset === 'custom', 'next 3 weeks uses custom range');
+  assert(!!threeWeeks.rangeEndKey, 'next 3 weeks has range end');
+}
+
+const tue = parseAvailabilityAsk('an hour next tuesday afternoon', {
+  visitorTimeZone: askZone,
+  now: askNow,
+});
+assert(tue.ok && tue.ok && tue.durationMinutes === 60, 'next tuesday afternoon is 60 min');
+if (tue.ok) assert(tue.timeOfDay === 'afternoon', 'next tuesday afternoon tod');
+
+const quick = parseAvailabilityAsk('quick 15 min call tomorrow morning', {
+  visitorTimeZone: askZone,
+  now: askNow,
+});
+assert(quick.ok && quick.durationMinutes === 15, 'tomorrow morning is 15 min');
+if (quick.ok) assert(quick.timeOfDay === 'morning', 'tomorrow morning tod');
+
+const fri = parseAvailabilityAsk('anything friday', {
+  visitorTimeZone: askZone,
+  now: askNow,
+});
+assert(fri.ok && fri.durationMinutes === 30, 'anything friday defaults to 30');
+
+const clamped = validateAskResult(
+  {
+    duration: 45,
+    rangeStart: '1999-01-01',
+    rangeEnd: '2099-01-01',
+    timeOfDay: 'evening' as 'any',
+    reply: 'Hello — streamlined plan',
+    source: 'ai',
+  },
+  { timeZone: askZone, now: askNow },
+);
+assert(clamped.duration === 30 || clamped.duration === 60, 'duration clamped to allowed set');
+assert(!clamped.reply.includes('—'), 'reply strips em dash');
+assert(!/streamlined/i.test(clamped.reply), 'reply strips streamlined');
+assert(clamped.rangeStart >= '2026-11-19', 'rangeStart clamped forward');
+
+const local = localAskFallback('30 minutes sometime in the next 3 weeks', {
+  timeZone: askZone,
+  now: askNow,
+});
+assert(local.source === 'local', 'local fallback marks source');
+assert(local.duration === 30, 'local fallback duration');
 
 if (failed) {
   console.error(`\n${failed} assertion(s) failed`);

@@ -54,9 +54,7 @@ const profile = personalAvailability;
       }).format(new Date());
     }
     function tickClocks() {
-      var utcEl = document.querySelector('[data-clock-utc]');
       var mtEl = document.querySelector('[data-clock-mt]');
-      if (utcEl) utcEl.textContent = clock('UTC') + 'Z';
       if (mtEl) mtEl.textContent = clock('America/Denver');
     }
     tickClocks();

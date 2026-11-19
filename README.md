@@ -61,6 +61,28 @@ Set these in the Cloudflare Pages project (**Settings** → **Environment variab
 
 `GET /api/availability` returns merged busy intervals only (no titles, attendees, descriptions, or calendar ids), plus schedule meta (open hours, timezone, look-ahead). The `/meet` page computes open slots in the browser and re-filters instantly when length or window changes. Responses are edge-cached for about 7 minutes.
 
+`POST /api/ask` turns plain-English asks into duration/range filters via **Workers AI** (`env.AI`). If the AI binding is missing or errors, it falls back to the local parser so `/meet` never breaks.
+
+### Workers AI binding
+
+`wrangler.toml` includes:
+
+```toml
+pages_build_output_dir = "dist"
+
+[ai]
+binding = "AI"
+```
+
+If preview still reports a missing AI binding after deploy, add it in the dashboard:
+
+1. Cloudflare dashboard → Workers & Pages → **jessepoteet** → Settings
+2. Open the **Production** (and Preview) environment → **Bindings** → **Add** → **Workers AI**
+3. Variable name: `AI`
+4. Redeploy the site
+
+Locally: `npx wrangler pages dev dist --ai=AI` (Workers AI calls your account even in local/dev).
+
 ### Contact webhook payload
 
 `POST /api/contact` validates the form (and honeypot), then forwards JSON like:
