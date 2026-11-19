@@ -78,8 +78,9 @@ const placeholders = [
         <span class="avail-chip-book" data-booking-badge hidden> · booking on</span>
       </p>
       <p class="avail-next-mini" data-hero>
-        <span data-tminus>opens in --</span>
+        <span class="avail-next-label" data-next-label>Next opening:</span>
         <span data-next-opening>Loading…</span>
+        <span data-tminus></span>
         <span class="avail-next-meta" data-next-meta hidden></span>
       </p>
     </div>
@@ -276,6 +277,7 @@ const placeholders = [
     const workspaceEl = root.querySelector('[data-workspace]') as HTMLElement;
     const nextEl = root.querySelector('[data-next-opening]') as HTMLElement;
     const nextMetaEl = root.querySelector('[data-next-meta]') as HTMLElement;
+    const nextLabelEl = root.querySelector('[data-next-label]') as HTMLElement | null;
     const tminusEl = root.querySelector('[data-tminus]') as HTMLElement;
     const liveEl = root.querySelector('[data-live]') as HTMLElement;
     const liveLabelEl = root.querySelector('[data-live-label]') as HTMLElement;
@@ -897,31 +899,28 @@ const placeholders = [
       return addDaysInZone(monday, 14, visitorZone);
     }
 
-    function updateTminus() {
-      if (!nextOpeningIso) {
-        tminusEl.textContent = 'opens in --';
-        return;
-      }
-      const ms = parseInstant(nextOpeningIso).getTime() - Date.now();
-      if (ms <= 0) {
-        tminusEl.textContent = 'open now';
-        return;
-      }
+    function formatCountdown(ms: number): string {
       const totalMin = Math.floor(ms / 60000);
       const days = Math.floor(totalMin / (60 * 24));
       const hours = Math.floor((totalMin % (60 * 24)) / 60);
       const mins = totalMin % 60;
-      if (days >= 2) {
-        tminusEl.textContent = `opens in ${days} days`;
-      } else if (days === 1) {
-        tminusEl.textContent =
-          hours > 0 ? `opens in 1 day ${hours}h` : 'opens in 1 day';
-      } else if (hours >= 1) {
-        tminusEl.textContent =
-          mins > 0 ? `opens in ${hours}h ${mins}m` : `opens in ${hours}h`;
-      } else {
-        tminusEl.textContent = `opens in ${Math.max(mins, 1)} min`;
+      if (days >= 2) return `${days} days`;
+      if (days === 1) return hours > 0 ? `1 day ${hours}h` : '1 day';
+      if (hours >= 1) return mins > 0 ? `${hours}h ${mins}m` : `${hours}h`;
+      return `${Math.max(mins, 1)} min`;
+    }
+
+    function updateTminus() {
+      if (!nextOpeningIso) {
+        tminusEl.textContent = '';
+        return;
       }
+      const ms = parseInstant(nextOpeningIso).getTime() - Date.now();
+      if (ms <= 0) {
+        tminusEl.textContent = '(now)';
+        return;
+      }
+      tminusEl.textContent = `(in ${formatCountdown(ms)})`;
     }
 
     function setLive(state: 'loading' | 'live' | 'error', label: string) {
@@ -945,6 +944,7 @@ const placeholders = [
     }
 
     function renderError() {
+      if (nextLabelEl) nextLabelEl.hidden = true;
       nextEl.textContent = 'Paused for a moment';
       nextMetaEl.textContent = '';
       nextOpeningIso = null;
@@ -1402,13 +1402,15 @@ const placeholders = [
       if (opening) {
         const start = parseInstant(opening.start);
         nextOpeningIso = opening.start;
+        if (nextLabelEl) nextLabelEl.hidden = false;
         renderHero(
-          `${formatShortDate(start, visitorZone)} · ${formatTimeInZone(start, visitorZone)}`,
+          `${formatShortDate(start, visitorZone)} at ${formatTimeInZone(start, visitorZone)}`,
           `${duration} min · ${visitorZoneShort}`,
           !!opts.animateHero,
         );
       } else {
         nextOpeningIso = null;
+        if (nextLabelEl) nextLabelEl.hidden = true;
         renderHero(`No openings for ${duration} min`, 'in the next few weeks', !!opts.animateHero);
       }
       updateTminus();
