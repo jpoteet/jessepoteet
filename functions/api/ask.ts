@@ -101,6 +101,7 @@ export async function onRequestPost(context: {
   });
 
   if (aiResult) {
+    // reconcileAskWithParser already ran inside validateAskResult via text=
     return json({ ok: true, ...aiResult, source: 'ai' });
   }
 

@@ -172,6 +172,87 @@ const local = localAskFallback('30 minutes sometime in the next 3 weeks', {
 assert(local.source === 'local', 'local fallback marks source');
 assert(local.duration === 30, 'local fallback duration');
 
+// Fixed "today" = Nov 18 2026 for month/week phrase coverage.
+const fixedToday = new Date('2026-11-18T17:00:00.000Z');
+
+function expectRange(
+  text: string,
+  start: string,
+  end: string,
+  label: string,
+) {
+  const parsed = parseAvailabilityAsk(text, {
+    visitorTimeZone: askZone,
+    now: fixedToday,
+  });
+  assert(parsed.ok, `${label} parses`);
+  if (!parsed.ok) return;
+  assert(
+    parsed.rangeStartKey === start && parsed.rangeEndKey === end,
+    `${label} → ${start}..${end} (got ${parsed.rangeStartKey}..${parsed.rangeEndKey})`,
+  );
+}
+
+expectRange(
+  'looking for an hour the second week of december for a podcast interview',
+  '2026-12-07',
+  '2026-12-11',
+  'second week of december',
+);
+expectRange(
+  '30 min first week of December',
+  '2026-11-30',
+  '2026-12-04',
+  'first week of december',
+);
+expectRange(
+  '60 minutes third week of december',
+  '2026-12-14',
+  '2026-12-18',
+  'third week of december',
+);
+expectRange(
+  '30 min last week of December',
+  '2026-12-28',
+  '2027-01-01',
+  'last week of december',
+);
+expectRange('an hour week of Dec 14', '2026-12-14', '2026-12-18', 'week of Dec 14');
+expectRange('30 min early December', '2026-12-01', '2026-12-10', 'early December');
+expectRange('30 min mid December', '2026-12-11', '2026-12-20', 'mid December');
+expectRange('30 min late December', '2026-12-21', '2026-12-31', 'late December');
+expectRange('30 minutes next month', '2026-12-01', '2026-12-31', 'next month');
+
+const aiWrong = validateAskResult(
+  {
+    duration: 60,
+    rangeStart: '2026-11-18',
+    rangeEnd: '2026-12-01',
+    timeOfDay: 'any',
+    reply: 'Here are some options in early December.',
+    source: 'ai',
+  },
+  {
+    timeZone: askZone,
+    now: fixedToday,
+    text: 'looking for an hour the second week of december for a podcast interview',
+  },
+);
+assert(
+  aiWrong.rangeStart === '2026-12-07' && aiWrong.rangeEnd === '2026-12-11',
+  `AI disagreement yields parser week (got ${aiWrong.rangeStart}..${aiWrong.rangeEnd})`,
+);
+
+const localSecond = localAskFallback(
+  'looking for an hour the second week of december for a podcast interview',
+  { timeZone: askZone, now: fixedToday },
+);
+assert(
+  localSecond.rangeStart === '2026-12-07' && localSecond.rangeEnd === '2026-12-11',
+  `local fallback second week (got ${localSecond.rangeStart}..${localSecond.rangeEnd})`,
+);
+assert(localSecond.duration === 90, 'podcast local fallback prefers 90');
+
 if (failed) {
   console.error(`\n${failed} assertion(s) failed`);
   process.exit(1);

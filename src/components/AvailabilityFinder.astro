@@ -684,12 +684,27 @@ const placeholders = [
         /\b(today|tomorrow|monday|tuesday|wednesday|thursday|friday|saturday|sunday)\b/i.test(
           lower,
         );
-      if (forceDuration && !namedDay && rangeStart && rangeEnd && rangeStart === rangeEnd) {
+      // Do not expand away a named month/week window (e.g. second week of December).
+      if (
+        forceDuration &&
+        !namedDay &&
+        !parsed.namedMonthWindow &&
+        rangeStart &&
+        rangeEnd &&
+        rangeStart === rangeEnd
+      ) {
         rangeStart = todayKey;
         rangeEnd = dateKeyInZone(
           addDaysInZone(startOfDayInZone(new Date(), visitorZone), 13, visitorZone),
           visitorZone,
         );
+      }
+      if (parsed.namedMonthWindow && parsed.summary) {
+        reply = `Looking at ${parsed.summary} on Jesse's calendar. Here are the openings in that window.`;
+        if (forceDuration === 90 && /\b(podcast|interview)\b/.test(lower)) {
+          reply =
+            "Podcast interviews tend to run long, so I'd suggest 90 minutes with Jesse. Looking at that week now.";
+        }
       }
       return {
         ok: true,
@@ -816,7 +831,8 @@ const placeholders = [
           applyTimer = null;
           commitAskFilters(result);
           paintAskChips(result);
-          setCalendarOpen(false);
+          // Jump the week grid to the requested range and open it so the jump is visible.
+          setCalendarOpen(true);
           flashPanel();
           render({ animateHero: true, markBest: true, animateCards: true });
           resolve();
@@ -1002,7 +1018,8 @@ const placeholders = [
 
       if (weekJumpEl) {
         const nowMon = startOfWeekMondayInZone(new Date(), visitorZone);
-        const jumps = [0, 1, 2, 3].map((i) => addDaysInZone(nowMon, i * 7, visitorZone));
+        // Cover the full ~4-week bookable horizon so far asks can highlight.
+        const jumps = [0, 1, 2, 3, 4].map((i) => addDaysInZone(nowMon, i * 7, visitorZone));
         weekJumpEl.innerHTML = jumps
           .map((mon) => {
             const key = dateKeyInZone(mon, visitorZone);
@@ -1119,7 +1136,7 @@ const placeholders = [
       const best = highlightStarts.has(slot.start) ? ' is-best' : '';
       const styleBits = [
         opts.delay ? `animation-delay: ${opts.delay}s` : '',
-        opts.gridRow ? `grid-row: ${opts.gridRow}` : '',
+        opts.gridRow ? `grid-row: ${opts.gridRow}; grid-column: 1` : '',
       ]
         .filter(Boolean)
         .join('; ');
@@ -1251,7 +1268,7 @@ const placeholders = [
         byDay.get(key)?.push(slot);
       }
 
-      statusEl.innerHTML = `<span class="avail-status-count">${allSlots.length}</span> open · week grid in ${escapeHtml(visitorZoneShort)} · Jesse 9am–2pm MT`;
+      statusEl.innerHTML = `<span class="avail-status-count">${allSlots.length}</span> open · ${duration} min starts · week grid in ${escapeHtml(visitorZoneShort)} · Jesse 9am–2pm MT`;
 
       const dayHeads = days
         .map((d, i) => {
@@ -1276,7 +1293,6 @@ const placeholders = [
       const labelY = Number(labelParts.find((p) => p.type === 'year')?.value || 0);
       const labelMo = Number(labelParts.find((p) => p.type === 'month')?.value || 0);
       const labelD = Number(labelParts.find((p) => p.type === 'day')?.value || 0);
-      const interval = data.meta.slotIntervalMinutes;
 
       const timeCol = ticks
         .map((hostMinutes) => {
@@ -1292,28 +1308,27 @@ const placeholders = [
         .map((key, dayIndex) => {
           const tone = dayIndex % 8;
           const daySlots = byDay.get(key) || [];
-          const occupied = new Set<number>();
+          const startTicks = new Set<number>();
           const blocks: string[] = [];
 
+          // One row per half-hour start (no multi-row span, no staggered columns).
           for (const slot of daySlots) {
             const startM = hostMinutesOf(slot.start);
             const tickIdx = ticks.indexOf(startM);
             if (tickIdx < 0) continue;
-            const span = Math.max(1, Math.round(slot.durationMinutes / interval));
-            const safeSpan = Math.min(span, ticks.length - tickIdx);
-            for (let s = 0; s < safeSpan; s++) occupied.add(tickIdx + s);
+            startTicks.add(tickIdx);
             blocks.push(
               slotButtonHtml(slot, tone, {
-                gridRow: `${tickIdx + 1} / span ${safeSpan}`,
+                gridRow: String(tickIdx + 1),
               }),
             );
           }
 
           const empties = ticks
             .map((_, i) =>
-              occupied.has(i)
+              startTicks.has(i)
                 ? ''
-                : `<div class="avail-cal-cell" style="grid-row: ${i + 1}"><span class="avail-cal-empty" aria-hidden="true"></span></div>`,
+                : `<div class="avail-cal-cell" style="grid-row: ${i + 1}; grid-column: 1"><span class="avail-cal-empty" aria-hidden="true"></span></div>`,
             )
             .join('');
 
