@@ -63,71 +63,54 @@ const profile = personalAvailability;
   document.documentElement.classList.add('dark');
 </script>
 
+<script is:inline>
+  (function () {
+    var funLines = [
+      'Quiet mornings. Clear calendar. Real work.',
+      'Probably outside when the inbox goes quiet.',
+      'Coffee first. Then the next open slot.',
+      'Colorado light, then deep work.',
+    ];
+    function clock(zone) {
+      return new Intl.DateTimeFormat('en-GB', {
+        timeZone: zone,
+        hour: '2-digit',
+        minute: '2-digit',
+        second: '2-digit',
+        hourCycle: 'h23',
+      }).format(new Date());
+    }
+    function tickClocks() {
+      var utcEl = document.querySelector('[data-clock-utc]');
+      var mtEl = document.querySelector('[data-clock-mt]');
+      if (utcEl) utcEl.textContent = clock('UTC') + 'Z';
+      if (mtEl) mtEl.textContent = clock('America/Denver');
+    }
+    tickClocks();
+    setInterval(tickClocks, 1000);
+
+    var funEl = document.querySelector('[data-funline]');
+    var reduce = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+    if (funEl && !reduce) {
+      var i = 0;
+      setInterval(function () {
+        i = (i + 1) % funLines.length;
+        funEl.style.opacity = '0';
+        setTimeout(function () {
+          funEl.textContent = funLines[i];
+          funEl.style.opacity = '1';
+        }, 180);
+      }, 5200);
+    }
+  })();
+</script>
+
 <script>
-  const funLines = [
-    'Quiet mornings. Clear calendar. Real work.',
-    'Probably outside when the inbox goes quiet.',
-    'Coffee first. Then the next open slot.',
-    'Colorado light, then deep work.',
-  ];
-
-  const utcEl = document.querySelector('[data-clock-utc]');
-  const mtEl = document.querySelector('[data-clock-mt]');
-  const funEl = document.querySelector('[data-funline]');
-  const reduce = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
-
-  function tickClocks() {
-    const now = new Date();
-    if (utcEl) utcEl.textContent = formatTimeInZone(now, 'UTC').replace(' ', '') + 'Z';
-    // Use 24h mono style for HUD feel
-    const fmt = new Intl.DateTimeFormat('en-GB', {
-      timeZone: 'America/Denver',
-      hour: '2-digit',
-      minute: '2-digit',
-      second: '2-digit',
-      hourCycle: 'h23',
-    });
-    if (mtEl) mtEl.textContent = fmt.format(now);
-    const utcFmt = new Intl.DateTimeFormat('en-GB', {
-      timeZone: 'UTC',
-      hour: '2-digit',
-      minute: '2-digit',
-      second: '2-digit',
-      hourCycle: 'h23',
-    });
-    if (utcEl) utcEl.textContent = `${utcFmt.format(now)}Z`;
-  }
-  tickClocks();
-  window.setInterval(tickClocks, 1000);
-
-  if (funEl && !reduce) {
-    let i = 0;
-    window.setInterval(() => {
-      i = (i + 1) % funLines.length;
-      funEl.animate(
-        [
-          { opacity: 1, transform: 'translateY(0)' },
-          { opacity: 0, transform: 'translateY(4px)' },
-        ],
-        { duration: 180, fill: 'forwards', easing: 'cubic-bezier(0.22, 1, 0.36, 1)' },
-      ).finished.then(() => {
-        funEl.textContent = funLines[i];
-        funEl.animate(
-          [
-            { opacity: 0, transform: 'translateY(4px)' },
-            { opacity: 1, transform: 'translateY(0)' },
-          ],
-          { duration: 280, fill: 'forwards', easing: 'cubic-bezier(0.22, 1, 0.36, 1)' },
-        );
-      });
-    }, 5200);
-  }
-
-  // Lazy WebGL terrain
   const canvas = document.querySelector('[data-avail-webgl]') as HTMLCanvasElement | null;
+  const reduce = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
   const lowPower =
     reduce ||
-    (navigator.hardwareConcurrency && navigator.hardwareConcurrency <= 4) ||
+    (typeof navigator.hardwareConcurrency === 'number' && navigator.hardwareConcurrency <= 4) ||
     matchMedia('(max-width: 700px)').matches;
 
   if (canvas && !lowPower) {
@@ -135,17 +118,11 @@ const profile = personalAvailability;
       void import('@/lib/availability/webglTerrain').then(({ createTerrain }) => {
         const handle = createTerrain({ canvas, reducedMotion: reduce });
         if (!handle) canvas.style.display = 'none';
-        window.addEventListener(
-          'pagehide',
-          () => {
-            handle?.destroy();
-          },
-          { once: true },
-        );
+        window.addEventListener('pagehide', () => handle?.destroy(), { once: true });
       });
     };
     if ('requestIdleCallback' in window) {
-      (window as Window & { requestIdleCallback: (cb: () => void) => void }).requestIdleCallback(boot);
+      (window as Window & { requestIdleCallback: (cb: () => void) => number }).requestIdleCallback(boot);
     } else {
       window.setTimeout(boot, 400);
     }
