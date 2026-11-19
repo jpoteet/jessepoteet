@@ -1,6 +1,13 @@
 import * as chrono from 'chrono-node';
 import type { TimeOfDayFilter, WindowPreset } from './types';
-import { addDaysInZone, dateKeyInZone, startOfDayInZone } from './time';
+import {
+  addDaysInZone,
+  dateKeyInZone,
+  getZonedParts,
+  startOfDayInZone,
+  startOfWeekMondayInZone,
+  zonedLocalToUtc,
+} from './time';
 
 export type ParsedAsk = {
   ok: true;
@@ -11,6 +18,8 @@ export type ParsedAsk = {
   rangeEndKey?: string;
   chips: { id: string; label: string; kind: 'duration' | 'window' | 'tod' }[];
   summary: string;
+  /** True when the ask named a calendar month / week-of-month style window. */
+  namedMonthWindow?: boolean;
 };
 
 export type FailedAsk = {
@@ -21,6 +30,84 @@ export type FailedAsk = {
 export type AskResult = ParsedAsk | FailedAsk;
 
 const DURATION_CANDIDATES = [15, 30, 60, 90] as const;
+
+const MONTH_NAMES: Record<string, number> = {
+  january: 1,
+  jan: 1,
+  february: 2,
+  feb: 2,
+  march: 3,
+  mar: 3,
+  april: 4,
+  apr: 4,
+  may: 5,
+  june: 6,
+  jun: 6,
+  july: 7,
+  jul: 7,
+  august: 8,
+  aug: 8,
+  september: 9,
+  sep: 9,
+  sept: 9,
+  october: 10,
+  oct: 10,
+  november: 11,
+  nov: 11,
+  december: 12,
+  dec: 12,
+};
+
+const ORDINAL_WEEK: Record<string, number | 'last'> = {
+  first: 1,
+  '1st': 1,
+  second: 2,
+  '2nd': 2,
+  third: 3,
+  '3rd': 3,
+  fourth: 4,
+  '4th': 4,
+  fifth: 5,
+  '5th': 5,
+  last: 'last',
+};
+
+/**
+ * True when the ask names a month/week window the local parser should own
+ * over a disagreeing AI range.
+ */
+export function hasMonthWeekPhrase(text: string): boolean {
+  const lower = text.toLowerCase();
+  if (
+    /\b(first|1st|second|2nd|third|3rd|fourth|4th|fifth|5th|last)\s+week\s+of\s+[a-z]+/.test(
+      lower,
+    )
+  ) {
+    return true;
+  }
+  if (/\bweek\s+of\s+(jan|feb|mar|apr|may|jun|jul|aug|sep|oct|nov|dec|[a-z]+|\d)/.test(lower)) {
+    return true;
+  }
+  if (/\b(early|mid|middle|late)\s+(jan|feb|mar|apr|may|jun|jul|aug|sep|oct|nov|dec|[a-z]+)/.test(lower)) {
+    return true;
+  }
+  if (/\bnext\s+month\b/.test(lower)) return true;
+  // Bare "December" / "in December" without a day number still counts as a month window.
+  if (
+    /\b(in\s+|for\s+|during\s+)?(january|february|march|april|may|june|july|august|september|october|november|december|jan|feb|mar|apr|jun|jul|aug|sep|sept|oct|nov|dec)\b/.test(
+      lower,
+    ) &&
+    !/\b(jan|feb|mar|apr|may|jun|jul|aug|sep|oct|nov|dec)[a-z]*\s+\d{1,2}\b/.test(lower)
+  ) {
+    // Exclude if it's only a weekday phrase with no month intent beyond chrono day.
+    if (/\b(week|early|mid|late|month)\b/.test(lower) || Object.keys(MONTH_NAMES).some((m) => new RegExp(`\\b${m}\\b`).test(lower))) {
+      return /\b(january|february|march|april|june|july|august|september|october|november|december|jan|feb|mar|apr|jun|jul|aug|sep|sept|oct|nov|dec)\b/.test(
+        lower,
+      );
+    }
+  }
+  return false;
+}
 
 /**
  * Parse a plain-English availability ask into duration / window / time-of-day.
@@ -97,6 +184,7 @@ export function parseAvailabilityAsk(
     rangeEndKey: windowing.rangeEndKey,
     chips,
     summary: chips.map((c) => c.label).join(' · '),
+    namedMonthWindow: windowing.namedMonthWindow,
   };
 }
 
@@ -146,19 +234,20 @@ function detectTimeOfDay(lower: string): TimeOfDayFilter {
   return 'all';
 }
 
+type WindowHit = {
+  preset: WindowPreset;
+  label: string;
+  rangeStartKey?: string;
+  rangeEndKey?: string;
+  namedMonthWindow?: boolean;
+};
+
 function detectWindow(
   lower: string,
   original: string,
   now: Date,
   zone: string,
-):
-  | {
-      preset: WindowPreset;
-      label: string;
-      rangeStartKey?: string;
-      rangeEndKey?: string;
-    }
-  | null {
+): WindowHit | null {
   if (/this\s+week/.test(lower)) {
     return { preset: 'this-week', label: 'This week' };
   }
@@ -198,13 +287,20 @@ function detectWindow(
     };
   }
 
+  const monthWindow = detectMonthWeekWindow(lower, now, zone);
+  if (monthWindow) return monthWindow;
+
   // Prefer chrono with forwardDate so "next Tuesday" lands in the future.
-  const results = chrono.parse(original, now, { forwardDate: true });
+  // Skip duration-only hits ("an hour", "30 min") so the date fragment wins.
+  const results = chrono.parse(original, now, { forwardDate: true }).filter((r) => {
+    const frag = (r.text || '').toLowerCase().trim();
+    if (!frag) return false;
+    if (/^\d+\s*(min|mins|minutes?|hours?|hrs?)$/.test(frag)) return false;
+    if (/^(an|one|a)\s+hour$/.test(frag)) return false;
+    if (/^(half[\s-]?hour|quarter[\s-]?hour)$/.test(frag)) return false;
+    return true;
+  });
   if (!results.length) {
-    // Default soft fallback when duration+tod exist but no date words
-    if (/soon|whenever|anytime|any time|anything|sometime/.test(lower)) {
-      return { preset: 'this-week', label: 'This week' };
-    }
     return { preset: 'this-week', label: 'This week' };
   }
 
@@ -224,6 +320,208 @@ function detectWindow(
     rangeStartKey: startKey,
     rangeEndKey: endKey,
   };
+}
+
+function detectMonthWeekWindow(lower: string, now: Date, zone: string): WindowHit | null {
+  // "second week of December" / "last week of Dec"
+  const ordinalWeek = lower.match(
+    /\b(first|1st|second|2nd|third|3rd|fourth|4th|fifth|5th|last)\s+week\s+of\s+([a-z]+)\b/,
+  );
+  if (ordinalWeek) {
+    const ord = ORDINAL_WEEK[ordinalWeek[1]];
+    const month = MONTH_NAMES[ordinalWeek[2]];
+    if (ord != null && month) {
+      const year = resolveYearForMonth(now, zone, month);
+      const weeks = mondayWeeksIntersectingMonth(year, month, zone);
+      if (!weeks.length) return null;
+      const idx = ord === 'last' ? weeks.length - 1 : ord - 1;
+      const week = weeks[Math.min(Math.max(idx, 0), weeks.length - 1)];
+      return weekHit(week.monday, zone, `${capitalize(ordinalWeek[1])} week of ${monthLabel(month)}`);
+    }
+  }
+
+  // "week of Dec 14" / "week of December 14"
+  const weekOf = lower.match(
+    /\bweek\s+of\s+(?:(jan|feb|mar|apr|may|jun|jul|aug|sep|sept|oct|nov|dec)[a-z]*\s+)?(\d{1,2})(?:st|nd|rd|th)?\b/,
+  );
+  if (weekOf) {
+    const monthToken = weekOf[1];
+    const day = Number(weekOf[2]);
+    let month: number;
+    let year: number;
+    if (monthToken) {
+      month = MONTH_NAMES[monthToken];
+      year = resolveYearForMonth(now, zone, month);
+    } else {
+      const parts = getZonedParts(now, zone);
+      month = parts.month;
+      year = parts.year;
+      // If that day already passed this month, roll forward.
+      const candidate = zonedLocalToUtc(year, month, day, 12 * 60, zone);
+      if (candidate.getTime() < startOfDayInZone(now, zone).getTime()) {
+        month += 1;
+        if (month > 12) {
+          month = 1;
+          year += 1;
+        }
+      }
+    }
+    if (month && day >= 1 && day <= 31) {
+      const anchor = zonedLocalToUtc(year, month, Math.min(day, daysInMonth(year, month)), 12 * 60, zone);
+      const monday = startOfWeekMondayInZone(anchor, zone);
+      return weekHit(monday, zone, `Week of ${monthLabel(month)} ${day}`);
+    }
+  }
+
+  // "early / mid / late December"
+  const band = lower.match(
+    /\b(early|mid|middle|late)\s+(january|february|march|april|may|june|july|august|september|october|november|december|jan|feb|mar|apr|jun|jul|aug|sep|sept|oct|nov|dec)\b/,
+  );
+  if (band) {
+    const month = MONTH_NAMES[band[2]];
+    if (month) {
+      const year = resolveYearForMonth(now, zone, month);
+      const last = daysInMonth(year, month);
+      let startDay = 1;
+      let endDay = last;
+      const kind = band[1];
+      if (kind === 'early') {
+        startDay = 1;
+        endDay = Math.min(10, last);
+      } else if (kind === 'mid' || kind === 'middle') {
+        startDay = Math.min(11, last);
+        endDay = Math.min(20, last);
+      } else {
+        startDay = Math.min(21, last);
+        endDay = last;
+      }
+      const start = zonedLocalToUtc(year, month, startDay, 0, zone);
+      const end = zonedLocalToUtc(year, month, endDay, 0, zone);
+      return {
+        preset: 'custom',
+        label: `${capitalize(kind === 'middle' ? 'mid' : kind)} ${monthLabel(month)}`,
+        rangeStartKey: dateKeyInZone(start, zone),
+        rangeEndKey: dateKeyInZone(end, zone),
+        namedMonthWindow: true,
+      };
+    }
+  }
+
+  // "next month"
+  if (/\bnext\s+month\b/.test(lower)) {
+    const parts = getZonedParts(now, zone);
+    let month = parts.month + 1;
+    let year = parts.year;
+    if (month > 12) {
+      month = 1;
+      year += 1;
+    }
+    const start = zonedLocalToUtc(year, month, 1, 0, zone);
+    const end = zonedLocalToUtc(year, month, daysInMonth(year, month), 0, zone);
+    return {
+      preset: 'custom',
+      label: monthLabel(month),
+      rangeStartKey: dateKeyInZone(start, zone),
+      rangeEndKey: dateKeyInZone(end, zone),
+      namedMonthWindow: true,
+    };
+  }
+
+  // Bare month name: "in December" / "December" → whole month
+  const bareMonth = lower.match(
+    /\b(?:in|for|during|sometime\s+in)?\s*(january|february|march|april|may|june|july|august|september|october|november|december)\b/,
+  );
+  if (bareMonth && !/\b(week|early|mid|late)\b/.test(lower)) {
+    // Avoid stealing "December 14" day phrases (chrono handles those).
+    if (!/\b(january|february|march|april|may|june|july|august|september|october|november|december)\s+\d{1,2}\b/.test(lower)) {
+      const month = MONTH_NAMES[bareMonth[1]];
+      if (month) {
+        const year = resolveYearForMonth(now, zone, month);
+        const start = zonedLocalToUtc(year, month, 1, 0, zone);
+        const end = zonedLocalToUtc(year, month, daysInMonth(year, month), 0, zone);
+        return {
+          preset: 'custom',
+          label: monthLabel(month),
+          rangeStartKey: dateKeyInZone(start, zone),
+          rangeEndKey: dateKeyInZone(end, zone),
+          namedMonthWindow: true,
+        };
+      }
+    }
+  }
+
+  return null;
+}
+
+/** Monday-start weeks that intersect the civil month, ordered by Monday. */
+function mondayWeeksIntersectingMonth(
+  year: number,
+  month: number,
+  zone: string,
+): { monday: Date }[] {
+  const first = zonedLocalToUtc(year, month, 1, 12 * 60, zone);
+  const last = zonedLocalToUtc(year, month, daysInMonth(year, month), 12 * 60, zone);
+  let monday = startOfWeekMondayInZone(first, zone);
+  const weeks: { monday: Date }[] = [];
+  // Walk until Monday is past the last day of the month.
+  for (let i = 0; i < 8; i++) {
+    const friday = addDaysInZone(monday, 4, zone);
+    const monKey = dateKeyInZone(monday, zone);
+    const friKey = dateKeyInZone(friday, zone);
+    const monthStart = dateKeyInZone(first, zone);
+    const monthEnd = dateKeyInZone(last, zone);
+    if (friKey >= monthStart && monKey <= monthEnd) {
+      weeks.push({ monday });
+    }
+    if (monKey > monthEnd) break;
+    monday = addDaysInZone(monday, 7, zone);
+  }
+  return weeks;
+}
+
+function weekHit(monday: Date, zone: string, label: string): WindowHit {
+  const friday = addDaysInZone(monday, 4, zone);
+  return {
+    preset: 'custom',
+    label,
+    rangeStartKey: dateKeyInZone(monday, zone),
+    rangeEndKey: dateKeyInZone(friday, zone),
+    namedMonthWindow: true,
+  };
+}
+
+function resolveYearForMonth(now: Date, zone: string, month: number): number {
+  const parts = getZonedParts(now, zone);
+  // If the month has fully ended, roll to next year.
+  if (month < parts.month) return parts.year + 1;
+  if (month > parts.month) return parts.year;
+  return parts.year;
+}
+
+function daysInMonth(year: number, month: number): number {
+  return new Date(Date.UTC(year, month, 0)).getUTCDate();
+}
+
+function monthLabel(month: number): string {
+  return [
+    '',
+    'January',
+    'February',
+    'March',
+    'April',
+    'May',
+    'June',
+    'July',
+    'August',
+    'September',
+    'October',
+    'November',
+    'December',
+  ][month];
+}
+
+function capitalize(s: string): string {
+  return s ? s.charAt(0).toUpperCase() + s.slice(1) : s;
 }
 
 function formatChipDay(date: Date, timeZone: string): string {
@@ -252,7 +550,6 @@ function pickClosest(n: number, durations: readonly number[]): number | null {
   }
   // Reject wildly off values
   if (bestDist > 20 && !durations.includes(n)) {
-    // still map 45->30/60 etc within 20... 45 is 15 from 30; ok
     if (bestDist > 25) return null;
   }
   return best;

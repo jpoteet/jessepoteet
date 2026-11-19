@@ -3,11 +3,15 @@
  */
 
 import { AVAILABILITY_SCHEDULE } from '../../src/config/availability';
-import { parseAvailabilityAsk } from '../../src/lib/availability/parseQuery';
+import {
+  hasMonthWeekPhrase,
+  parseAvailabilityAsk,
+} from '../../src/lib/availability/parseQuery';
 import {
   addDaysInZone,
   dateKeyInZone,
   startOfDayInZone,
+  startOfWeekMondayInZone,
 } from '../../src/lib/availability/time';
 
 export type AskEnv = {
@@ -201,9 +205,77 @@ function sanitizeReply(raw: unknown): string {
   return s;
 }
 
+/**
+ * When the visitor named a month/week window, prefer the local parser's
+ * start/end over a disagreeing AI range. Also append honest horizon copy
+ * when the requested window sits past the bookable horizon.
+ */
+export function reconcileAskWithParser(
+  payload: AskPayload,
+  text: string,
+  opts: { timeZone: string; now?: Date },
+): AskPayload {
+  if (!hasMonthWeekPhrase(text)) return payload;
+
+  const parsed = parseAvailabilityAsk(text, {
+    visitorTimeZone: opts.timeZone,
+    now: opts.now,
+    durations: ALLOWED_DURATIONS,
+  });
+  if (!parsed.ok || !parsed.rangeStartKey) return payload;
+
+  const parserStart = parsed.rangeStartKey;
+  const parserEnd = parsed.rangeEndKey || parserStart;
+  const bounds = bookableBounds(opts.timeZone, opts.now);
+
+  // Prefer parser dates whenever the AI disagrees on a month/week phrase.
+  const disagrees =
+    payload.rangeStart !== parserStart ||
+    payload.rangeEnd !== parserEnd ||
+    payload.rangeStart < parserStart ||
+    payload.rangeEnd > parserEnd;
+
+  let rangeStart = disagrees ? parserStart : payload.rangeStart;
+  let rangeEnd = disagrees ? parserEnd : payload.rangeEnd;
+
+  const requestedPastHorizon = parserStart > bounds.end;
+  const requestedStartsBeyond = parserStart > bounds.end;
+  const overlapsHorizon = parserStart <= bounds.end && parserEnd >= bounds.start;
+
+  let reply = payload.reply;
+  if (requestedPastHorizon || requestedStartsBeyond) {
+    rangeStart = bounds.start;
+    rangeEnd = bounds.end;
+    reply = sanitizeReply(
+      `That window is past Jesse's current booking horizon (about ${AVAILABILITY_SCHEDULE.lookAheadDays} days out). Here are the closest openings he has left.`,
+    );
+  } else if (parserEnd > bounds.end && overlapsHorizon) {
+    rangeStart = clampDateKey(parserStart, bounds.start, bounds.end);
+    rangeEnd = bounds.end;
+    if (!/horizon|bookable|closest/i.test(reply)) {
+      reply = sanitizeReply(
+        `${reply} Part of that window sits past Jesse's bookable horizon, so I'm showing what is still open through ${bounds.end}.`,
+      );
+    }
+  } else {
+    rangeStart = clampDateKey(rangeStart, bounds.start, bounds.end);
+    rangeEnd = clampDateKey(rangeEnd, bounds.start, bounds.end);
+  }
+
+  if (rangeEnd < rangeStart) rangeEnd = rangeStart;
+
+  // Range ownership only — leave duration to AI / local heuristics (e.g. podcast → 90).
+  return {
+    ...payload,
+    rangeStart,
+    rangeEnd,
+    reply,
+  };
+}
+
 export function validateAskResult(
   raw: Partial<AskPayload> | null | undefined,
-  opts: { timeZone: string; now?: Date },
+  opts: { timeZone: string; now?: Date; text?: string },
 ): AskPayload {
   const bounds = bookableBounds(opts.timeZone, opts.now);
   const duration = normalizeDuration(raw?.duration ?? 30);
@@ -217,7 +289,7 @@ export function validateAskResult(
         .filter((d) => ['mon', 'tue', 'wed', 'thu', 'fri'].includes(d))
         .slice(0, 5)
     : undefined;
-  return {
+  let payload: AskPayload = {
     duration,
     rangeStart,
     rangeEnd,
@@ -226,6 +298,10 @@ export function validateAskResult(
     reply: sanitizeReply(raw?.reply),
     source: raw?.source === 'local' ? 'local' : 'ai',
   };
+  if (opts.text) {
+    payload = reconcileAskWithParser(payload, opts.text, opts);
+  }
+  return payload;
 }
 
 /** Friendlier local replies when AI is offline. Third person about Jesse. */
@@ -249,7 +325,24 @@ function localReplyFor(text: string, summary: string, duration: number): string 
   if (/\b(next week|following week)\b/.test(lower)) {
     return `Next week works. Here are some good options with Jesse.`;
   }
+  if (hasMonthWeekPhrase(text)) {
+    return `Looking at ${summary} on Jesse's calendar. Here are the openings in that window.`;
+  }
   return `Got it: ${summary}. Here are some good options with Jesse.`;
+}
+
+function materializeWeekPreset(
+  preset: 'this-week' | 'next-week',
+  timeZone: string,
+  now = new Date(),
+): { start: string; end: string } {
+  let monday = startOfWeekMondayInZone(now, timeZone);
+  if (preset === 'next-week') monday = addDaysInZone(monday, 7, timeZone);
+  const friday = addDaysInZone(monday, 4, timeZone);
+  return {
+    start: dateKeyInZone(monday, timeZone),
+    end: dateKeyInZone(friday, timeZone),
+  };
 }
 
 export function localAskFallback(
@@ -284,7 +377,7 @@ export function localAskFallback(
             'Jesse meets weekdays 9am to 2pm Mountain. Here are the closest options in that window.',
           source: 'local',
         },
-        opts,
+        { ...opts, text },
       );
     }
     return validateAskResult(
@@ -296,19 +389,43 @@ export function localAskFallback(
         reply: parsed.message.replace(/\u2014/g, ',').replace(/\u2013/g, '-'),
         source: 'local',
       },
-      opts,
+      { ...opts, text },
     );
   }
 
   const duration = forceDuration || parsed.durationMinutes;
   let rangeStart = parsed.rangeStartKey || browse.start;
   let rangeEnd = parsed.rangeEndKey || parsed.rangeStartKey || browse.end;
-  // Intent upgrades without a named day should browse the next couple weeks,
-  // not collapse onto a single chrono-guessed day.
-  if (forceDuration && !namedSpecificDay(text) && rangeStart === rangeEnd) {
+
+  if (parsed.windowPreset === 'this-week' || parsed.windowPreset === 'next-week') {
+    const week = materializeWeekPreset(parsed.windowPreset, opts.timeZone, opts.now);
+    rangeStart = week.start;
+    rangeEnd = week.end;
+  }
+
+  // Intent upgrades without a named day/month window should browse the next
+  // couple weeks, not collapse onto a single chrono-guessed day.
+  if (
+    forceDuration &&
+    !namedSpecificDay(text) &&
+    !parsed.namedMonthWindow &&
+    !hasMonthWeekPhrase(text) &&
+    rangeStart === rangeEnd
+  ) {
     rangeStart = browse.start;
     rangeEnd = browse.end;
   }
+
+  // Honest reply when the named window is past the bookable horizon.
+  let reply = localReplyFor(text, parsed.summary, duration);
+  if (parsed.namedMonthWindow && parsed.rangeStartKey && parsed.rangeStartKey > bounds.end) {
+    reply = `That window is past Jesse's current booking horizon (about ${AVAILABILITY_SCHEDULE.lookAheadDays} days out). Here are the closest openings he has left.`;
+    rangeStart = bounds.start;
+    rangeEnd = bounds.end;
+  } else if (parsed.namedMonthWindow && parsed.rangeEndKey && parsed.rangeEndKey > bounds.end) {
+    reply = `Part of that window sits past Jesse's bookable horizon, so I'm showing what is still open. Here are the closest options with Jesse.`;
+  }
+
   return validateAskResult(
     {
       duration,
@@ -318,10 +435,10 @@ export function localAskFallback(
         parsed.timeOfDay === 'all'
           ? 'any'
           : (parsed.timeOfDay as 'morning' | 'afternoon'),
-      reply: localReplyFor(text, parsed.summary, duration),
+      reply,
       source: 'local',
     },
-    opts,
+    { ...opts, text },
   );
 }
 
@@ -358,14 +475,29 @@ rangeEnd (YYYY-MM-DD),
 timeOfDay ("any" | "morning" | "afternoon"),
 preferredDays (optional array of mon/tue/wed/thu/fri),
 reply (1 to 2 short sentences as Jesse's assistant; plain text, escape quotes).
-When the visitor does not name a specific day, set rangeStart to today and rangeEnd about 14 days out.
+You MUST always return concrete rangeStart and rangeEnd dates.
+When the visitor does not name a specific day or month window, set rangeStart to today and rangeEnd about 14 days out.
 
 Hard facts (use these; do not invent others):
 - Jesse meets weekdays only, ${openStartH}am to ${openEndH}pm Mountain Time (America/Denver). No weekends, no evenings.
 - Allowed meeting lengths: ${input.durations.join(', ')} minutes.
 - Minimum notice: about ${noticeH} hours.
-- Bookable horizon: about ${horizon} days from today.
-- Today is ${input.today} in timezone ${input.timeZone}.
+- Bookable horizon: about ${horizon} days from today (${input.today}). Dates past that horizon cannot be booked yet.
+- Today is ${input.today} in timezone ${input.timeZone}. Use this as the anchor for every relative date.
+
+Date-window rules (Monday-start weeks, weekday portion Mon–Fri):
+- "first/second/third/fourth/last week of <month>": take Monday-start weeks that intersect that month, ordered by Monday. Week 1 may begin in the prior month (e.g. Dec 2026 week 1 = Mon Nov 30–Fri Dec 4; week 2 = Mon Dec 7–Fri Dec 11). Set rangeStart to that Monday and rangeEnd to that Friday.
+- "week of Dec 14" / "week of <month> <day>": Monday–Friday of the week containing that date.
+- "early <month>": days 1–10; "mid <month>": 11–20; "late <month>": 21–end.
+- "next month": the 1st through the last day of the following calendar month.
+- "next N weeks" / "sometime in the next N weeks": today through today+N weeks.
+- If only a weekday is named (like Friday), set rangeStart/rangeEnd to that upcoming weekday.
+- Always resolve month names into the next occurrence on or after today (do not pick a past month).
+
+Horizon honesty:
+- If the requested window is entirely past the bookable horizon, say so plainly in reply and set rangeStart/rangeEnd to the remaining bookable window so the UI can show the closest openings.
+- If only part of the window is past the horizon, say that and clamp rangeEnd to the horizon end.
+- Never silently substitute a different month or earlier week without saying why.
 
 Critical rules:
 - NEVER invent, list, or claim specific open times, slot counts, or calendar free/busy. The server computes real availability from filters. Your job is only to set filters and write the reply that introduces the options below.
@@ -379,8 +511,6 @@ Critical rules:
   - workshop / strategy / deep dive / planning → 60 or 90
 - If they ask for weekends or evenings, explain Jesse meets weekdays ${openStartH}am to ${openEndH}pm Mountain and still offer the closest weekday options (set a sensible weekday range).
 - Follow-ups refine prior filters. Examples: "anything earlier?" keeps duration and pulls rangeStart toward today; "what about next week?" shifts the range to next week; "make it shorter" steps duration down.
-- If the user says "next N weeks" or "sometime in the next N weeks", set range from today through today+N weeks.
-- If only a weekday is named (like Friday), set rangeStart/rangeEnd to that upcoming weekday.
 - Default duration to 30 when unclear.`;
 }
 
@@ -432,7 +562,7 @@ export async function runAskAi(
         reply: String(parsed.reply || ''),
         source: 'ai',
       },
-      { timeZone: input.timeZone, now },
+      { timeZone: input.timeZone, now, text: input.text },
     );
   };
 
