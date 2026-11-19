@@ -1,6 +1,7 @@
 ---
 import AvailabilityLayout from '@/layouts/AvailabilityLayout.astro';
 import AvailabilityFinder from '@/components/AvailabilityFinder.astro';
+import AvailabilityTools from '@/components/AvailabilityTools.astro';
 import { personalAvailability } from '@/config/availability';
 import '@/styles/availability-product.css';
 
@@ -30,6 +31,7 @@ const profile = personalAvailability;
         headline={profile.headline}
         lead={profile.lead}
       />
+      <AvailabilityTools />
     </div>
   </div>
 </AvailabilityLayout>
@@ -45,12 +47,10 @@ const profile = personalAvailability;
 <script is:inline>
   (function () {
     function clock(zone) {
-      return new Intl.DateTimeFormat('en-GB', {
+      return new Intl.DateTimeFormat('en-US', {
         timeZone: zone,
-        hour: '2-digit',
+        hour: 'numeric',
         minute: '2-digit',
-        second: '2-digit',
-        hourCycle: 'h23',
       }).format(new Date());
     }
     function tickClocks() {
@@ -58,7 +58,7 @@ const profile = personalAvailability;
       if (mtEl) mtEl.textContent = clock('America/Denver');
     }
     tickClocks();
-    setInterval(tickClocks, 1000);
+    setInterval(tickClocks, 30000);
   })();
 </script>
 
