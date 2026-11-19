@@ -1,6 +1,6 @@
 ---
 /**
- * Standalone full-viewport layout for /availability.
+ * Standalone full-viewport layout for /meet.
  * No site header, nav, or footer. App chrome is a dedicated top bar.
  */
 import BaseHead from '@/components/BaseHead.astro';
@@ -10,9 +10,17 @@ interface Props {
   description?: string;
   image?: string;
   noindex?: boolean;
+  /** Absolute or site-relative canonical URL (defaults to /meet). */
+  canonicalURL?: string;
 }
 
-const { title, description, image, noindex } = Astro.props;
+const {
+  title,
+  description,
+  image,
+  noindex,
+  canonicalURL = '/meet',
+} = Astro.props;
 ---
 
 <!doctype html>
@@ -23,6 +31,7 @@ const { title, description, image, noindex } = Astro.props;
       description={description}
       image={image}
       noindex={noindex}
+      canonicalURL={canonicalURL}
       personalOnly
     />
   </head>

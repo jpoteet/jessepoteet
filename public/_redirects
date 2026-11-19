@@ -2,3 +2,6 @@
 /ventures /work 301
 /blog /writing 301
 /blog/* /writing/:splat 301
+# Keep query string (e.g. ?book=1) — destination has no query of its own
+/availability /meet 301
+/availability/ /meet 301
