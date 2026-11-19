@@ -140,6 +140,28 @@ function bookableBounds(timeZone: string, now = new Date()) {
   return { start, end };
 }
 
+function parseTodayAsNow(today: string | undefined, timeZone: string): Date | undefined {
+  if (!today || !/^\d{4}-\d{2}-\d{2}$/.test(today)) return undefined;
+  // Noon UTC on the visitor's calendar day keeps the key stable across zones.
+  return new Date(`${today}T17:00:00.000Z`);
+}
+
+/** Default browse window when the visitor did not name a specific day. */
+function defaultBrowseRange(timeZone: string, now = new Date()) {
+  const start = dateKeyInZone(now, timeZone);
+  const end = dateKeyInZone(
+    addDaysInZone(startOfDayInZone(now, timeZone), 13, timeZone),
+    timeZone,
+  );
+  return { start, end };
+}
+
+function namedSpecificDay(text: string): boolean {
+  return /\b(today|tomorrow|monday|tuesday|wednesday|thursday|friday|saturday|sunday|mon|tue|wed|thu|fri|sat|sun)\b/i.test(
+    text,
+  ) || /\b(jan|feb|mar|apr|may|jun|jul|aug|sep|oct|nov|dec)[a-z]*\s+\d{1,2}\b/i.test(text);
+}
+
 function clampDateKey(key: string, min: string, max: string): string {
   if (!/^\d{4}-\d{2}-\d{2}$/.test(key)) return min;
   if (key < min) return min;
@@ -240,6 +262,7 @@ export function localAskFallback(
     durations: ALLOWED_DURATIONS,
   });
   const bounds = bookableBounds(opts.timeZone, opts.now);
+  const browse = defaultBrowseRange(opts.timeZone, opts.now);
   const lower = text.toLowerCase();
 
   // Heuristic duration upgrades when the local parser is length-agnostic.
@@ -254,8 +277,8 @@ export function localAskFallback(
       return validateAskResult(
         {
           duration: forceDuration || 30,
-          rangeStart: bounds.start,
-          rangeEnd: bounds.end,
+          rangeStart: browse.start,
+          rangeEnd: browse.end,
           timeOfDay: 'any',
           reply:
             'Jesse meets weekdays 9am to 2pm Mountain. Here are the closest options in that window.',
@@ -267,8 +290,8 @@ export function localAskFallback(
     return validateAskResult(
       {
         duration: forceDuration || 30,
-        rangeStart: bounds.start,
-        rangeEnd: bounds.end,
+        rangeStart: browse.start,
+        rangeEnd: browse.end,
         timeOfDay: 'any',
         reply: parsed.message.replace(/\u2014/g, ',').replace(/\u2013/g, '-'),
         source: 'local',
@@ -278,11 +301,19 @@ export function localAskFallback(
   }
 
   const duration = forceDuration || parsed.durationMinutes;
+  let rangeStart = parsed.rangeStartKey || browse.start;
+  let rangeEnd = parsed.rangeEndKey || parsed.rangeStartKey || browse.end;
+  // Intent upgrades without a named day should browse the next couple weeks,
+  // not collapse onto a single chrono-guessed day.
+  if (forceDuration && !namedSpecificDay(text) && rangeStart === rangeEnd) {
+    rangeStart = browse.start;
+    rangeEnd = browse.end;
+  }
   return validateAskResult(
     {
       duration,
-      rangeStart: parsed.rangeStartKey || bounds.start,
-      rangeEnd: parsed.rangeEndKey || parsed.rangeStartKey || bounds.start,
+      rangeStart,
+      rangeEnd,
       timeOfDay:
         parsed.timeOfDay === 'all'
           ? 'any'
@@ -320,13 +351,14 @@ function buildSystemPrompt(input: {
   return `You help visitors find time with Jesse Poteet on his /meet page.
 You are writing as a warm, knowledgeable friend of Jesse: concise, human, lightly playful. Never stiff or corporate.
 
-Return ONLY a JSON object with keys:
+Return ONLY a raw JSON object (no markdown fences, no commentary) with keys:
 duration (one of ${input.durations.join('/')}),
 rangeStart (YYYY-MM-DD),
 rangeEnd (YYYY-MM-DD),
 timeOfDay ("any" | "morning" | "afternoon"),
 preferredDays (optional array of mon/tue/wed/thu/fri),
-reply (1 to 2 short sentences in Jesse's voice).
+reply (1 to 2 short sentences in Jesse's voice; plain text, escape quotes).
+When the visitor does not name a specific day, set rangeStart to today and rangeEnd about 14 days out.
 
 Hard facts (use these; do not invent others):
 - Jesse meets weekdays only, ${openStartH}am to ${openEndH}pm Mountain Time (America/Denver). No weekends, no evenings.
@@ -369,12 +401,13 @@ export async function runAskAi(
     ...history.map((t) => ({ role: t.role, content: t.content })),
     { role: 'user', content: input.text },
   ];
+  const now = parseTodayAsNow(input.today, input.timeZone);
 
   const tryModel = async (model: string) => {
     const result = await env.AI!.run(model, {
       messages,
-      max_tokens: 360,
-      temperature: 0.35,
+      max_tokens: 420,
+      temperature: 0.25,
     });
     const text =
       typeof result === 'string'
@@ -383,7 +416,10 @@ export async function runAskAi(
           ? String((result as { response: unknown }).response)
           : JSON.stringify(result);
     const parsed = extractJsonObject(text);
-    if (!parsed) return null;
+    if (!parsed) {
+      console.warn('ask AI returned non-JSON', text.slice(0, 240));
+      return null;
+    }
     return validateAskResult(
       {
         duration: Number(parsed.duration),
@@ -394,7 +430,7 @@ export async function runAskAi(
         reply: String(parsed.reply || ''),
         source: 'ai',
       },
-      { timeZone: input.timeZone },
+      { timeZone: input.timeZone, now },
     );
   };
 
