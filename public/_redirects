@@ -1,4 +1,7 @@
 # Cloudflare Pages redirects
+# Static rules before splat rules (query string preserved when dest has none)
 /ventures /work 301
+/availability /meet 301
+/availability/ /meet 301
 /blog /writing 301
 /blog/* /writing/:splat 301

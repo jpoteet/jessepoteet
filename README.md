@@ -21,7 +21,7 @@ npm run build
 npx wrangler pages dev dist
 ```
 
-For availability without a Reclaim token, put `ALLOW_MOCK_AVAILABILITY=true` in `.dev.vars` (gitignored). On `localhost`, the availability page also falls back to mock data if the API is unreachable so `astro dev` still shows a working UI.
+For availability without a Reclaim token, put `ALLOW_MOCK_AVAILABILITY=true` in `.dev.vars` (gitignored). On `localhost`, the `/meet` page also falls back to mock data if the API is unreachable so `astro dev` still shows a working UI.
 
 ## Cloudflare Pages settings
 
@@ -59,7 +59,7 @@ Set these in the Cloudflare Pages project (**Settings** → **Environment variab
 
 ### Availability API
 
-`GET /api/availability` returns merged busy intervals only (no titles, attendees, descriptions, or calendar ids), plus schedule meta (open hours, timezone, look-ahead). The `/availability` page computes open slots in the browser and re-filters instantly when length or window changes. Responses are edge-cached for about 7 minutes.
+`GET /api/availability` returns merged busy intervals only (no titles, attendees, descriptions, or calendar ids), plus schedule meta (open hours, timezone, look-ahead). The `/meet` page computes open slots in the browser and re-filters instantly when length or window changes. Responses are edge-cached for about 7 minutes. `/availability` 301-redirects to `/meet` (query string preserved).
 
 ### Contact webhook payload
 
