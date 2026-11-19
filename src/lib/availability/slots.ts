@@ -107,6 +107,26 @@ export function filterByTimeOfDay(
   });
 }
 
+/**
+ * Greedy non-overlapping pack: earliest valid start, then the next start
+ * that begins at or after the previous slot ends. Use this for the week
+ * grid and best cards so 90m options don't stack every half hour.
+ */
+export function packNonOverlappingSlots(slots: Slot[]): Slot[] {
+  const sorted = [...slots].sort(
+    (a, b) => parseInstant(a.start).getTime() - parseInstant(b.start).getTime(),
+  );
+  const packed: Slot[] = [];
+  let nextFreeMs = 0;
+  for (const slot of sorted) {
+    const startMs = parseInstant(slot.start).getTime();
+    if (startMs < nextFreeMs) continue;
+    packed.push(slot);
+    nextFreeMs = parseInstant(slot.end).getTime();
+  }
+  return packed;
+}
+
 export function groupSlotsByDay(
   slots: Slot[],
   visitorTimeZone: string,

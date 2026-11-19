@@ -176,6 +176,7 @@ const placeholders = [
     generateSlots,
     nextDateWithRoom,
     nextOpening,
+    packNonOverlappingSlots,
   } from '@/lib/availability/slots';
   import {
     addDaysInZone,
@@ -183,6 +184,7 @@ const placeholders = [
     detectVisitorTimeZone,
     formatShortDate,
     formatTimeInZone,
+    formatTimeRangeInZone,
     friendlyZoneName,
     parseInstant,
     shortZoneAbbr,
@@ -1127,13 +1129,23 @@ const placeholders = [
     }
 
     function slotButtonHtml(
-      slot: { start: string; durationMinutes: number },
+      slot: { start: string; end?: string; durationMinutes: number },
       tone: number,
-      opts: { delay?: number; gridRow?: string; compact?: boolean } = {},
+      opts: {
+        delay?: number;
+        gridRow?: string;
+        compact?: boolean;
+        halfRow?: boolean;
+      } = {},
     ) {
-      const label = formatTimeInZone(parseInstant(slot.start), visitorZone);
+      const start = parseInstant(slot.start);
+      const end = slot.end
+        ? parseInstant(slot.end)
+        : new Date(start.getTime() + slot.durationMinutes * 60 * 1000);
+      const label = formatTimeRangeInZone(start, end, visitorZone);
       const pressed = selectedSlotStart === slot.start ? 'true' : 'false';
       const best = highlightStarts.has(slot.start) ? ' is-best' : '';
+      const halfClass = opts.halfRow ? ' is-half' : '';
       const styleBits = [
         opts.delay ? `animation-delay: ${opts.delay}s` : '',
         opts.gridRow ? `grid-row: ${opts.gridRow}; grid-column: 1` : '',
@@ -1144,8 +1156,8 @@ const placeholders = [
         bookingEnabled && bookingUrl
           ? `<a class="avail-slot-book" href="${escapeHtml(bookingUrl)}" target="_blank" rel="noopener noreferrer" data-book-slot="${escapeHtml(slot.start)}">Book</a>`
           : '';
-      const btn = `<button type="button" class="avail-slot avail-chip-tone-${tone}${best}" data-slot-start="${escapeHtml(slot.start)}" aria-pressed="${pressed}">${escapeHtml(label)}</button>`;
-      return `<div class="avail-slot-wrap" style="${styleBits}">${btn}${book}</div>`;
+      const btn = `<button type="button" class="avail-slot avail-chip-tone-${tone}${best}" data-slot-start="${escapeHtml(slot.start)}" aria-pressed="${pressed}"><span class="avail-slot-range">${escapeHtml(label)}</span></button>`;
+      return `<div class="avail-slot-wrap${halfClass}" style="${styleBits}">${btn}${book}</div>`;
     }
 
     function currentQuery() {
@@ -1194,9 +1206,15 @@ const placeholders = [
       bestCardsEl.innerHTML = best
         .map((slot, i) => {
           const start = parseInstant(slot.start);
-          const visitorTime = formatTimeInZone(start, visitorZone);
-          const jesseTime = formatTimeInZone(start, data!.meta.timeZone);
-          const showJesse = !sameClockLabel(visitorTime, jesseTime);
+          const end = parseInstant(slot.end);
+          const visitorTime = formatTimeRangeInZone(start, end, visitorZone);
+          const jesseStart = formatTimeInZone(start, data!.meta.timeZone);
+          const jesseEnd = formatTimeInZone(end, data!.meta.timeZone);
+          const jesseRange = `${jesseStart} to ${jesseEnd}`;
+          const showJesse = !sameClockLabel(
+            formatTimeInZone(start, visitorZone),
+            jesseStart,
+          );
           const tone = i % 8;
           const pressed = selectedSlotStart === slot.start;
           const cta = bookingEnabled && bookingUrl
@@ -1208,7 +1226,7 @@ const placeholders = [
             <p class="avail-best-time">${escapeHtml(visitorTime)}</p>
             <p class="avail-best-meta">${slot.durationMinutes} min</p>
             <p class="avail-best-zone">${escapeHtml(visitorZoneShort)}</p>
-            ${showJesse ? `<p class="avail-best-jesse">${escapeHtml(jesseTime)} ${hostZoneLabel}</p>` : ''}
+            ${showJesse ? `<p class="avail-best-jesse">${escapeHtml(jesseRange)} ${hostZoneLabel}</p>` : ''}
             ${cta}
           </article>`;
         })
@@ -1268,7 +1286,8 @@ const placeholders = [
         byDay.get(key)?.push(slot);
       }
 
-      statusEl.innerHTML = `<span class="avail-status-count">${allSlots.length}</span> open · ${duration} min starts · week grid in ${escapeHtml(visitorZoneShort)} · Jesse 9am–2pm MT`;
+      const interval = data.meta.slotIntervalMinutes;
+      statusEl.innerHTML = `<span class="avail-status-count">${allSlots.length}</span> open · ${duration} min blocks · week grid in ${escapeHtml(visitorZoneShort)} · Jesse 9am–2pm MT`;
 
       const dayHeads = days
         .map((d, i) => {
@@ -1308,25 +1327,32 @@ const placeholders = [
         .map((key, dayIndex) => {
           const tone = dayIndex % 8;
           const daySlots = byDay.get(key) || [];
-          const startTicks = new Set<number>();
+          const occupied = new Set<number>();
           const blocks: string[] = [];
 
-          // One row per half-hour start (no multi-row span, no staggered columns).
+          // Duration-height blocks, already packed non-overlapping upstream.
           for (const slot of daySlots) {
             const startM = hostMinutesOf(slot.start);
             const tickIdx = ticks.indexOf(startM);
             if (tickIdx < 0) continue;
-            startTicks.add(tickIdx);
+            const spanRows = Math.max(slot.durationMinutes / interval, 0.5);
+            const wholeSpan = Math.max(1, Math.round(spanRows));
+            const safeSpan = Math.min(wholeSpan, ticks.length - tickIdx);
+            const halfRow = spanRows < 1;
+            for (let s = 0; s < safeSpan; s++) occupied.add(tickIdx + s);
             blocks.push(
               slotButtonHtml(slot, tone, {
-                gridRow: String(tickIdx + 1),
+                gridRow: halfRow
+                  ? String(tickIdx + 1)
+                  : `${tickIdx + 1} / span ${safeSpan}`,
+                halfRow,
               }),
             );
           }
 
           const empties = ticks
             .map((_, i) =>
-              startTicks.has(i)
+              occupied.has(i)
                 ? ''
                 : `<div class="avail-cal-cell" style="grid-row: ${i + 1}; grid-column: 1"><span class="avail-cal-empty" aria-hidden="true"></span></div>`,
             )
@@ -1432,6 +1458,8 @@ const placeholders = [
 
       let allSlots = generateSlots(data.busy, data.meta, currentQuery());
       allSlots = filterByTimeOfDay(allSlots, visitorZone, timeOfDay);
+      // Pack so cards + calendar share the same non-overlapping duration blocks.
+      allSlots = packNonOverlappingSlots(allSlots);
       lastSlots = allSlots;
 
       if (opts.markBest) markBestSlots(allSlots);
@@ -1584,6 +1612,7 @@ const placeholders = [
         // Recompute once so calendar matches current filters/cards.
         let allSlots = generateSlots(data.busy, data.meta, currentQuery());
         allSlots = filterByTimeOfDay(allSlots, visitorZone, timeOfDay);
+        allSlots = packNonOverlappingSlots(allSlots);
         lastSlots = allSlots;
         renderBestCards(lastSlots, { animate: false });
         renderCalendar(lastSlots);
