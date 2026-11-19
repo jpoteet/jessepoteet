@@ -14,27 +14,52 @@ const {
   durations = personalAvailability.durations,
   defaultDuration = personalAvailability.defaultDuration,
 } = Astro.props;
+
+const defaultIndex = Math.max(0, durations.indexOf(defaultDuration));
 ---
 
 <div
   id="availability-finder"
-  class="availability-finder"
+  class="availability-finder avail-panel"
   data-booking-url={bookingUrl}
   data-default-duration={String(defaultDuration)}
   data-durations={JSON.stringify(durations)}
 >
-  <div class="space-y-8" data-controls>
+  <div class="avail-panel-inner">
+    <div class="avail-status-row" aria-live="polite">
+      <div class="avail-live" data-live data-state="loading">
+        <span class="avail-live-dot" aria-hidden="true"></span>
+        <span data-live-label>Connecting to calendar…</span>
+      </div>
+      <div class="avail-chip" data-sync hidden>synced just now</div>
+      <div class="avail-chip" data-zone-chip>Detecting time zone…</div>
+    </div>
+
+    <div class="avail-hero-stat" data-hero>
+      <p class="avail-hero-label">Next opening</p>
+      <p class="avail-hero-value" data-next-opening aria-live="polite">Loading…</p>
+      <p class="avail-hero-meta" data-next-meta></p>
+    </div>
+
+    <div class="avail-divider" aria-hidden="true"></div>
+
     <section aria-labelledby="length-heading">
-      <h2 id="length-heading" class="font-display text-xl font-semibold sm:text-2xl">
-        1. How long do you need?
-      </h2>
-      <div class="mt-4 flex flex-wrap gap-2" role="group" aria-label="Meeting length">
+      <h2 id="length-heading" class="avail-section-label">1. How long do you need?</h2>
+      <div
+        class="avail-segment"
+        role="group"
+        aria-label="Meeting length"
+        data-duration-segment
+        style={`--seg-count: ${durations.length}; --seg-index: ${defaultIndex};`}
+      >
+        <div class="avail-segment-thumb" data-duration-thumb aria-hidden="true"></div>
         {
-          durations.map((mins) => (
+          durations.map((mins, i) => (
             <button
               type="button"
-              class="duration-btn rounded-md border border-[var(--color-line)] bg-[var(--color-canvas-elevated)] px-4 py-2.5 text-sm font-semibold text-[var(--color-ink)] transition hover:border-[var(--color-ink)] dark:border-[var(--color-dark-line)] dark:bg-[var(--color-dark-elevated)] dark:text-[var(--color-dark-ink)] dark:hover:border-[var(--color-dark-muted)]"
+              class="duration-btn"
               data-duration={mins}
+              data-index={i}
               aria-pressed={mins === defaultDuration ? 'true' : 'false'}
             >
               {mins} min
@@ -42,196 +67,77 @@ const {
           ))
         }
       </div>
+      <p class="avail-hint">
+        Tip: press <span class="avail-kbd">1</span>
+        <span class="avail-kbd">2</span>
+        <span class="avail-kbd">3</span>
+        <span class="avail-kbd">4</span>
+        to switch length
+      </p>
     </section>
 
+    <div class="avail-divider" aria-hidden="true"></div>
+
     <section aria-labelledby="window-heading">
-      <h2 id="window-heading" class="font-display text-xl font-semibold sm:text-2xl">
-        2. When should we look?
-      </h2>
-      <div class="mt-4 flex flex-wrap gap-2" role="group" aria-label="Date window">
-        <button
-          type="button"
-          class="window-btn rounded-md border border-[var(--color-line)] bg-[var(--color-canvas-elevated)] px-4 py-2.5 text-sm font-semibold transition hover:border-[var(--color-ink)] dark:border-[var(--color-dark-line)] dark:bg-[var(--color-dark-elevated)] dark:hover:border-[var(--color-dark-muted)]"
-          data-window="this-week"
-          aria-pressed="true"
-        >
+      <h2 id="window-heading" class="avail-section-label">2. When should we look?</h2>
+      <div class="avail-pills" role="group" aria-label="Date window">
+        <button type="button" class="avail-pill window-btn" data-window="this-week" aria-pressed="true">
           This week
         </button>
-        <button
-          type="button"
-          class="window-btn rounded-md border border-[var(--color-line)] bg-[var(--color-canvas-elevated)] px-4 py-2.5 text-sm font-semibold transition hover:border-[var(--color-ink)] dark:border-[var(--color-dark-line)] dark:bg-[var(--color-dark-elevated)] dark:hover:border-[var(--color-dark-muted)]"
-          data-window="next-week"
-          aria-pressed="false"
-        >
+        <button type="button" class="avail-pill window-btn" data-window="next-week" aria-pressed="false">
           Next week
         </button>
-        <button
-          type="button"
-          class="window-btn rounded-md border border-[var(--color-line)] bg-[var(--color-canvas-elevated)] px-4 py-2.5 text-sm font-semibold transition hover:border-[var(--color-ink)] dark:border-[var(--color-dark-line)] dark:bg-[var(--color-dark-elevated)] dark:hover:border-[var(--color-dark-muted)]"
-          data-window="custom"
-          aria-pressed="false"
-        >
+        <button type="button" class="avail-pill window-btn" data-window="custom" aria-pressed="false">
           Custom range
         </button>
       </div>
-      <div
-        id="custom-range"
-        class="mt-4 hidden grid gap-3 sm:grid-cols-2"
-        data-custom-range
-      >
-        <label class="block text-sm">
-          <span class="text-[var(--color-ink-muted)] dark:text-[var(--color-dark-muted)]">From</span>
-          <input
-            type="date"
-            id="range-start"
-            class="mt-1 w-full rounded-md border border-[var(--color-line)] bg-[var(--color-canvas-elevated)] px-3 py-2 text-[var(--color-ink)] dark:border-[var(--color-dark-line)] dark:bg-[var(--color-dark-elevated)] dark:text-[var(--color-dark-ink)]"
-          />
+
+      <div id="custom-range" class="avail-date-grid hidden" data-custom-range hidden>
+        <label class="avail-date-field">
+          <span>From</span>
+          <input type="date" id="range-start" />
         </label>
-        <label class="block text-sm">
-          <span class="text-[var(--color-ink-muted)] dark:text-[var(--color-dark-muted)]">Through</span>
-          <input
-            type="date"
-            id="range-end"
-            class="mt-1 w-full rounded-md border border-[var(--color-line)] bg-[var(--color-canvas-elevated)] px-3 py-2 text-[var(--color-ink)] dark:border-[var(--color-dark-line)] dark:bg-[var(--color-dark-elevated)] dark:text-[var(--color-dark-ink)]"
-          />
+        <label class="avail-date-field">
+          <span>Through</span>
+          <input type="date" id="range-end" />
         </label>
+      </div>
+
+      <div class="avail-pills" style="margin-top: 0.85rem;" role="group" aria-label="Morning or afternoon">
+        <button type="button" class="avail-pill tod-btn" data-tod="all" aria-pressed="true">All times</button>
+        <button type="button" class="avail-pill tod-btn" data-tod="morning" aria-pressed="false">Morning</button>
+        <button type="button" class="avail-pill tod-btn" data-tod="afternoon" aria-pressed="false">Afternoon</button>
       </div>
     </section>
 
-    <section aria-labelledby="filter-heading">
-      <h2 id="filter-heading" class="sr-only">Time of day filter</h2>
-      <div class="flex flex-wrap gap-2" role="group" aria-label="Morning or afternoon">
-        <button
-          type="button"
-          class="tod-btn rounded-md border border-[var(--color-line)] px-3 py-2 text-sm font-medium transition hover:border-[var(--color-ink)] dark:border-[var(--color-dark-line)] dark:hover:border-[var(--color-dark-muted)]"
-          data-tod="all"
-          aria-pressed="true"
-        >
-          All times
-        </button>
-        <button
-          type="button"
-          class="tod-btn rounded-md border border-[var(--color-line)] px-3 py-2 text-sm font-medium transition hover:border-[var(--color-ink)] dark:border-[var(--color-dark-line)] dark:hover:border-[var(--color-dark-muted)]"
-          data-tod="morning"
-          aria-pressed="false"
-        >
-          Morning
-        </button>
-        <button
-          type="button"
-          class="tod-btn rounded-md border border-[var(--color-line)] px-3 py-2 text-sm font-medium transition hover:border-[var(--color-ink)] dark:border-[var(--color-dark-line)] dark:hover:border-[var(--color-dark-muted)]"
-          data-tod="afternoon"
-          aria-pressed="false"
-        >
-          Afternoon
-        </button>
-      </div>
-    </section>
-  </div>
+    <div class="avail-divider" aria-hidden="true"></div>
 
-  <div class="mt-10 border-t border-[var(--color-line)] pt-8 dark:border-[var(--color-dark-line)]">
-    <p
-      id="zone-note"
-      class="text-sm text-[var(--color-ink-muted)] dark:text-[var(--color-dark-muted)]"
-      data-zone-note
-    >
-      Loading your time zone…
+    <p class="avail-status" data-status>Checking the calendar…</p>
+
+    <div class="avail-skeleton" data-skeleton hidden>
+      <div class="avail-skel-line lg"></div>
+      <div class="avail-skel-line" style="width: 72%;"></div>
+      <div class="avail-skel-line" style="width: 54%;"></div>
+      <div class="avail-skel-line lg" style="margin-top: 0.5rem;"></div>
+      <div class="avail-skel-line" style="width: 66%;"></div>
+    </div>
+
+    <div id="slot-results" class="mt-4" data-results></div>
+
+    <a href={bookingUrl} class="avail-cta" rel="noopener noreferrer" data-book-btn>
+      {bookingCta}
+      <span aria-hidden="true">↗</span>
+    </a>
+    <p class="avail-cta-note">
+      Booking happens on Jesse’s scheduling page. Nothing is reserved here.
     </p>
-    <p
-      id="next-opening"
-      class="mt-3 font-display text-lg font-semibold text-[var(--color-ink)] dark:text-[var(--color-dark-ink)] sm:text-xl"
-      data-next-opening
-      aria-live="polite"
-    ></p>
-
-    <div
-      id="availability-status"
-      class="mt-6 text-[var(--color-ink-muted)] dark:text-[var(--color-dark-muted)]"
-      data-status
-      aria-live="polite"
-    >
-      Checking the calendar…
-    </div>
-
-    <div id="slot-results" class="mt-8 space-y-8" data-results></div>
-
-    <div class="mt-10">
-      <a
-        href={bookingUrl}
-        class="btn-primary"
-        rel="noopener noreferrer"
-        data-book-btn
-      >
-        {bookingCta}
-      </a>
-      <p class="mt-3 text-sm text-[var(--color-ink-muted)] dark:text-[var(--color-dark-muted)]">
-        Booking happens on Jesse’s scheduling page. Nothing is reserved here.
-      </p>
-    </div>
   </div>
 </div>
-
-<style>
-  .availability-finder .duration-btn[aria-pressed='true'],
-  .availability-finder .window-btn[aria-pressed='true'],
-  .availability-finder .tod-btn[aria-pressed='true'] {
-    background: var(--color-accent);
-    border-color: var(--color-accent);
-    color: #fff;
-  }
-
-  :global(.dark) .availability-finder .duration-btn[aria-pressed='true'],
-  :global(.dark) .availability-finder .window-btn[aria-pressed='true'],
-  :global(.dark) .availability-finder .tod-btn[aria-pressed='true'] {
-    background: var(--color-dark-accent);
-    border-color: var(--color-dark-accent);
-    color: var(--color-dark-canvas);
-  }
-
-  .availability-finder .slot-chip {
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-    border: 1px solid var(--color-line);
-    background: var(--color-canvas-elevated);
-    border-radius: 0.375rem;
-    padding: 0.5rem 0.85rem;
-    font-size: 0.875rem;
-    font-weight: 600;
-    color: var(--color-ink);
-  }
-
-  :global(.dark) .availability-finder .slot-chip {
-    border-color: var(--color-dark-line);
-    background: var(--color-dark-elevated);
-    color: var(--color-dark-ink);
-  }
-
-  .availability-finder .day-group {
-    animation: avail-fade 0.35s ease both;
-  }
-
-  @keyframes avail-fade {
-    from {
-      opacity: 0;
-      transform: translateY(8px);
-    }
-    to {
-      opacity: 1;
-      transform: translateY(0);
-    }
-  }
-
-  @media (prefers-reduced-motion: reduce) {
-    .availability-finder .day-group {
-      animation: none;
-    }
-  }
-</style>
 
 <script>
   import { buildMockAvailabilityResponse } from '@/lib/availability/mock';
   import {
+    dayHeatStrip,
     filterByTimeOfDay,
     generateSlots,
     groupSlotsByDay,
@@ -269,25 +175,40 @@ const {
     return host === 'localhost' || host === '127.0.0.1';
   }
 
+  function prefersReducedMotion() {
+    return window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+  }
+
   const root = document.getElementById('availability-finder');
   if (root) {
+    const durations = JSON.parse(root.dataset.durations || '[15,30,60,90]') as number[];
     const defaultDuration = Number(root.dataset.defaultDuration || 30);
     let duration = defaultDuration;
     let windowPreset: WindowPreset = 'this-week';
     let timeOfDay: TimeOfDayFilter = 'all';
     let data: AvailabilitySuccess | null = null;
     let loadError: string | null = null;
+    let fetchedAt: number | null = null;
+    let selectedSlotStart: string | null = null;
+    let heroAnimToken = 0;
     const visitorZone = detectVisitorTimeZone();
 
     const statusEl = root.querySelector('[data-status]') as HTMLElement;
     const resultsEl = root.querySelector('[data-results]') as HTMLElement;
     const nextEl = root.querySelector('[data-next-opening]') as HTMLElement;
-    const zoneEl = root.querySelector('[data-zone-note]') as HTMLElement;
+    const nextMetaEl = root.querySelector('[data-next-meta]') as HTMLElement;
+    const liveEl = root.querySelector('[data-live]') as HTMLElement;
+    const liveLabelEl = root.querySelector('[data-live-label]') as HTMLElement;
+    const syncEl = root.querySelector('[data-sync]') as HTMLElement;
+    const zoneChipEl = root.querySelector('[data-zone-chip]') as HTMLElement;
+    const skeletonEl = root.querySelector('[data-skeleton]') as HTMLElement;
     const customWrap = root.querySelector('[data-custom-range]') as HTMLElement;
+    const durationSegment = root.querySelector('[data-duration-segment]') as HTMLElement;
     const rangeStartInput = root.querySelector('#range-start') as HTMLInputElement;
     const rangeEndInput = root.querySelector('#range-end') as HTMLInputElement;
 
-    zoneEl.textContent = `Times are shown in your time zone (${friendlyZoneName(visitorZone)}). Jesse’s open hours are Mountain Time.`;
+    zoneChipEl.textContent = friendlyZoneName(visitorZone);
+    zoneChipEl.title = `Times shown in ${friendlyZoneName(visitorZone)}. Jesse’s open hours are Mountain Time.`;
 
     const todayKey = dateKeyInZone(new Date(), visitorZone);
     rangeStartInput.min = todayKey;
@@ -308,6 +229,27 @@ const {
       });
     }
 
+    function flashPanel() {
+      if (prefersReducedMotion()) return;
+      root!.dataset.flash = 'false';
+      void root!.offsetWidth;
+      root!.dataset.flash = 'true';
+      window.setTimeout(() => {
+        root!.dataset.flash = 'false';
+      }, 480);
+    }
+
+    function setDuration(next: number) {
+      if (!durations.includes(next)) return;
+      duration = next;
+      const index = durations.indexOf(next);
+      durationSegment.style.setProperty('--seg-index', String(index));
+      setPressed('.duration-btn', 'data-duration', String(duration));
+      selectedSlotStart = null;
+      flashPanel();
+      render({ animateHero: true });
+    }
+
     function windowExclusiveEnd(now = new Date()): Date {
       if (windowPreset === 'custom' && rangeEndInput.value) {
         const endStart = startOfDayInZone(
@@ -316,34 +258,97 @@ const {
         );
         return addDaysInZone(endStart, 1, visitorZone);
       }
-
       const monday = startOfWeekMondayInZone(now, visitorZone);
-      if (windowPreset === 'this-week') {
-        return addDaysInZone(monday, 7, visitorZone);
-      }
+      if (windowPreset === 'this-week') return addDaysInZone(monday, 7, visitorZone);
       return addDaysInZone(monday, 14, visitorZone);
     }
 
-    function renderError() {
-      nextEl.textContent = '';
-      resultsEl.innerHTML = '';
-      statusEl.textContent =
-        loadError ||
-        'Availability is unavailable right now. You can still book a time on Jesse’s scheduling page.';
+    function updateSyncLabel() {
+      if (!fetchedAt) {
+        syncEl.hidden = true;
+        return;
+      }
+      const mins = Math.max(0, Math.floor((Date.now() - fetchedAt) / 60000));
+      syncEl.hidden = false;
+      syncEl.textContent =
+        mins === 0 ? 'synced just now' : `synced ${mins} min ago`;
     }
 
-    function render() {
+    function setLive(state: 'loading' | 'live' | 'error', label: string) {
+      liveEl.dataset.state = state;
+      liveLabelEl.textContent = label;
+    }
+
+    function showSkeleton(show: boolean) {
+      skeletonEl.hidden = !show;
+      if (show) resultsEl.innerHTML = '';
+    }
+
+    function renderError() {
+      nextEl.textContent = 'Unavailable right now';
+      nextMetaEl.textContent = '';
+      resultsEl.innerHTML = '';
+      showSkeleton(false);
+      setLive(
+        'error',
+        'Availability is unavailable right now',
+      );
+      statusEl.innerHTML = `<div class="avail-empty"><strong>Availability is unavailable right now</strong>${escapeHtml(
+        loadError ||
+          'You can still book a time on Jesse’s scheduling page.',
+      )}</div>`;
+    }
+
+    function renderHero(openingText: string, metaText: string, animate: boolean) {
+      const token = ++heroAnimToken;
+      if (animate && !prefersReducedMotion()) {
+        nextEl.dataset.animate = 'false';
+        // restart CSS animation
+        void nextEl.offsetWidth;
+        nextEl.dataset.animate = 'true';
+      } else {
+        nextEl.dataset.animate = 'false';
+      }
+      nextEl.textContent = openingText;
+      nextMetaEl.textContent = metaText;
+      // clear animate flag after run so it can retrigger
+      window.setTimeout(() => {
+        if (token === heroAnimToken) nextEl.dataset.animate = 'false';
+      }, 500);
+    }
+
+    function heatHtml(dayDate: Date) {
+      if (!data) return '';
+      const cells = dayHeatStrip(dayDate, data.busy, data.meta);
+      return `<div class="avail-heat" aria-hidden="true">${cells
+        .map((c) => `<span data-open="${c.open ? 'true' : 'false'}"></span>`)
+        .join('')}</div>`;
+    }
+
+    function render(opts: { animateHero?: boolean } = {}) {
       if (!data) {
         renderError();
         return;
       }
 
+      showSkeleton(false);
+      setLive('live', "Live from Jesse’s calendar");
+      updateSyncLabel();
+
       const opening = nextOpening(data.busy, data.meta, duration);
       if (opening) {
         const start = parseInstant(opening.start);
-        nextEl.textContent = `Next opening for ${duration} minutes: ${formatShortDate(start, visitorZone)} at ${formatTimeInZone(start, visitorZone)}`;
+        renderHero(
+          `${formatShortDate(start, visitorZone)} · ${formatTimeInZone(start, visitorZone)}`,
+          `${duration} minutes · your time zone`,
+          !!opts.animateHero,
+        );
       } else {
-        nextEl.textContent = `No openings for ${duration} minutes in the next few weeks.`;
+        renderHero(
+          `No openings for ${duration} minutes`,
+          'in the next few weeks',
+          !!opts.animateHero,
+        );
       }
 
       const query =
@@ -372,42 +377,58 @@ const {
           visitorZone,
           windowExclusiveEnd(),
         );
+        let detail = 'Nothing open in that window.';
+        if (hint) detail += ` The next day with room is ${hint.label}.`;
+        else detail += ' There is not another opening in the loaded range either.';
 
-        let message = 'Nothing open in that window.';
-        if (hint) {
-          message += ` The next day with room is ${hint.label}.`;
-        } else {
-          message += ' There is not another opening in the loaded range either.';
-        }
-
-        statusEl.textContent = message;
+        statusEl.innerHTML = `<div class="avail-empty"><strong>Quiet calendar for that filter</strong>${escapeHtml(detail)}</div>`;
         resultsEl.innerHTML = '';
         return;
       }
 
       statusEl.textContent = `${slots.length} open start${slots.length === 1 ? '' : 's'} in this window.`;
+
       resultsEl.innerHTML = groups
-        .map(
-          (group, index) => `
-          <section class="day-group" style="animation-delay: ${Math.min(index, 6) * 0.04}s" aria-labelledby="day-${group.dateKey}">
-            <h3 id="day-${group.dateKey}" class="font-display text-lg font-semibold">${escapeHtml(group.label)}</h3>
-            <ul class="mt-3 flex flex-wrap gap-2">
+        .map((group, index) => {
+          const dayDate = parseInstant(group.slots[0].start);
+          return `
+          <section class="avail-day" style="animation-delay: ${Math.min(index, 8) * 0.05}s" aria-labelledby="day-${group.dateKey}">
+            <div class="avail-day-head">
+              <h3 id="day-${group.dateKey}" class="avail-day-title">${escapeHtml(group.label)}</h3>
+              <p class="avail-day-count">${group.slots.length} open</p>
+            </div>
+            ${heatHtml(dayDate)}
+            <ul class="avail-slots">
               ${group.slots
-                .map((slot) => {
+                .map((slot, slotIndex) => {
                   const label = formatTimeInZone(parseInstant(slot.start), visitorZone);
-                  return `<li><span class="slot-chip">${escapeHtml(label)}</span></li>`;
+                  const pressed = selectedSlotStart === slot.start ? 'true' : 'false';
+                  return `<li style="display:contents"><button type="button" class="avail-slot" data-slot-start="${escapeHtml(slot.start)}" aria-pressed="${pressed}" style="animation-delay: ${Math.min(slotIndex, 12) * 0.03}s">${escapeHtml(label)}</button></li>`;
                 })
                 .join('')}
             </ul>
-          </section>`,
-        )
+          </section>`;
+        })
         .join('');
+
+      resultsEl.querySelectorAll('[data-slot-start]').forEach((btn) => {
+        btn.addEventListener('click', () => {
+          selectedSlotStart = (btn as HTMLElement).dataset.slotStart || null;
+          resultsEl.querySelectorAll('[data-slot-start]').forEach((other) => {
+            other.setAttribute(
+              'aria-pressed',
+              other === btn ? 'true' : 'false',
+            );
+          });
+        });
+      });
     }
 
     async function loadAvailability() {
       statusEl.textContent = 'Checking the calendar…';
       resultsEl.innerHTML = '';
-      nextEl.textContent = '';
+      showSkeleton(true);
+      setLive('loading', 'Connecting to calendar…');
       loadError = null;
 
       try {
@@ -418,16 +439,15 @@ const {
 
         if (json.ok) {
           data = json;
-          render();
+          fetchedAt = Date.now();
+          render({ animateHero: true });
           return;
         }
 
-        // Local-only fallback so `astro dev` / `astro preview` can show a working UI
-        // without Wrangler. Preview/production Pages deploys never use this path;
-        // they require RECLAIM_API_TOKEN (or explicit ALLOW_MOCK_AVAILABILITY on the Function).
         if (isLocalHost()) {
           data = buildMockAvailabilityResponse();
-          render();
+          fetchedAt = Date.now();
+          render({ animateHero: true });
           return;
         }
 
@@ -439,7 +459,8 @@ const {
       } catch {
         if (isLocalHost()) {
           data = buildMockAvailabilityResponse();
-          render();
+          fetchedAt = Date.now();
+          render({ animateHero: true });
           return;
         }
         loadError =
@@ -451,9 +472,7 @@ const {
 
     root.querySelectorAll('.duration-btn').forEach((btn) => {
       btn.addEventListener('click', () => {
-        duration = Number((btn as HTMLElement).dataset.duration);
-        setPressed('.duration-btn', 'data-duration', String(duration));
-        render();
+        setDuration(Number((btn as HTMLElement).dataset.duration));
       });
     });
 
@@ -462,8 +481,12 @@ const {
         windowPreset = ((btn as HTMLElement).dataset.window ||
           'this-week') as WindowPreset;
         setPressed('.window-btn', 'data-window', windowPreset);
-        customWrap.classList.toggle('hidden', windowPreset !== 'custom');
-        render();
+        const showCustom = windowPreset === 'custom';
+        customWrap.hidden = !showCustom;
+        customWrap.classList.toggle('hidden', !showCustom);
+        selectedSlotStart = null;
+        flashPanel();
+        render({ animateHero: true });
       });
     });
 
@@ -471,6 +494,8 @@ const {
       btn.addEventListener('click', () => {
         timeOfDay = ((btn as HTMLElement).dataset.tod || 'all') as TimeOfDayFilter;
         setPressed('.tod-btn', 'data-tod', timeOfDay);
+        selectedSlotStart = null;
+        flashPanel();
         render();
       });
     });
@@ -487,6 +512,30 @@ const {
       if (windowPreset === 'custom') render();
     });
 
+    window.addEventListener('keydown', (event) => {
+      const target = event.target as HTMLElement | null;
+      if (
+        target &&
+        (target.tagName === 'INPUT' ||
+          target.tagName === 'TEXTAREA' ||
+          target.isContentEditable)
+      ) {
+        return;
+      }
+      const map: Record<string, number> = {
+        '1': durations[0],
+        '2': durations[1],
+        '3': durations[2],
+        '4': durations[3],
+      };
+      const next = map[event.key];
+      if (next) {
+        event.preventDefault();
+        setDuration(next);
+      }
+    });
+
+    window.setInterval(updateSyncLabel, 30000);
     void loadAvailability();
   }
 </script>

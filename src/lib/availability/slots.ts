@@ -220,5 +220,37 @@ function dateKeyToUtcStart(dateKey: string, timeZone: string): Date {
   return zonedLocalToUtc(y, m, d, 0, timeZone);
 }
 
+/**
+ * Compact open/busy density for a host-zone calendar day during open hours.
+ * Half-hour cells only. No event titles or other details.
+ */
+export function dayHeatStrip(
+  dayDate: Date,
+  busy: BusyInterval[],
+  meta: AvailabilityMeta,
+  now?: Date,
+): { open: boolean; startMinutes: number }[] {
+  const hostZone = meta.timeZone;
+  const parts = getZonedParts(startOfDayInZone(dayDate, hostZone), hostZone);
+  const busyMs = busyToMs(busy);
+  const earliest =
+    (now ?? new Date()).getTime() + meta.minNoticeMinutes * 60 * 1000;
+  const cells: { open: boolean; startMinutes: number }[] = [];
+
+  for (
+    let m = meta.openHours.startMinutes;
+    m < meta.openHours.endMinutes;
+    m += meta.slotIntervalMinutes
+  ) {
+    const start = zonedLocalToUtc(parts.year, parts.month, parts.day, m, hostZone);
+    const end = new Date(start.getTime() + meta.slotIntervalMinutes * 60 * 1000);
+    const open =
+      start.getTime() >= earliest &&
+      !overlapsBusy(start.getTime(), end.getTime(), busyMs);
+    cells.push({ open, startMinutes: m });
+  }
+  return cells;
+}
+
 /** Exported for tests: check overlap helper re-export */
 export type { MsInterval };

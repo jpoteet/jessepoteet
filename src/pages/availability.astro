@@ -1,33 +1,70 @@
 ---
 import BaseLayout from '@/layouts/BaseLayout.astro';
 import AvailabilityFinder from '@/components/AvailabilityFinder.astro';
+import AvailabilityTools from '@/components/AvailabilityTools.astro';
 import { personalAvailability } from '@/config/availability';
+import '@/styles/availability-product.css';
 
 const profile = personalAvailability;
+
+const floatEmojis = [
+  { emoji: '🎣', x: '8%', y: '18%', delay: '0s' },
+  { emoji: '🏕️', x: '88%', y: '14%', delay: '1.2s' },
+  { emoji: '🍳', x: '12%', y: '72%', delay: '2.1s' },
+  { emoji: '🏔️', x: '90%', y: '68%', delay: '0.6s' },
+  { emoji: '☕', x: '78%', y: '42%', delay: '1.8s' },
+  { emoji: '📖', x: '6%', y: '48%', delay: '2.8s' },
+];
+
+const funLines = [
+  'Probably fly fishing when not in a meeting 🎣',
+  'Fuelled by coffee and Colorado mornings ☕🏔️',
+  'Kitchen experiments count as R&D 🍳',
+  'Camping weekends keep the calendar honest 🏕️',
+  'Faith, family, then the next open slot 📖',
+];
 ---
 
-<BaseLayout title={profile.headline} description={profile.description} personalOnly>
-  <div class="relative overflow-hidden">
-    <div
-      class="pointer-events-none absolute inset-0 -z-10 bg-[radial-gradient(ellipse_at_top,_rgba(31,61,50,0.08),_transparent_55%),linear-gradient(180deg,_#f3f5f2_0%,_var(--color-canvas)_42%)] dark:bg-[radial-gradient(ellipse_at_top,_rgba(143,186,159,0.12),_transparent_50%),linear-gradient(180deg,_#121612_0%,_var(--color-dark-canvas)_45%)]"
-      aria-hidden="true"
-    ></div>
-
-    <article class="site-shell section-pad max-w-3xl">
-      <header class="reveal">
-        <p class="eyebrow">{profile.eyebrow}</p>
-        <h1 class="mt-3 font-display text-4xl font-semibold sm:text-5xl">
-          <span class="block text-[var(--color-accent)] dark:text-[var(--color-dark-accent)]">
-            {profile.displayName}
+<BaseLayout
+  title={profile.headline}
+  description={profile.description}
+  personalOnly
+  bodyClass="avail-product dark"
+>
+  <div class="avail-stage">
+    <div class="avail-aurora" aria-hidden="true">
+      <span class="avail-blob avail-blob-a"></span>
+      <span class="avail-blob avail-blob-b"></span>
+      <span class="avail-blob avail-blob-c"></span>
+    </div>
+    <div class="avail-grid-motion" aria-hidden="true"></div>
+    <div class="avail-noise" aria-hidden="true"></div>
+    <div class="avail-floats" aria-hidden="true">
+      {
+        floatEmojis.map((item) => (
+          <span
+            class="avail-float"
+            style={`left:${item.x};top:${item.y};animation-delay:${item.delay}`}
+          >
+            {item.emoji}
           </span>
-          <span class="mt-2 block">{profile.headline}</span>
-        </h1>
-        <p class="mt-5 max-w-2xl text-lg leading-relaxed text-[var(--color-ink-muted)] dark:text-[var(--color-dark-muted)]">
-          {profile.lead}
-        </p>
+        ))
+      }
+    </div>
+
+    <article class="avail-shell">
+      <header class="avail-enter" style="--enter-delay: 0.05s">
+        <p class="avail-kicker">{profile.eyebrow}</p>
+        <h1 class="avail-brand">{profile.displayName}</h1>
+        <p class="avail-lead">{profile.lead}</p>
+        <p class="avail-funline" data-funline aria-live="polite">{funLines[0]}</p>
       </header>
 
-      <div class="reveal reveal-delay-1 mt-12">
+      <div class="avail-enter" style="--enter-delay: 0.16s">
+        <AvailabilityTools />
+      </div>
+
+      <div class="avail-enter" style="--enter-delay: 0.28s">
         <AvailabilityFinder
           bookingUrl={profile.bookingUrl}
           bookingCta={profile.bookingCta}
@@ -38,3 +75,31 @@ const profile = personalAvailability;
     </article>
   </div>
 </BaseLayout>
+
+<style is:global>
+  @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap');
+</style>
+
+<script is:inline>
+  document.documentElement.classList.add('dark');
+</script>
+
+<script define:vars={{ funLines }}>
+  const el = document.querySelector('[data-funline]');
+  if (el && Array.isArray(funLines) && funLines.length > 1) {
+    const reduce = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+    if (!reduce) {
+      let i = 0;
+      window.setInterval(() => {
+        i = (i + 1) % funLines.length;
+        el.style.opacity = '0';
+        el.style.transform = 'translateY(6px)';
+        window.setTimeout(() => {
+          el.textContent = funLines[i];
+          el.style.opacity = '1';
+          el.style.transform = 'none';
+        }, 220);
+      }, 4200);
+    }
+  }
+</script>
