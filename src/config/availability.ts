@@ -8,7 +8,7 @@
  */
 
 export type AvailabilityProfile = {
-  /** URL path segment, e.g. "availability" → /availability */
+  /** URL path segment, e.g. "meet" → /meet */
   slug: string;
   /** Display name shown to visitors */
   displayName: string;
@@ -36,7 +36,7 @@ export type AvailabilityProfile = {
 };
 
 /**
- * URL `?book=` codes that unlock booking CTAs on /availability.
+ * URL `?book=` codes that unlock booking CTAs on /meet.
  * Keys are matched case-insensitively after trim.
  * Unknown codes stay find-only (never fall back to another link).
  * Do not surface brand names or logos from these codes on the page.
@@ -88,11 +88,11 @@ export const AVAILABILITY_SCHEDULE = {
 } as const;
 
 export const personalAvailability: AvailabilityProfile = {
-  slug: 'availability',
+  slug: 'meet',
   displayName: 'Jesse Poteet',
   description:
     'See when Jesse Poteet is free and pick a time that works. Times show in your time zone.',
-  eyebrow: 'Availability',
+  eyebrow: 'Meet',
   headline: 'Find a time that works',
   lead: 'Pick a length and a window. Open times show up as colorful chips in a clean day grid.',
   durations: [15, 30, 60, 90],
