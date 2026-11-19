@@ -33,29 +33,38 @@ const placeholders = [
   data-durations={JSON.stringify(durations)}
   data-placeholders={JSON.stringify(placeholders)}
 >
+  <a class="avail-home-link" href="/" aria-label="Back to jessepoteet.com">jessepoteet.com</a>
+
   <header class="avail-top">
     <form class="avail-ask-hero" data-ask-form>
-      <h1 class="avail-ask-title">When works for you?</h1>
-      <div class="avail-ask-row">
-        <input
-          id="avail-ask-input"
-          class="avail-ask-input"
-          type="text"
-          autocomplete="off"
-          spellcheck="false"
-          maxlength="300"
-          placeholder={placeholders[0]}
-          data-ask-input
-          aria-label="When works for you"
-        />
-        <button type="submit" class="avail-ask-go" data-ask-go>Find it</button>
+      <h1 class="avail-ask-title avail-enter" style="--enter-delay: 0ms">
+        Looking for time to connect with Jesse?
+      </h1>
+      <p class="avail-jesse-clock avail-enter" style="--enter-delay: 80ms" data-jesse-clock>
+        It's currently <span data-clock-mt>--:-- --</span> in Jesse's timezone (Mountain)
+      </p>
+      <div class="avail-ask-glow avail-enter" style="--enter-delay: 140ms">
+        <div class="avail-ask-row">
+          <input
+            id="avail-ask-input"
+            class="avail-ask-input"
+            type="text"
+            autocomplete="off"
+            spellcheck="false"
+            maxlength="300"
+            placeholder=""
+            data-ask-input
+            aria-label="Describe when you want to meet"
+          />
+          <button type="submit" class="avail-ask-go" data-ask-go>Find it</button>
+        </div>
       </div>
       <p class="avail-ask-reply" data-ask-reply hidden></p>
       <p class="avail-ask-msg" data-ask-msg hidden></p>
       <div class="avail-ask-chips" data-ask-chips hidden></div>
     </form>
 
-    <div class="avail-meta-row" aria-live="polite">
+    <div class="avail-meta-row avail-enter" style="--enter-delay: 220ms" aria-live="polite">
       <p class="avail-live-line" data-live data-state="loading">
         <span class="avail-live-dot" aria-hidden="true"></span>
         <span data-live-label>Connecting…</span>
@@ -70,7 +79,7 @@ const placeholders = [
       </p>
     </div>
 
-    <div class="avail-adjust-bar">
+    <div class="avail-adjust-bar avail-enter" style="--enter-delay: 280ms">
       <div
         class="avail-adjust-group"
         role="group"
@@ -126,7 +135,7 @@ const placeholders = [
     </div>
   </header>
 
-  <section class="avail-workspace" aria-label="Open times">
+  <section class="avail-workspace avail-enter" style="--enter-delay: 360ms" data-workspace aria-label="Open times">
     <div class="avail-workspace-bar">
       <div class="avail-cal-nav">
         <button type="button" class="avail-cal-nav-btn" data-week-prev aria-label="Previous week">‹</button>
@@ -308,14 +317,50 @@ const placeholders = [
       visitorZone,
     );
 
-    // Rotating ask placeholders
-    if (placeholders.length && !prefersReducedMotion()) {
+    // Typing + rotating ask placeholders
+    if (placeholders.length) {
       let pi = 0;
-      window.setInterval(() => {
-        if (document.activeElement === askInput || askInput.value) return;
-        pi = (pi + 1) % placeholders.length;
-        askInput.placeholder = placeholders[pi];
-      }, 3800);
+      let char = 0;
+      let deleting = false;
+      let holdUntil = 0;
+      const tickPlaceholder = () => {
+        if (document.activeElement === askInput || askInput.value) {
+          window.setTimeout(tickPlaceholder, 500);
+          return;
+        }
+        if (prefersReducedMotion()) {
+          askInput.placeholder = placeholders[pi];
+          pi = (pi + 1) % placeholders.length;
+          window.setTimeout(tickPlaceholder, 4200);
+          return;
+        }
+        const now = Date.now();
+        if (now < holdUntil) {
+          window.setTimeout(tickPlaceholder, holdUntil - now);
+          return;
+        }
+        const full = placeholders[pi];
+        if (!deleting) {
+          char = Math.min(full.length, char + 1);
+          askInput.placeholder = full.slice(0, char);
+          if (char >= full.length) {
+            deleting = true;
+            holdUntil = now + 2200;
+          }
+          window.setTimeout(tickPlaceholder, 28 + Math.random() * 36);
+        } else {
+          char = Math.max(0, char - 1);
+          askInput.placeholder = full.slice(0, char);
+          if (char <= 0) {
+            deleting = false;
+            pi = (pi + 1) % placeholders.length;
+            holdUntil = now + 280;
+          }
+          window.setTimeout(tickPlaceholder, 16 + Math.random() * 22);
+        }
+      };
+      askInput.placeholder = '';
+      window.setTimeout(tickPlaceholder, prefersReducedMotion() ? 0 : 520);
     }
 
     function setPressed(selector: string, attr: string, value: string) {
@@ -393,6 +438,16 @@ const placeholders = [
       askMsg.hidden = true;
       askReply.hidden = false;
       askReply.textContent = result.reply || 'Here is what I found.';
+      askReply.classList.remove('is-reveal');
+      void askReply.offsetWidth;
+      askReply.classList.add('is-reveal');
+      const workspace = root!.querySelector('[data-workspace]') as HTMLElement | null;
+      if (workspace) {
+        workspace.classList.remove('is-match-reveal');
+        void workspace.offsetWidth;
+        workspace.classList.add('is-match-reveal');
+        window.setTimeout(() => workspace.classList.remove('is-match-reveal'), 1200);
+      }
 
       const chips: { kind: string; label: string }[] = [
         { kind: 'duration', label: `${result.duration || duration} min` },
