@@ -104,7 +104,7 @@ const placeholders = [
       <div class="avail-adjust-wrap">
         <button type="button" class="avail-adjust-toggle" data-adjust-toggle aria-expanded="false">Adjust</button>
         <div class="avail-adjust-panel" data-adjust-panel hidden>
-          <button type="button" class="avail-pill window-btn" data-window="custom" aria-pressed="false">Custom range</button>
+          <button type="button" class="avail-pill avail-chip-tone avail-chip-tone-7 window-btn" data-window="custom" aria-pressed="false">Custom range</button>
           <div id="custom-range" class="avail-date-grid" data-custom-range hidden>
             <label class="avail-date-field">
               <span>From</span>
@@ -668,13 +668,38 @@ const placeholders = [
       ranked.slice(0, Math.min(4, ranked.length)).forEach((s) => highlightStarts.add(s.start));
     }
 
-    function slotButtonHtml(slot: { start: string }, tone: number, delay = 0) {
+    function hostMinutesOf(slotStart: string) {
+      const parts = new Intl.DateTimeFormat('en-US', {
+        timeZone: data!.meta.timeZone,
+        hour: '2-digit',
+        minute: '2-digit',
+        hourCycle: 'h23',
+      }).formatToParts(parseInstant(slotStart));
+      const h = Number(parts.find((p) => p.type === 'hour')?.value || 0);
+      const m = Number(parts.find((p) => p.type === 'minute')?.value || 0);
+      return h * 60 + m;
+    }
+
+    function slotButtonHtml(
+      slot: { start: string; durationMinutes: number },
+      tone: number,
+      opts: { delay?: number; gridRow?: string; compact?: boolean } = {},
+    ) {
       const label = formatTimeInZone(parseInstant(slot.start), visitorZone);
       const pressed = selectedSlotStart === slot.start ? 'true' : 'false';
       const best = highlightStarts.has(slot.start) ? ' is-best' : '';
-      const slotBtn = `<button type="button" class="avail-slot avail-chip-tone-${tone}${best}" data-slot-start="${escapeHtml(slot.start)}" aria-pressed="${pressed}" style="animation-delay: ${delay}s">${escapeHtml(label)}</button>`;
-      if (!bookingEnabled || !bookingUrl) return slotBtn;
-      return `<span class="avail-slot-row">${slotBtn}<a class="avail-slot-book" href="${escapeHtml(bookingUrl)}" target="_blank" rel="noopener noreferrer" data-book-slot="${escapeHtml(slot.start)}">Book</a></span>`;
+      const styleBits = [
+        opts.delay ? `animation-delay: ${opts.delay}s` : '',
+        opts.gridRow ? `grid-row: ${opts.gridRow}` : '',
+      ]
+        .filter(Boolean)
+        .join('; ');
+      const book =
+        bookingEnabled && bookingUrl
+          ? `<a class="avail-slot-book" href="${escapeHtml(bookingUrl)}" target="_blank" rel="noopener noreferrer" data-book-slot="${escapeHtml(slot.start)}">Book</a>`
+          : '';
+      const btn = `<button type="button" class="avail-slot avail-chip-tone-${tone}${best}" data-slot-start="${escapeHtml(slot.start)}" aria-pressed="${pressed}">${escapeHtml(label)}</button>`;
+      return `<div class="avail-slot-wrap" style="${styleBits}">${btn}${book}</div>`;
     }
 
     function render(opts: { animateHero?: boolean; markBest?: boolean } = {}) {
@@ -795,34 +820,48 @@ const placeholders = [
       const labelY = Number(labelParts.find((p) => p.type === 'year')?.value || 0);
       const labelMo = Number(labelParts.find((p) => p.type === 'month')?.value || 0);
       const labelD = Number(labelParts.find((p) => p.type === 'day')?.value || 0);
+      const interval = data.meta.slotIntervalMinutes;
 
-      const rows = ticks
+      const timeCol = ticks
         .map((hostMinutes) => {
           const timeLabel = formatTimeInZone(
             zonedLocalToUtc(labelY, labelMo, labelD, hostMinutes, hostZone),
             visitorZone,
           );
+          return `<div class="avail-cal-time">${escapeHtml(timeLabel)}</div>`;
+        })
+        .join('');
 
-          const cells = dayKeys
-            .map((key, dayIndex) => {
-              const daySlots = (byDay.get(key) || []).filter((slot) => {
-                const parts = new Intl.DateTimeFormat('en-US', {
-                  timeZone: hostZone,
-                  hour: '2-digit',
-                  minute: '2-digit',
-                  hourCycle: 'h23',
-                }).formatToParts(parseInstant(slot.start));
-                const h = Number(parts.find((p) => p.type === 'hour')?.value || 0);
-                const m = Number(parts.find((p) => p.type === 'minute')?.value || 0);
-                return h * 60 + m === hostMinutes;
-              });
-              const tone = dayIndex % 8;
-              const inner = daySlots.map((slot) => slotButtonHtml(slot, tone, 0)).join('');
-              return `<div class="avail-cal-cell" data-day-key="${key}">${inner || '<span class="avail-cal-empty" aria-hidden="true"></span>'}</div>`;
-            })
+      const dayCols = dayKeys
+        .map((key, dayIndex) => {
+          const tone = dayIndex % 8;
+          const daySlots = byDay.get(key) || [];
+          const occupied = new Set<number>();
+          const blocks: string[] = [];
+
+          for (const slot of daySlots) {
+            const startM = hostMinutesOf(slot.start);
+            const tickIdx = ticks.indexOf(startM);
+            if (tickIdx < 0) continue;
+            const span = Math.max(1, Math.round(slot.durationMinutes / interval));
+            const safeSpan = Math.min(span, ticks.length - tickIdx);
+            for (let s = 0; s < safeSpan; s++) occupied.add(tickIdx + s);
+            blocks.push(
+              slotButtonHtml(slot, tone, {
+                gridRow: `${tickIdx + 1} / span ${safeSpan}`,
+              }),
+            );
+          }
+
+          const empties = ticks
+            .map((_, i) =>
+              occupied.has(i)
+                ? ''
+                : `<div class="avail-cal-cell" style="grid-row: ${i + 1}"><span class="avail-cal-empty" aria-hidden="true"></span></div>`,
+            )
             .join('');
 
-          return `<div class="avail-cal-time">${escapeHtml(timeLabel)}</div>${cells}`;
+          return `<div class="avail-cal-daycol" data-day-key="${key}">${empties}${blocks.join('')}</div>`;
         })
         .join('');
 
@@ -849,10 +888,11 @@ const placeholders = [
       resultsEl.innerHTML = `
         <div class="avail-cal" data-cal>
           <div class="avail-cal-desktop" aria-hidden="false">
-            <div class="avail-cal-grid" style="--cal-rows: ${ticks.length}">
+            <div class="avail-cal-grid" style="--tick-count: ${ticks.length}">
               <div class="avail-cal-corner" aria-hidden="true"></div>
               ${dayHeads}
-              ${rows}
+              <div class="avail-cal-times">${timeCol}</div>
+              ${dayCols}
             </div>
           </div>
           <div class="avail-cal-mobile">
@@ -861,7 +901,12 @@ const placeholders = [
               ${
                 mobileSlots.length
                   ? mobileSlots
-                      .map((slot, i) => slotButtonHtml(slot, mobileTone, Math.min(i, 12) * 0.028))
+                      .map((slot, i) =>
+                        slotButtonHtml(slot, mobileTone, {
+                          delay: Math.min(i, 12) * 0.028,
+                          compact: true,
+                        }),
+                      )
                       .join('')
                   : '<div class="avail-empty"><strong>No opens this day</strong>Try another weekday in this week.</div>'
               }
