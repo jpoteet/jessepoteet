@@ -1,5 +1,5 @@
 ---
-import BaseLayout from '@/layouts/BaseLayout.astro';
+import AvailabilityLayout from '@/layouts/AvailabilityLayout.astro';
 import AvailabilityFinder from '@/components/AvailabilityFinder.astro';
 import AvailabilityTools from '@/components/AvailabilityTools.astro';
 import { personalAvailability } from '@/config/availability';
@@ -8,12 +8,7 @@ import '@/styles/availability-product.css';
 const profile = personalAvailability;
 ---
 
-<BaseLayout
-  title={profile.headline}
-  description={profile.description}
-  personalOnly
-  bodyClass="avail-product"
->
+<AvailabilityLayout title={profile.headline} description={profile.description}>
   <div class="avail-stage" data-avail-stage>
     <canvas class="avail-webgl" data-avail-webgl aria-hidden="true"></canvas>
     <div class="avail-aurora" aria-hidden="true">
@@ -21,46 +16,40 @@ const profile = personalAvailability;
       <span class="avail-blob avail-blob-b"></span>
       <span class="avail-blob avail-blob-c"></span>
     </div>
-    <div class="avail-grid-motion" aria-hidden="true"></div>
-    <div class="avail-noise" aria-hidden="true"></div>
-    <div class="avail-floats" aria-hidden="true">
-      <span class="avail-float" style="left: 8%; top: 18%; animation-delay: 0s">🎣</span>
-      <span class="avail-float" style="left: 86%; top: 22%; animation-delay: 1.2s">☕</span>
-      <span class="avail-float" style="left: 12%; top: 72%; animation-delay: 2.4s">🏔️</span>
-      <span class="avail-float" style="left: 78%; top: 68%; animation-delay: 0.6s">🌲</span>
-    </div>
 
-    <article class="avail-shell">
-      <header class="avail-enter" style="--enter-delay: 0.04s">
+    <div class="avail-app-frame">
+      <header class="avail-enter avail-app-header" style="--enter-delay: 0.04s">
         <div class="avail-topbar">
-          <p class="avail-kicker">{profile.eyebrow}</p>
+          <div>
+            <p class="avail-kicker">{profile.eyebrow}</p>
+            <h1 class="avail-brand">{profile.headline}</h1>
+          </div>
           <div class="avail-hud" data-hud aria-hidden="false">
             <span class="avail-hud-item"><span class="avail-hud-key">UTC</span> <span data-clock-utc class="avail-mono">--:--:--</span></span>
             <span class="avail-hud-sep" aria-hidden="true"></span>
             <span class="avail-hud-item"><span class="avail-hud-key">MT</span> <span data-clock-mt class="avail-mono">--:--:--</span></span>
           </div>
         </div>
-        <h1 class="avail-brand">{profile.displayName}</h1>
         <p class="avail-lead">{profile.lead}</p>
         <p class="avail-funline" data-funline>Quiet mornings. Clear calendar. Real work. ☀️</p>
       </header>
 
-      <div class="avail-enter" style="--enter-delay: 0.12s">
+      <div class="avail-enter" style="--enter-delay: 0.1s">
         <AvailabilityTools />
       </div>
 
-      <div class="avail-enter" style="--enter-delay: 0.2s">
+      <div class="avail-enter" style="--enter-delay: 0.16s">
         <AvailabilityFinder
           durations={profile.durations}
           defaultDuration={profile.defaultDuration}
         />
       </div>
-    </article>
+    </div>
   </div>
-</BaseLayout>
+</AvailabilityLayout>
 
 <style is:global>
-  @import url('https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,500;9..144,650&family=JetBrains+Mono:wght@400;500;600&family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap');
+  @import url('https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600&family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap');
 </style>
 
 <script is:inline>

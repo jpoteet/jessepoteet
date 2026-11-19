@@ -73,18 +73,17 @@ const placeholders = [
     <section aria-labelledby="length-heading">
       <h2 id="length-heading" class="avail-section-label">1. How long do you need?</h2>
       <div
-        class="avail-segment"
+        class="avail-chip-row"
         role="group"
         aria-label="Meeting length"
         data-duration-segment
         style={`--seg-count: ${durations.length}; --seg-index: ${defaultIndex};`}
       >
-        <div class="avail-segment-thumb" data-duration-thumb aria-hidden="true"></div>
         {
           durations.map((mins, i) => (
             <button
               type="button"
-              class="duration-btn"
+              class={`duration-btn avail-pill avail-chip-tone avail-chip-tone-${i % 8}`}
               data-duration={mins}
               data-index={i}
               aria-pressed={mins === defaultDuration ? 'true' : 'false'}
@@ -108,9 +107,9 @@ const placeholders = [
     <section aria-labelledby="window-heading">
       <h2 id="window-heading" class="avail-section-label">2. When should we look?</h2>
       <div class="avail-pills" role="group" aria-label="Date window">
-        <button type="button" class="avail-pill window-btn" data-window="this-week" aria-pressed="true">This week</button>
-        <button type="button" class="avail-pill window-btn" data-window="next-week" aria-pressed="false">Next week</button>
-        <button type="button" class="avail-pill window-btn" data-window="custom" aria-pressed="false">Custom range</button>
+        <button type="button" class="avail-pill avail-chip-tone avail-chip-tone-0 window-btn" data-window="this-week" aria-pressed="true">This week</button>
+        <button type="button" class="avail-pill avail-chip-tone avail-chip-tone-4 window-btn" data-window="next-week" aria-pressed="false">Next week</button>
+        <button type="button" class="avail-pill avail-chip-tone avail-chip-tone-7 window-btn" data-window="custom" aria-pressed="false">Custom range</button>
       </div>
 
       <div id="custom-range" class="avail-date-grid hidden" data-custom-range hidden>
@@ -125,9 +124,9 @@ const placeholders = [
       </div>
 
       <div class="avail-pills" style="margin-top: 0.75rem;" role="group" aria-label="Morning or afternoon">
-        <button type="button" class="avail-pill tod-btn" data-tod="all" aria-pressed="true">All times</button>
-        <button type="button" class="avail-pill tod-btn" data-tod="morning" aria-pressed="false">Morning</button>
-        <button type="button" class="avail-pill tod-btn" data-tod="afternoon" aria-pressed="false">Afternoon</button>
+        <button type="button" class="avail-pill avail-chip-tone avail-chip-tone-5 tod-btn" data-tod="all" aria-pressed="true">All times</button>
+        <button type="button" class="avail-pill avail-chip-tone avail-chip-tone-3 tod-btn" data-tod="morning" aria-pressed="false">Morning</button>
+        <button type="button" class="avail-pill avail-chip-tone avail-chip-tone-1 tod-btn" data-tod="afternoon" aria-pressed="false">Afternoon</button>
       </div>
     </section>
 
@@ -546,38 +545,46 @@ const placeholders = [
         if (hint) detail += ` The next day with room is ${hint.label}.`;
         else detail += ' There is not another opening in the loaded range either.';
         statusEl.innerHTML = `<div class="avail-empty"><strong>Quiet for that filter</strong>${escapeHtml(detail)}</div>`;
+        resultsEl.className = 'mt-4';
         resultsEl.innerHTML = '';
         return;
       }
 
-      statusEl.innerHTML = `<span class="avail-mono">${slots.length}</span> open start${slots.length === 1 ? '' : 's'} in this window.`;
+      statusEl.innerHTML = `<span class="avail-status-count">${slots.length}</span> open start${slots.length === 1 ? '' : 's'} in this window.`;
+      resultsEl.className = 'avail-board mt-4';
       resultsEl.innerHTML = groups
         .map((group, index) => {
           const dayDate = parseInstant(group.slots[0].start);
+          const tone = index % 8;
           return `
-          <section class="avail-day avail-tilt-card" style="animation-delay: ${Math.min(index, 8) * 0.045}s" aria-labelledby="day-${group.dateKey}">
-            <div class="avail-day-head">
-              <h3 id="day-${group.dateKey}" class="avail-day-title">${escapeHtml(group.label)}</h3>
-              <p class="avail-day-count avail-mono">${group.slots.length} open</p>
+          <section class="avail-day-row avail-tilt-card" style="animation-delay: ${Math.min(index, 8) * 0.045}s; --day-tone: ${tone}" aria-labelledby="day-${group.dateKey}">
+            <div class="avail-day-label">
+              <span class="avail-day-swatch avail-chip-tone-${tone}" aria-hidden="true"></span>
+              <div>
+                <h3 id="day-${group.dateKey}" class="avail-day-title">${escapeHtml(group.label)}</h3>
+                <p class="avail-day-count">${group.slots.length} open</p>
+              </div>
             </div>
-            ${heatHtml(dayDate)}
-            <ul class="avail-slots">
-              ${group.slots
-                .map((slot, slotIndex) => {
-                  const label = formatTimeInZone(parseInstant(slot.start), visitorZone);
-                  const pressed = selectedSlotStart === slot.start ? 'true' : 'false';
-                  const delay = Math.min(slotIndex, 12) * 0.028;
-                  const slotBtn = `<button type="button" class="avail-slot" data-slot-start="${escapeHtml(slot.start)}" aria-pressed="${pressed}" style="animation-delay: ${delay}s">${escapeHtml(label)}</button>`;
-                  if (!bookingEnabled || !bookingUrl) {
-                    return `<li style="display:contents">${slotBtn}</li>`;
-                  }
-                  return `<li class="avail-slot-row" style="animation-delay: ${delay}s">
-                    ${slotBtn}
-                    <a class="avail-slot-book" href="${escapeHtml(bookingUrl)}" target="_blank" rel="noopener noreferrer" data-book-slot="${escapeHtml(slot.start)}">Book this time</a>
-                  </li>`;
-                })
-                .join('')}
-            </ul>
+            <div class="avail-day-body">
+              ${heatHtml(dayDate)}
+              <ul class="avail-slots">
+                ${group.slots
+                  .map((slot, slotIndex) => {
+                    const label = formatTimeInZone(parseInstant(slot.start), visitorZone);
+                    const pressed = selectedSlotStart === slot.start ? 'true' : 'false';
+                    const delay = Math.min(slotIndex, 12) * 0.028;
+                    const slotBtn = `<button type="button" class="avail-slot avail-chip-tone-${tone}" data-slot-start="${escapeHtml(slot.start)}" aria-pressed="${pressed}" style="animation-delay: ${delay}s">${escapeHtml(label)}</button>`;
+                    if (!bookingEnabled || !bookingUrl) {
+                      return `<li style="display:contents">${slotBtn}</li>`;
+                    }
+                    return `<li class="avail-slot-row" style="animation-delay: ${delay}s">
+                      ${slotBtn}
+                      <a class="avail-slot-book" href="${escapeHtml(bookingUrl)}" target="_blank" rel="noopener noreferrer" data-book-slot="${escapeHtml(slot.start)}">Book</a>
+                    </li>`;
+                  })
+                  .join('')}
+              </ul>
+            </div>
           </section>`;
         })
         .join('');

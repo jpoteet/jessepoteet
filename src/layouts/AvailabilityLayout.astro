@@ -1,0 +1,44 @@
+---
+/**
+ * Standalone full-viewport layout for /availability.
+ * No site header, nav, or footer. App-like chrome only.
+ */
+import BaseHead from '@/components/BaseHead.astro';
+
+interface Props {
+  title?: string;
+  description?: string;
+  image?: string;
+  noindex?: boolean;
+}
+
+const { title, description, image, noindex } = Astro.props;
+---
+
+<!doctype html>
+<html lang="en">
+  <head>
+    <BaseHead
+      title={title}
+      description={description}
+      image={image}
+      noindex={noindex}
+      personalOnly
+    />
+  </head>
+  <body class="avail-app">
+    <a
+      href="#main"
+      class="sr-only focus:not-sr-only focus:absolute focus:left-4 focus:top-4 focus:z-50 focus:rounded-md focus:bg-[var(--ap-blue-ink)] focus:px-4 focus:py-2 focus:text-white"
+    >
+      Skip to content
+    </a>
+    <a href="/" class="avail-wordmark" aria-label="Jesse Poteet home">
+      <span class="avail-wordmark-mark" aria-hidden="true">JP</span>
+      <span class="avail-wordmark-name">Jesse Poteet</span>
+    </a>
+    <main id="main" class="avail-app-main">
+      <slot />
+    </main>
+  </body>
+</html>
