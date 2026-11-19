@@ -12,17 +12,39 @@ interface Props {
   noindex?: boolean;
   /** Hide the site header chrome when the page paints its own hero band. */
   transparentHeader?: boolean;
+  /**
+   * Personal-hub chrome only: omit brand names/links from footer and JSON-LD.
+   * Used by /availability so branded destinations stay off that page.
+   */
+  personalOnly?: boolean;
+  /** Extra classes on <body> (e.g. product-dark skin for /availability). */
+  bodyClass?: string;
 }
 
-const { title, description, image, type, noindex } = Astro.props;
+const {
+  title,
+  description,
+  image,
+  type,
+  noindex,
+  personalOnly = false,
+  bodyClass = '',
+} = Astro.props;
 ---
 
 <!doctype html>
 <html lang="en">
   <head>
-    <BaseHead title={title} description={description} image={image} type={type} noindex={noindex} />
+    <BaseHead
+      title={title}
+      description={description}
+      image={image}
+      type={type}
+      noindex={noindex}
+      personalOnly={personalOnly}
+    />
   </head>
-  <body class="flex min-h-screen flex-col antialiased">
+  <body class:list={['flex min-h-screen flex-col antialiased', bodyClass]}>
     <a
       href="#main"
       class="sr-only focus:not-sr-only focus:absolute focus:left-4 focus:top-4 focus:z-50 focus:rounded-md focus:bg-[var(--color-accent)] focus:px-4 focus:py-2 focus:text-white"
@@ -33,7 +55,7 @@ const { title, description, image, type, noindex } = Astro.props;
     <main id="main" class="flex-1">
       <slot />
     </main>
-    <Footer />
+    <Footer personalOnly={personalOnly} />
     <ScrollReveal />
   </body>
 </html>

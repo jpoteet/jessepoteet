@@ -10,6 +10,8 @@ interface Props {
   canonicalURL?: string;
   type?: 'website' | 'article';
   noindex?: boolean;
+  /** When true, JSON-LD sameAs lists only personal social profiles (no brand URLs). */
+  personalOnly?: boolean;
 }
 
 const {
@@ -19,12 +21,13 @@ const {
   canonicalURL = Astro.url.href,
   type = 'website',
   noindex = false,
+  personalOnly = false,
 } = Astro.props;
 
 const pageTitle = title ? `${title} · ${SITE.name}` : `${SITE.name} · ${SITE.tagline}`;
 const absoluteImage = new URL(image, Astro.site).href;
 const canonical = new URL(canonicalURL, Astro.site).href;
-const sameAs = getResolvedSameAs();
+const sameAs = getResolvedSameAs({ personalOnly });
 
 const personJsonLd = {
   '@context': 'https://schema.org',

@@ -1,0 +1,798 @@
+---
+import { BOOKING_LINKS, personalAvailability } from '@/config/availability';
+
+interface Props {
+  durations?: readonly number[];
+  defaultDuration?: number;
+  headline?: string;
+  lead?: string;
+}
+
+const {
+  durations = personalAvailability.durations,
+  defaultDuration = personalAvailability.defaultDuration,
+  headline = personalAvailability.headline,
+  lead = personalAvailability.lead,
+} = Astro.props;
+
+const defaultIndex = Math.max(0, durations.indexOf(defaultDuration));
+
+const placeholders = [
+  'an hour next Tuesday afternoon',
+  '30 min this week before noon',
+  '90 minutes sometime next week',
+  '15 minutes tomorrow morning',
+];
+---
+
+<div
+  id="availability-finder"
+  class="availability-finder avail-app-grid"
+  data-booking-links={JSON.stringify(BOOKING_LINKS)}
+  data-default-duration={String(defaultDuration)}
+  data-durations={JSON.stringify(durations)}
+  data-placeholders={JSON.stringify(placeholders)}
+>
+  <aside class="avail-rail">
+    <div class="avail-rail-scroll">
+      <header class="avail-hero-block">
+        <p class="avail-greeting" data-greeting>Hey there</p>
+        <h1 class="avail-brand">{headline}</h1>
+        <p class="avail-lead">{lead}</p>
+        <p class="avail-funline" data-funline>Quiet mornings. Clear calendar. Real work. ☀️</p>
+      </header>
+
+      <div class="avail-hero-stat" data-hero>
+        <div class="avail-hero-top">
+          <p class="avail-hero-label">Next opening</p>
+          <p class="avail-tminus avail-mono" data-tminus>opens in --</p>
+        </div>
+        <p class="avail-hero-value" data-next-opening aria-live="polite">Loading…</p>
+        <p class="avail-hero-meta" data-next-meta></p>
+      </div>
+
+      <form class="avail-ask" data-ask-form>
+        <label class="avail-ask-label" for="avail-ask-input">Ask in plain English</label>
+        <div class="avail-ask-row">
+          <span class="avail-ask-prompt" aria-hidden="true">›</span>
+          <input
+            id="avail-ask-input"
+            class="avail-ask-input"
+            type="text"
+            autocomplete="off"
+            spellcheck="false"
+            placeholder={placeholders[0]}
+            data-ask-input
+          />
+          <button type="submit" class="avail-ask-go">Parse</button>
+        </div>
+        <div class="avail-ask-chips" data-ask-chips hidden></div>
+        <p class="avail-ask-msg" data-ask-msg hidden></p>
+      </form>
+
+      <div class="avail-status-row" aria-live="polite">
+        <div class="avail-live" data-live data-state="loading">
+          <span class="avail-live-dot" aria-hidden="true"></span>
+          <span data-live-label>Connecting…</span>
+        </div>
+        <div class="avail-chip avail-mono" data-sync hidden>synced 0m</div>
+        <div class="avail-chip" data-zone-chip>Detecting zone…</div>
+        <div class="avail-chip avail-chip-book" data-booking-badge hidden>Booking enabled</div>
+      </div>
+
+      <section aria-labelledby="length-heading">
+        <h2 id="length-heading" class="avail-section-label">How long?</h2>
+        <div
+          class="avail-chip-row"
+          role="group"
+          aria-label="Meeting length"
+          data-duration-segment
+          style={`--seg-count: ${durations.length}; --seg-index: ${defaultIndex};`}
+        >
+          {
+            durations.map((mins, i) => (
+              <button
+                type="button"
+                class={`duration-btn avail-pill avail-chip-tone avail-chip-tone-${i % 8}`}
+                data-duration={mins}
+                data-index={i}
+                aria-pressed={mins === defaultDuration ? 'true' : 'false'}
+              >
+                <span class="avail-mono">{mins}</span> min
+              </button>
+            ))
+          }
+        </div>
+        <p class="avail-hint">
+          Keys <span class="avail-kbd">1</span>
+          <span class="avail-kbd">2</span>
+          <span class="avail-kbd">3</span>
+          <span class="avail-kbd">4</span>
+        </p>
+      </section>
+
+      <section aria-labelledby="window-heading">
+        <h2 id="window-heading" class="avail-section-label">When?</h2>
+        <div class="avail-pills" role="group" aria-label="Date window">
+          <button type="button" class="avail-pill avail-chip-tone avail-chip-tone-0 window-btn" data-window="this-week" aria-pressed="true">This week</button>
+          <button type="button" class="avail-pill avail-chip-tone avail-chip-tone-4 window-btn" data-window="next-week" aria-pressed="false">Next week</button>
+          <button type="button" class="avail-pill avail-chip-tone avail-chip-tone-7 window-btn" data-window="custom" aria-pressed="false">Custom</button>
+        </div>
+
+        <div id="custom-range" class="avail-date-grid hidden" data-custom-range hidden>
+          <label class="avail-date-field">
+            <span>From</span>
+            <input type="date" id="range-start" />
+          </label>
+          <label class="avail-date-field">
+            <span>Through</span>
+            <input type="date" id="range-end" />
+          </label>
+        </div>
+
+        <div class="avail-pills" style="margin-top: 0.65rem;" role="group" aria-label="Morning or afternoon">
+          <button type="button" class="avail-pill avail-chip-tone avail-chip-tone-5 tod-btn" data-tod="all" aria-pressed="true">All</button>
+          <button type="button" class="avail-pill avail-chip-tone avail-chip-tone-3 tod-btn" data-tod="morning" aria-pressed="false">Morning</button>
+          <button type="button" class="avail-pill avail-chip-tone avail-chip-tone-1 tod-btn" data-tod="afternoon" aria-pressed="false">Afternoon</button>
+        </div>
+      </section>
+
+      <div class="avail-book-footer" data-book-footer hidden>
+        <p class="avail-pick-note" data-pick-note hidden></p>
+        <a
+          href="#"
+          class="avail-cta"
+          rel="noopener noreferrer"
+          target="_blank"
+          data-book-btn
+        >
+          Book a time
+          <span aria-hidden="true">↗</span>
+        </a>
+        <p class="avail-cta-note" data-book-note>
+          Opens the scheduling page in a new tab. Nothing is reserved here.
+        </p>
+      </div>
+    </div>
+  </aside>
+
+  <section class="avail-workspace" aria-label="Open times">
+    <div class="avail-workspace-bar">
+      <p class="avail-status" data-status>Checking the calendar…</p>
+    </div>
+    <div class="avail-skeleton" data-skeleton hidden>
+      <div class="avail-skel-line lg"></div>
+      <div class="avail-skel-line" style="width: 70%;"></div>
+      <div class="avail-skel-line" style="width: 52%;"></div>
+    </div>
+    <div id="slot-results" class="avail-board" data-results></div>
+  </section>
+</div>
+
+<script>
+  import { buildMockAvailabilityResponse } from '@/lib/availability/mock';
+  import { parseAvailabilityAsk } from '@/lib/availability/parseQuery';
+  import {
+    dayHeatStrip,
+    filterByTimeOfDay,
+    generateSlots,
+    groupSlotsByDay,
+    nextDateWithRoom,
+    nextOpening,
+  } from '@/lib/availability/slots';
+  import {
+    addDaysInZone,
+    dateKeyInZone,
+    detectVisitorTimeZone,
+    formatShortDate,
+    formatTimeInZone,
+    friendlyZoneName,
+    parseInstant,
+    startOfDayInZone,
+    startOfWeekMondayInZone,
+  } from '@/lib/availability/time';
+  import type {
+    AvailabilityResponse,
+    AvailabilitySuccess,
+    TimeOfDayFilter,
+    WindowPreset,
+  } from '@/lib/availability/types';
+
+  function escapeHtml(value: string) {
+    return value
+      .replaceAll('&', '&amp;')
+      .replaceAll('<', '&lt;')
+      .replaceAll('>', '&gt;')
+      .replaceAll('"', '&quot;');
+  }
+
+  function isLocalHost() {
+    const host = window.location.hostname;
+    return host === 'localhost' || host === '127.0.0.1';
+  }
+
+  /** Dev-only mock slots for local screenshots. Never on by default in production. */
+  function allowMockSlots() {
+    if (isLocalHost()) return true;
+    const params = new URLSearchParams(window.location.search);
+    if (params.get('mock') !== '1') return false;
+    // Preview hosts only. Production domain stays find/API-only.
+    const host = window.location.hostname;
+    return host.endsWith('.pages.dev') || host === '127.0.0.1' || host === 'localhost';
+  }
+
+  /** Mock screenshots should show Mountain Time open hours (9am–2pm MT). */
+  function resolveVisitorZone() {
+    if (allowMockSlots()) return 'America/Denver';
+    return detectVisitorTimeZone();
+  }
+
+  function greetingForMountain(now = new Date()) {
+    const hour = Number(
+      new Intl.DateTimeFormat('en-US', {
+        timeZone: 'America/Denver',
+        hour: 'numeric',
+        hourCycle: 'h23',
+      }).format(now),
+    );
+    if (hour < 12) return 'Good morning';
+    if (hour < 17) return 'Good afternoon';
+    return 'Good evening';
+  }
+
+  function prefersReducedMotion() {
+    return window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+  }
+
+  const root = document.getElementById('availability-finder');
+  if (root) {
+    const durations = JSON.parse(root.dataset.durations || '[15,30,60,90]') as number[];
+    const placeholders = JSON.parse(root.dataset.placeholders || '[]') as string[];
+    const defaultDuration = Number(root.dataset.defaultDuration || 30);
+    const bookingLinks = JSON.parse(root.dataset.bookingLinks || '{}') as Record<string, string>;
+    const bookParam = new URLSearchParams(window.location.search).get('book');
+    const bookingCode =
+      bookParam == null ? '' : bookParam.trim().toLowerCase();
+    const bookingUrl = bookingCode ? bookingLinks[bookingCode] || '' : '';
+    const bookingEnabled = Boolean(bookingUrl);
+    let duration = defaultDuration;
+    let windowPreset: WindowPreset = 'this-week';
+    let timeOfDay: TimeOfDayFilter = 'all';
+    let data: AvailabilitySuccess | null = null;
+    let loadError: string | null = null;
+    let fetchedAt: number | null = null;
+    let selectedSlotStart: string | null = null;
+    let nextOpeningIso: string | null = null;
+    let heroAnimToken = 0;
+    const visitorZone = resolveVisitorZone();
+
+    const statusEl = root.querySelector('[data-status]') as HTMLElement;
+    const greetingEl = root.querySelector('[data-greeting]') as HTMLElement | null;
+    const funlineEl = root.querySelector('[data-funline]') as HTMLElement | null;
+    const resultsEl = root.querySelector('[data-results]') as HTMLElement;
+    const nextEl = root.querySelector('[data-next-opening]') as HTMLElement;
+    const nextMetaEl = root.querySelector('[data-next-meta]') as HTMLElement;
+    const tminusEl = root.querySelector('[data-tminus]') as HTMLElement;
+    const liveEl = root.querySelector('[data-live]') as HTMLElement;
+    const liveLabelEl = root.querySelector('[data-live-label]') as HTMLElement;
+    const syncEl = root.querySelector('[data-sync]') as HTMLElement;
+    const zoneChipEl = root.querySelector('[data-zone-chip]') as HTMLElement;
+    const skeletonEl = root.querySelector('[data-skeleton]') as HTMLElement;
+    const customWrap = root.querySelector('[data-custom-range]') as HTMLElement;
+    const durationSegment = root.querySelector('[data-duration-segment]') as HTMLElement;
+    const rangeStartInput = root.querySelector('#range-start') as HTMLInputElement;
+    const rangeEndInput = root.querySelector('#range-end') as HTMLInputElement;
+    const askForm = root.querySelector('[data-ask-form]') as HTMLFormElement;
+    const askInput = root.querySelector('[data-ask-input]') as HTMLInputElement;
+    const askChips = root.querySelector('[data-ask-chips]') as HTMLElement;
+    const askMsg = root.querySelector('[data-ask-msg]') as HTMLElement;
+    const pickNoteEl = root.querySelector('[data-pick-note]') as HTMLElement | null;
+    const bookBtn = root.querySelector('[data-book-btn]') as HTMLAnchorElement | null;
+    const bookFooter = root.querySelector('[data-book-footer]') as HTMLElement | null;
+    const bookingBadge = root.querySelector('[data-booking-badge]') as HTMLElement | null;
+
+    if (bookingEnabled && bookingUrl) {
+      if (bookFooter) bookFooter.hidden = false;
+      if (bookingBadge) bookingBadge.hidden = false;
+      if (bookBtn) bookBtn.href = bookingUrl;
+    }
+
+    function unavailableMessage() {
+      if (bookingEnabled && bookingUrl) {
+        return 'Availability is unavailable right now. You can still book a time with the button below.';
+      }
+      return 'Availability is unavailable right now. Try again in a few minutes.';
+    }
+
+    function updatePickNote() {
+      if (!pickNoteEl || !bookingEnabled) return;
+      if (!selectedSlotStart) {
+        pickNoteEl.hidden = true;
+        pickNoteEl.textContent = '';
+        return;
+      }
+      const label = formatTimeInZone(parseInstant(selectedSlotStart), visitorZone);
+      pickNoteEl.textContent = `Pick ${label} on the next page.`;
+      pickNoteEl.hidden = false;
+    }
+
+    function selectSlot(start: string | null) {
+      selectedSlotStart = start;
+      resultsEl.querySelectorAll('[data-slot-start]').forEach((other) => {
+        const el = other as HTMLElement;
+        other.setAttribute('aria-pressed', el.dataset.slotStart === start ? 'true' : 'false');
+      });
+      updatePickNote();
+    }
+
+    zoneChipEl.textContent = friendlyZoneName(visitorZone);
+    zoneChipEl.title = `Times shown in ${friendlyZoneName(visitorZone)}. Jesse’s open hours are Mountain Time.`;
+
+    if (greetingEl) {
+      greetingEl.textContent = `${greetingForMountain()} 👋`;
+    }
+
+    const funLines = [
+      'Quiet mornings. Clear calendar. Real work. ☀️',
+      'Probably outside when the inbox goes quiet. 🎣',
+      'Coffee first. Then the next open slot. ☕',
+      'Colorado light, then deep work. 🏔️',
+      'Leave a little room for the river. 🌲',
+    ];
+    if (funlineEl && !prefersReducedMotion()) {
+      let fi = 0;
+      window.setInterval(() => {
+        fi = (fi + 1) % funLines.length;
+        funlineEl.style.opacity = '0';
+        window.setTimeout(() => {
+          funlineEl.textContent = funLines[fi];
+          funlineEl.style.opacity = '1';
+        }, 180);
+      }, 5200);
+    }
+
+    const todayKey = dateKeyInZone(new Date(), visitorZone);
+    rangeStartInput.min = todayKey;
+    rangeEndInput.min = todayKey;
+    rangeStartInput.value = todayKey;
+    rangeEndInput.value = dateKeyInZone(
+      addDaysInZone(startOfDayInZone(new Date(), visitorZone), 6, visitorZone),
+      visitorZone,
+    );
+
+    // Rotating ask placeholders
+    if (placeholders.length && !prefersReducedMotion()) {
+      let pi = 0;
+      window.setInterval(() => {
+        if (document.activeElement === askInput || askInput.value) return;
+        pi = (pi + 1) % placeholders.length;
+        askInput.placeholder = placeholders[pi];
+      }, 3800);
+    }
+
+    function setPressed(selector: string, attr: string, value: string) {
+      root!.querySelectorAll(selector).forEach((btn) => {
+        const el = btn as HTMLElement;
+        el.setAttribute('aria-pressed', el.getAttribute(attr) === value ? 'true' : 'false');
+      });
+    }
+
+    function flashPanel() {
+      if (prefersReducedMotion()) return;
+      root!.dataset.flash = 'false';
+      void root!.offsetWidth;
+      root!.dataset.flash = 'true';
+      window.setTimeout(() => {
+        root!.dataset.flash = 'false';
+      }, 480);
+    }
+
+    function setDuration(next: number, opts: { animate?: boolean } = {}) {
+      if (!durations.includes(next)) return;
+      duration = next;
+      durationSegment.style.setProperty('--seg-index', String(durations.indexOf(next)));
+      setPressed('.duration-btn', 'data-duration', String(duration));
+      selectedSlotStart = null;
+      if (opts.animate !== false) flashPanel();
+      render({ animateHero: true });
+    }
+
+    function applyAsk(raw: string) {
+      const parsed = parseAvailabilityAsk(raw, {
+        visitorTimeZone: visitorZone,
+        durations,
+      });
+      if (!parsed.ok) {
+        askChips.hidden = true;
+        askChips.innerHTML = '';
+        askMsg.hidden = false;
+        askMsg.textContent = parsed.message;
+        return;
+      }
+
+      askMsg.hidden = true;
+      askChips.hidden = false;
+      askChips.innerHTML = parsed.chips
+        .map(
+          (chip) =>
+            `<button type="button" class="avail-ask-chip" data-chip-kind="${chip.kind}">${escapeHtml(chip.label)} <span aria-hidden="true">×</span></button>`,
+        )
+        .join('');
+
+      setDuration(parsed.durationMinutes, { animate: false });
+      timeOfDay = parsed.timeOfDay;
+      setPressed('.tod-btn', 'data-tod', timeOfDay);
+      windowPreset = parsed.windowPreset;
+      setPressed('.window-btn', 'data-window', windowPreset);
+      const showCustom = windowPreset === 'custom';
+      customWrap.hidden = !showCustom;
+      customWrap.classList.toggle('hidden', !showCustom);
+      if (parsed.rangeStartKey) rangeStartInput.value = parsed.rangeStartKey;
+      if (parsed.rangeEndKey) rangeEndInput.value = parsed.rangeEndKey;
+
+      askChips.querySelectorAll('[data-chip-kind]').forEach((btn) => {
+        btn.addEventListener('click', () => {
+          const kind = (btn as HTMLElement).dataset.chipKind;
+          if (kind === 'tod') {
+            timeOfDay = 'all';
+            setPressed('.tod-btn', 'data-tod', 'all');
+          } else if (kind === 'window') {
+            windowPreset = 'this-week';
+            setPressed('.window-btn', 'data-window', 'this-week');
+            customWrap.hidden = true;
+            customWrap.classList.add('hidden');
+          }
+          btn.remove();
+          if (!askChips.children.length) askChips.hidden = true;
+          flashPanel();
+          render({ animateHero: true });
+        });
+      });
+
+      flashPanel();
+      render({ animateHero: true });
+    }
+
+    function windowExclusiveEnd(now = new Date()): Date {
+      if (windowPreset === 'custom' && rangeEndInput.value) {
+        const endStart = startOfDayInZone(
+          parseInstant(`${rangeEndInput.value}T17:00:00.000Z`),
+          visitorZone,
+        );
+        return addDaysInZone(endStart, 1, visitorZone);
+      }
+      const monday = startOfWeekMondayInZone(now, visitorZone);
+      if (windowPreset === 'this-week') return addDaysInZone(monday, 7, visitorZone);
+      return addDaysInZone(monday, 14, visitorZone);
+    }
+
+    function updateSyncLabel() {
+      if (!fetchedAt) {
+        syncEl.hidden = true;
+        return;
+      }
+      const mins = Math.max(0, Math.floor((Date.now() - fetchedAt) / 60000));
+      syncEl.hidden = false;
+      syncEl.textContent = mins === 0 ? 'synced 0m' : `synced ${mins}m`;
+    }
+
+    function updateTminus() {
+      if (!nextOpeningIso) {
+        tminusEl.textContent = 'opens in --';
+        return;
+      }
+      const ms = parseInstant(nextOpeningIso).getTime() - Date.now();
+      if (ms <= 0) {
+        tminusEl.textContent = 'open now';
+        return;
+      }
+      const total = Math.floor(ms / 1000);
+      const h = Math.floor(total / 3600);
+      const m = Math.floor((total % 3600) / 60);
+      const s = total % 60;
+      const pad = (n: number) => String(n).padStart(2, '0');
+      tminusEl.textContent =
+        h > 48
+          ? `opens in ${Math.floor(h / 24)}d ${pad(h % 24)}h`
+          : `opens in ${pad(h)}:${pad(m)}:${pad(s)}`;
+    }
+
+    function setLive(state: 'loading' | 'live' | 'error', label: string) {
+      liveEl.dataset.state = state;
+      liveLabelEl.textContent = label;
+    }
+
+    function showSkeleton(show: boolean) {
+      skeletonEl.hidden = !show;
+      if (show) resultsEl.innerHTML = '';
+    }
+
+    function renderError() {
+      nextEl.textContent = 'Unavailable right now';
+      nextMetaEl.textContent = '';
+      nextOpeningIso = null;
+      updateTminus();
+      resultsEl.innerHTML = '';
+      showSkeleton(false);
+      setLive('error', 'Availability is unavailable right now');
+      statusEl.innerHTML = `<div class="avail-empty"><strong>Availability is unavailable right now</strong>${escapeHtml(
+        loadError || unavailableMessage(),
+      )}</div>`;
+    }
+
+    function renderHero(openingText: string, metaText: string, animate: boolean) {
+      const token = ++heroAnimToken;
+      if (animate && !prefersReducedMotion()) {
+        nextEl.dataset.animate = 'false';
+        void nextEl.offsetWidth;
+        nextEl.dataset.animate = 'true';
+      } else {
+        nextEl.dataset.animate = 'false';
+      }
+      nextEl.textContent = openingText;
+      nextMetaEl.textContent = metaText;
+      window.setTimeout(() => {
+        if (token === heroAnimToken) nextEl.dataset.animate = 'false';
+      }, 500);
+    }
+
+    function heatHtml(dayDate: Date) {
+      if (!data) return '';
+      const cells = dayHeatStrip(dayDate, data.busy, data.meta);
+      return `<div class="avail-heat" aria-hidden="true">${cells
+        .map((c) => `<span data-open="${c.open ? 'true' : 'false'}"></span>`)
+        .join('')}</div>`;
+    }
+
+    function render(opts: { animateHero?: boolean } = {}) {
+      if (!data) {
+        renderError();
+        return;
+      }
+
+      showSkeleton(false);
+      setLive('live', "Live from Jesse’s calendar");
+      updateSyncLabel();
+
+      const opening = nextOpening(data.busy, data.meta, duration);
+      if (opening) {
+        const start = parseInstant(opening.start);
+        nextOpeningIso = opening.start;
+        renderHero(
+          `${formatShortDate(start, visitorZone)} · ${formatTimeInZone(start, visitorZone)}`,
+          `${duration} min · ${friendlyZoneName(visitorZone)}`,
+          !!opts.animateHero,
+        );
+      } else {
+        nextOpeningIso = null;
+        renderHero(`No openings for ${duration} min`, 'in the next few weeks', !!opts.animateHero);
+      }
+      updateTminus();
+
+      const query =
+        windowPreset === 'custom'
+          ? {
+              durationMinutes: duration,
+              visitorTimeZone: visitorZone,
+              rangeStartKey: rangeStartInput.value,
+              rangeEndKey: rangeEndInput.value,
+            }
+          : {
+              durationMinutes: duration,
+              visitorTimeZone: visitorZone,
+              preset: windowPreset,
+            };
+
+      let slots = generateSlots(data.busy, data.meta, query);
+      slots = filterByTimeOfDay(slots, visitorZone, timeOfDay);
+      const groups = groupSlotsByDay(slots, visitorZone);
+
+      if (!groups.length) {
+        const hint = nextDateWithRoom(
+          data.busy,
+          data.meta,
+          duration,
+          visitorZone,
+          windowExclusiveEnd(),
+        );
+        let detail = 'Nothing open in that window.';
+        if (hint) detail += ` The next day with room is ${hint.label}.`;
+        else detail += ' There is not another opening in the loaded range either.';
+        statusEl.innerHTML = `<div class="avail-empty"><strong>Quiet for that filter</strong>${escapeHtml(detail)}</div>`;
+        resultsEl.className = 'avail-board';
+        resultsEl.innerHTML = '';
+        return;
+      }
+
+      statusEl.innerHTML = `<span class="avail-status-count">${slots.length}</span> open start${slots.length === 1 ? '' : 's'} · Mountain Time open window 9am–2pm`;
+      resultsEl.className = 'avail-board';
+      resultsEl.innerHTML = groups
+        .map((group, index) => {
+          const dayDate = parseInstant(group.slots[0].start);
+          const tone = index % 8;
+          return `
+          <section class="avail-day-row avail-tilt-card" style="animation-delay: ${Math.min(index, 8) * 0.045}s; --day-tone: ${tone}" aria-labelledby="day-${group.dateKey}">
+            <div class="avail-day-label">
+              <span class="avail-day-swatch avail-chip-tone-${tone}" aria-hidden="true"></span>
+              <div>
+                <h3 id="day-${group.dateKey}" class="avail-day-title">${escapeHtml(group.label)}</h3>
+                <p class="avail-day-count">${group.slots.length} open</p>
+              </div>
+            </div>
+            <div class="avail-day-body">
+              ${heatHtml(dayDate)}
+              <ul class="avail-slots">
+                ${group.slots
+                  .map((slot, slotIndex) => {
+                    const label = formatTimeInZone(parseInstant(slot.start), visitorZone);
+                    const pressed = selectedSlotStart === slot.start ? 'true' : 'false';
+                    const delay = Math.min(slotIndex, 12) * 0.028;
+                    const slotBtn = `<button type="button" class="avail-slot avail-chip-tone-${tone}" data-slot-start="${escapeHtml(slot.start)}" aria-pressed="${pressed}" style="animation-delay: ${delay}s">${escapeHtml(label)}</button>`;
+                    if (!bookingEnabled || !bookingUrl) {
+                      return `<li style="display:contents">${slotBtn}</li>`;
+                    }
+                    return `<li class="avail-slot-row" style="animation-delay: ${delay}s">
+                      ${slotBtn}
+                      <a class="avail-slot-book" href="${escapeHtml(bookingUrl)}" target="_blank" rel="noopener noreferrer" data-book-slot="${escapeHtml(slot.start)}">Book</a>
+                    </li>`;
+                  })
+                  .join('')}
+              </ul>
+            </div>
+          </section>`;
+        })
+        .join('');
+
+      resultsEl.querySelectorAll('[data-slot-start]').forEach((btn) => {
+        btn.addEventListener('click', () => {
+          selectSlot((btn as HTMLElement).dataset.slotStart || null);
+        });
+      });
+
+      resultsEl.querySelectorAll('[data-book-slot]').forEach((link) => {
+        link.addEventListener('click', () => {
+          selectSlot((link as HTMLElement).dataset.bookSlot || null);
+        });
+      });
+
+      updatePickNote();
+      attachTilt();
+    }
+
+    function attachTilt() {
+      if (prefersReducedMotion()) return;
+      root!.querySelectorAll('.avail-tilt-card').forEach((card) => {
+        const el = card as HTMLElement;
+        el.onpointermove = (e) => {
+          const r = el.getBoundingClientRect();
+          const px = (e.clientX - r.left) / r.width - 0.5;
+          const py = (e.clientY - r.top) / r.height - 0.5;
+          el.style.transform = `perspective(900px) rotateX(${(-py * 4).toFixed(2)}deg) rotateY(${(px * 5).toFixed(2)}deg) translateY(-1px)`;
+        };
+        el.onpointerleave = () => {
+          el.style.transform = '';
+        };
+      });
+    }
+
+    // Panel tilt
+    if (!prefersReducedMotion()) {
+      root.addEventListener('pointermove', (e) => {
+        const r = root.getBoundingClientRect();
+        const px = (e.clientX - r.left) / r.width - 0.5;
+        const py = (e.clientY - r.top) / r.height - 0.5;
+        root.style.setProperty('--tilt-x', `${(-py * 1.4).toFixed(3)}deg`);
+        root.style.setProperty('--tilt-y', `${(px * 1.8).toFixed(3)}deg`);
+      });
+      root.addEventListener('pointerleave', () => {
+        root.style.setProperty('--tilt-x', '0deg');
+        root.style.setProperty('--tilt-y', '0deg');
+      });
+    }
+
+    async function loadAvailability() {
+      statusEl.textContent = 'Checking the calendar…';
+      resultsEl.innerHTML = '';
+      showSkeleton(true);
+      setLive('loading', 'Connecting…');
+      loadError = null;
+      try {
+        const res = await fetch('/api/availability', { headers: { Accept: 'application/json' } });
+        const json = (await res.json()) as AvailabilityResponse;
+        if (json.ok) {
+          data = json;
+          fetchedAt = Date.now();
+          render({ animateHero: true });
+          return;
+        }
+        if (allowMockSlots()) {
+          data = buildMockAvailabilityResponse();
+          fetchedAt = Date.now();
+          render({ animateHero: true });
+          return;
+        }
+        loadError = json.message || unavailableMessage();
+        data = null;
+        renderError();
+      } catch {
+        if (allowMockSlots()) {
+          data = buildMockAvailabilityResponse();
+          fetchedAt = Date.now();
+          render({ animateHero: true });
+          return;
+        }
+        loadError = unavailableMessage();
+        data = null;
+        renderError();
+      }
+    }
+
+    askForm.addEventListener('submit', (e) => {
+      e.preventDefault();
+      applyAsk(askInput.value);
+    });
+
+    root.querySelectorAll('.duration-btn').forEach((btn) => {
+      btn.addEventListener('click', () => setDuration(Number((btn as HTMLElement).dataset.duration)));
+    });
+
+    root.querySelectorAll('.window-btn').forEach((btn) => {
+      btn.addEventListener('click', () => {
+        windowPreset = ((btn as HTMLElement).dataset.window || 'this-week') as WindowPreset;
+        setPressed('.window-btn', 'data-window', windowPreset);
+        const showCustom = windowPreset === 'custom';
+        customWrap.hidden = !showCustom;
+        customWrap.classList.toggle('hidden', !showCustom);
+        selectedSlotStart = null;
+        flashPanel();
+        render({ animateHero: true });
+      });
+    });
+
+    root.querySelectorAll('.tod-btn').forEach((btn) => {
+      btn.addEventListener('click', () => {
+        timeOfDay = ((btn as HTMLElement).dataset.tod || 'all') as TimeOfDayFilter;
+        setPressed('.tod-btn', 'data-tod', timeOfDay);
+        selectedSlotStart = null;
+        flashPanel();
+        render();
+      });
+    });
+
+    rangeStartInput.addEventListener('change', () => {
+      if (rangeEndInput.value < rangeStartInput.value) rangeEndInput.value = rangeStartInput.value;
+      rangeEndInput.min = rangeStartInput.value;
+      if (windowPreset === 'custom') render();
+    });
+    rangeEndInput.addEventListener('change', () => {
+      if (windowPreset === 'custom') render();
+    });
+
+    window.addEventListener('keydown', (event) => {
+      const target = event.target as HTMLElement | null;
+      if (target && (target.tagName === 'INPUT' || target.tagName === 'TEXTAREA' || target.isContentEditable)) {
+        return;
+      }
+      const map: Record<string, number> = {
+        '1': durations[0],
+        '2': durations[1],
+        '3': durations[2],
+        '4': durations[3],
+      };
+      if (map[event.key]) {
+        event.preventDefault();
+        setDuration(map[event.key]);
+      }
+    });
+
+    if (bookBtn && bookingEnabled) {
+      bookBtn.addEventListener('click', () => {
+        updatePickNote();
+      });
+    }
+
+    window.setInterval(updateSyncLabel, 30000);
+    window.setInterval(updateTminus, 1000);
+    void loadAvailability();
+  }
+</script>
