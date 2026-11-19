@@ -1,0 +1,492 @@
+---
+import { personalAvailability } from '@/config/availability';
+
+interface Props {
+  bookingUrl?: string;
+  bookingCta?: string;
+  durations?: readonly number[];
+  defaultDuration?: number;
+}
+
+const {
+  bookingUrl = personalAvailability.bookingUrl,
+  bookingCta = personalAvailability.bookingCta,
+  durations = personalAvailability.durations,
+  defaultDuration = personalAvailability.defaultDuration,
+} = Astro.props;
+---
+
+<div
+  id="availability-finder"
+  class="availability-finder"
+  data-booking-url={bookingUrl}
+  data-default-duration={String(defaultDuration)}
+  data-durations={JSON.stringify(durations)}
+>
+  <div class="space-y-8" data-controls>
+    <section aria-labelledby="length-heading">
+      <h2 id="length-heading" class="font-display text-xl font-semibold sm:text-2xl">
+        1. How long do you need?
+      </h2>
+      <div class="mt-4 flex flex-wrap gap-2" role="group" aria-label="Meeting length">
+        {
+          durations.map((mins) => (
+            <button
+              type="button"
+              class="duration-btn rounded-md border border-[var(--color-line)] bg-[var(--color-canvas-elevated)] px-4 py-2.5 text-sm font-semibold text-[var(--color-ink)] transition hover:border-[var(--color-ink)] dark:border-[var(--color-dark-line)] dark:bg-[var(--color-dark-elevated)] dark:text-[var(--color-dark-ink)] dark:hover:border-[var(--color-dark-muted)]"
+              data-duration={mins}
+              aria-pressed={mins === defaultDuration ? 'true' : 'false'}
+            >
+              {mins} min
+            </button>
+          ))
+        }
+      </div>
+    </section>
+
+    <section aria-labelledby="window-heading">
+      <h2 id="window-heading" class="font-display text-xl font-semibold sm:text-2xl">
+        2. When should we look?
+      </h2>
+      <div class="mt-4 flex flex-wrap gap-2" role="group" aria-label="Date window">
+        <button
+          type="button"
+          class="window-btn rounded-md border border-[var(--color-line)] bg-[var(--color-canvas-elevated)] px-4 py-2.5 text-sm font-semibold transition hover:border-[var(--color-ink)] dark:border-[var(--color-dark-line)] dark:bg-[var(--color-dark-elevated)] dark:hover:border-[var(--color-dark-muted)]"
+          data-window="this-week"
+          aria-pressed="true"
+        >
+          This week
+        </button>
+        <button
+          type="button"
+          class="window-btn rounded-md border border-[var(--color-line)] bg-[var(--color-canvas-elevated)] px-4 py-2.5 text-sm font-semibold transition hover:border-[var(--color-ink)] dark:border-[var(--color-dark-line)] dark:bg-[var(--color-dark-elevated)] dark:hover:border-[var(--color-dark-muted)]"
+          data-window="next-week"
+          aria-pressed="false"
+        >
+          Next week
+        </button>
+        <button
+          type="button"
+          class="window-btn rounded-md border border-[var(--color-line)] bg-[var(--color-canvas-elevated)] px-4 py-2.5 text-sm font-semibold transition hover:border-[var(--color-ink)] dark:border-[var(--color-dark-line)] dark:bg-[var(--color-dark-elevated)] dark:hover:border-[var(--color-dark-muted)]"
+          data-window="custom"
+          aria-pressed="false"
+        >
+          Custom range
+        </button>
+      </div>
+      <div
+        id="custom-range"
+        class="mt-4 hidden grid gap-3 sm:grid-cols-2"
+        data-custom-range
+      >
+        <label class="block text-sm">
+          <span class="text-[var(--color-ink-muted)] dark:text-[var(--color-dark-muted)]">From</span>
+          <input
+            type="date"
+            id="range-start"
+            class="mt-1 w-full rounded-md border border-[var(--color-line)] bg-[var(--color-canvas-elevated)] px-3 py-2 text-[var(--color-ink)] dark:border-[var(--color-dark-line)] dark:bg-[var(--color-dark-elevated)] dark:text-[var(--color-dark-ink)]"
+          />
+        </label>
+        <label class="block text-sm">
+          <span class="text-[var(--color-ink-muted)] dark:text-[var(--color-dark-muted)]">Through</span>
+          <input
+            type="date"
+            id="range-end"
+            class="mt-1 w-full rounded-md border border-[var(--color-line)] bg-[var(--color-canvas-elevated)] px-3 py-2 text-[var(--color-ink)] dark:border-[var(--color-dark-line)] dark:bg-[var(--color-dark-elevated)] dark:text-[var(--color-dark-ink)]"
+          />
+        </label>
+      </div>
+    </section>
+
+    <section aria-labelledby="filter-heading">
+      <h2 id="filter-heading" class="sr-only">Time of day filter</h2>
+      <div class="flex flex-wrap gap-2" role="group" aria-label="Morning or afternoon">
+        <button
+          type="button"
+          class="tod-btn rounded-md border border-[var(--color-line)] px-3 py-2 text-sm font-medium transition hover:border-[var(--color-ink)] dark:border-[var(--color-dark-line)] dark:hover:border-[var(--color-dark-muted)]"
+          data-tod="all"
+          aria-pressed="true"
+        >
+          All times
+        </button>
+        <button
+          type="button"
+          class="tod-btn rounded-md border border-[var(--color-line)] px-3 py-2 text-sm font-medium transition hover:border-[var(--color-ink)] dark:border-[var(--color-dark-line)] dark:hover:border-[var(--color-dark-muted)]"
+          data-tod="morning"
+          aria-pressed="false"
+        >
+          Morning
+        </button>
+        <button
+          type="button"
+          class="tod-btn rounded-md border border-[var(--color-line)] px-3 py-2 text-sm font-medium transition hover:border-[var(--color-ink)] dark:border-[var(--color-dark-line)] dark:hover:border-[var(--color-dark-muted)]"
+          data-tod="afternoon"
+          aria-pressed="false"
+        >
+          Afternoon
+        </button>
+      </div>
+    </section>
+  </div>
+
+  <div class="mt-10 border-t border-[var(--color-line)] pt-8 dark:border-[var(--color-dark-line)]">
+    <p
+      id="zone-note"
+      class="text-sm text-[var(--color-ink-muted)] dark:text-[var(--color-dark-muted)]"
+      data-zone-note
+    >
+      Loading your time zone…
+    </p>
+    <p
+      id="next-opening"
+      class="mt-3 font-display text-lg font-semibold text-[var(--color-ink)] dark:text-[var(--color-dark-ink)] sm:text-xl"
+      data-next-opening
+      aria-live="polite"
+    ></p>
+
+    <div
+      id="availability-status"
+      class="mt-6 text-[var(--color-ink-muted)] dark:text-[var(--color-dark-muted)]"
+      data-status
+      aria-live="polite"
+    >
+      Checking the calendar…
+    </div>
+
+    <div id="slot-results" class="mt-8 space-y-8" data-results></div>
+
+    <div class="mt-10">
+      <a
+        href={bookingUrl}
+        class="btn-primary"
+        rel="noopener noreferrer"
+        data-book-btn
+      >
+        {bookingCta}
+      </a>
+      <p class="mt-3 text-sm text-[var(--color-ink-muted)] dark:text-[var(--color-dark-muted)]">
+        Booking happens on Jesse’s scheduling page. Nothing is reserved here.
+      </p>
+    </div>
+  </div>
+</div>
+
+<style>
+  .availability-finder .duration-btn[aria-pressed='true'],
+  .availability-finder .window-btn[aria-pressed='true'],
+  .availability-finder .tod-btn[aria-pressed='true'] {
+    background: var(--color-accent);
+    border-color: var(--color-accent);
+    color: #fff;
+  }
+
+  :global(.dark) .availability-finder .duration-btn[aria-pressed='true'],
+  :global(.dark) .availability-finder .window-btn[aria-pressed='true'],
+  :global(.dark) .availability-finder .tod-btn[aria-pressed='true'] {
+    background: var(--color-dark-accent);
+    border-color: var(--color-dark-accent);
+    color: var(--color-dark-canvas);
+  }
+
+  .availability-finder .slot-chip {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    border: 1px solid var(--color-line);
+    background: var(--color-canvas-elevated);
+    border-radius: 0.375rem;
+    padding: 0.5rem 0.85rem;
+    font-size: 0.875rem;
+    font-weight: 600;
+    color: var(--color-ink);
+  }
+
+  :global(.dark) .availability-finder .slot-chip {
+    border-color: var(--color-dark-line);
+    background: var(--color-dark-elevated);
+    color: var(--color-dark-ink);
+  }
+
+  .availability-finder .day-group {
+    animation: avail-fade 0.35s ease both;
+  }
+
+  @keyframes avail-fade {
+    from {
+      opacity: 0;
+      transform: translateY(8px);
+    }
+    to {
+      opacity: 1;
+      transform: translateY(0);
+    }
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .availability-finder .day-group {
+      animation: none;
+    }
+  }
+</style>
+
+<script>
+  import { buildMockAvailabilityResponse } from '@/lib/availability/mock';
+  import {
+    filterByTimeOfDay,
+    generateSlots,
+    groupSlotsByDay,
+    nextDateWithRoom,
+    nextOpening,
+  } from '@/lib/availability/slots';
+  import {
+    addDaysInZone,
+    dateKeyInZone,
+    detectVisitorTimeZone,
+    formatShortDate,
+    formatTimeInZone,
+    friendlyZoneName,
+    parseInstant,
+    startOfDayInZone,
+    startOfWeekMondayInZone,
+  } from '@/lib/availability/time';
+  import type {
+    AvailabilityResponse,
+    AvailabilitySuccess,
+    TimeOfDayFilter,
+    WindowPreset,
+  } from '@/lib/availability/types';
+
+  function escapeHtml(value: string) {
+    return value
+      .replaceAll('&', '&amp;')
+      .replaceAll('<', '&lt;')
+      .replaceAll('>', '&gt;')
+      .replaceAll('"', '&quot;');
+  }
+
+  function isLocalHost() {
+    const host = window.location.hostname;
+    return host === 'localhost' || host === '127.0.0.1';
+  }
+
+  const root = document.getElementById('availability-finder');
+  if (root) {
+    const defaultDuration = Number(root.dataset.defaultDuration || 30);
+    let duration = defaultDuration;
+    let windowPreset: WindowPreset = 'this-week';
+    let timeOfDay: TimeOfDayFilter = 'all';
+    let data: AvailabilitySuccess | null = null;
+    let loadError: string | null = null;
+    const visitorZone = detectVisitorTimeZone();
+
+    const statusEl = root.querySelector('[data-status]') as HTMLElement;
+    const resultsEl = root.querySelector('[data-results]') as HTMLElement;
+    const nextEl = root.querySelector('[data-next-opening]') as HTMLElement;
+    const zoneEl = root.querySelector('[data-zone-note]') as HTMLElement;
+    const customWrap = root.querySelector('[data-custom-range]') as HTMLElement;
+    const rangeStartInput = root.querySelector('#range-start') as HTMLInputElement;
+    const rangeEndInput = root.querySelector('#range-end') as HTMLInputElement;
+
+    zoneEl.textContent = `Times are shown in your time zone (${friendlyZoneName(visitorZone)}). Jesse’s open hours are Mountain Time.`;
+
+    const todayKey = dateKeyInZone(new Date(), visitorZone);
+    rangeStartInput.min = todayKey;
+    rangeEndInput.min = todayKey;
+    rangeStartInput.value = todayKey;
+    rangeEndInput.value = dateKeyInZone(
+      addDaysInZone(startOfDayInZone(new Date(), visitorZone), 6, visitorZone),
+      visitorZone,
+    );
+
+    function setPressed(selector: string, attr: string, value: string) {
+      root!.querySelectorAll(selector).forEach((btn) => {
+        const el = btn as HTMLElement;
+        el.setAttribute(
+          'aria-pressed',
+          el.getAttribute(attr) === value ? 'true' : 'false',
+        );
+      });
+    }
+
+    function windowExclusiveEnd(now = new Date()): Date {
+      if (windowPreset === 'custom' && rangeEndInput.value) {
+        const endStart = startOfDayInZone(
+          parseInstant(`${rangeEndInput.value}T17:00:00.000Z`),
+          visitorZone,
+        );
+        return addDaysInZone(endStart, 1, visitorZone);
+      }
+
+      const monday = startOfWeekMondayInZone(now, visitorZone);
+      if (windowPreset === 'this-week') {
+        return addDaysInZone(monday, 7, visitorZone);
+      }
+      return addDaysInZone(monday, 14, visitorZone);
+    }
+
+    function renderError() {
+      nextEl.textContent = '';
+      resultsEl.innerHTML = '';
+      statusEl.textContent =
+        loadError ||
+        'Availability is unavailable right now. You can still book a time on Jesse’s scheduling page.';
+    }
+
+    function render() {
+      if (!data) {
+        renderError();
+        return;
+      }
+
+      const opening = nextOpening(data.busy, data.meta, duration);
+      if (opening) {
+        const start = parseInstant(opening.start);
+        nextEl.textContent = `Next opening for ${duration} minutes: ${formatShortDate(start, visitorZone)} at ${formatTimeInZone(start, visitorZone)}`;
+      } else {
+        nextEl.textContent = `No openings for ${duration} minutes in the next few weeks.`;
+      }
+
+      const query =
+        windowPreset === 'custom'
+          ? {
+              durationMinutes: duration,
+              visitorTimeZone: visitorZone,
+              rangeStartKey: rangeStartInput.value,
+              rangeEndKey: rangeEndInput.value,
+            }
+          : {
+              durationMinutes: duration,
+              visitorTimeZone: visitorZone,
+              preset: windowPreset,
+            };
+
+      let slots = generateSlots(data.busy, data.meta, query);
+      slots = filterByTimeOfDay(slots, visitorZone, timeOfDay);
+      const groups = groupSlotsByDay(slots, visitorZone);
+
+      if (!groups.length) {
+        const hint = nextDateWithRoom(
+          data.busy,
+          data.meta,
+          duration,
+          visitorZone,
+          windowExclusiveEnd(),
+        );
+
+        let message = 'Nothing open in that window.';
+        if (hint) {
+          message += ` The next day with room is ${hint.label}.`;
+        } else {
+          message += ' There is not another opening in the loaded range either.';
+        }
+
+        statusEl.textContent = message;
+        resultsEl.innerHTML = '';
+        return;
+      }
+
+      statusEl.textContent = `${slots.length} open start${slots.length === 1 ? '' : 's'} in this window.`;
+      resultsEl.innerHTML = groups
+        .map(
+          (group, index) => `
+          <section class="day-group" style="animation-delay: ${Math.min(index, 6) * 0.04}s" aria-labelledby="day-${group.dateKey}">
+            <h3 id="day-${group.dateKey}" class="font-display text-lg font-semibold">${escapeHtml(group.label)}</h3>
+            <ul class="mt-3 flex flex-wrap gap-2">
+              ${group.slots
+                .map((slot) => {
+                  const label = formatTimeInZone(parseInstant(slot.start), visitorZone);
+                  return `<li><span class="slot-chip">${escapeHtml(label)}</span></li>`;
+                })
+                .join('')}
+            </ul>
+          </section>`,
+        )
+        .join('');
+    }
+
+    async function loadAvailability() {
+      statusEl.textContent = 'Checking the calendar…';
+      resultsEl.innerHTML = '';
+      nextEl.textContent = '';
+      loadError = null;
+
+      try {
+        const res = await fetch('/api/availability', {
+          headers: { Accept: 'application/json' },
+        });
+        const json = (await res.json()) as AvailabilityResponse;
+
+        if (json.ok) {
+          data = json;
+          render();
+          return;
+        }
+
+        // Local-only fallback so `astro dev` / `astro preview` can show a working UI
+        // without Wrangler. Preview/production Pages deploys never use this path;
+        // they require RECLAIM_API_TOKEN (or explicit ALLOW_MOCK_AVAILABILITY on the Function).
+        if (isLocalHost()) {
+          data = buildMockAvailabilityResponse();
+          render();
+          return;
+        }
+
+        loadError =
+          json.message ||
+          'Availability is unavailable right now. You can still book a time on Jesse’s scheduling page.';
+        data = null;
+        renderError();
+      } catch {
+        if (isLocalHost()) {
+          data = buildMockAvailabilityResponse();
+          render();
+          return;
+        }
+        loadError =
+          'Availability is unavailable right now. You can still book a time on Jesse’s scheduling page.';
+        data = null;
+        renderError();
+      }
+    }
+
+    root.querySelectorAll('.duration-btn').forEach((btn) => {
+      btn.addEventListener('click', () => {
+        duration = Number((btn as HTMLElement).dataset.duration);
+        setPressed('.duration-btn', 'data-duration', String(duration));
+        render();
+      });
+    });
+
+    root.querySelectorAll('.window-btn').forEach((btn) => {
+      btn.addEventListener('click', () => {
+        windowPreset = ((btn as HTMLElement).dataset.window ||
+          'this-week') as WindowPreset;
+        setPressed('.window-btn', 'data-window', windowPreset);
+        customWrap.classList.toggle('hidden', windowPreset !== 'custom');
+        render();
+      });
+    });
+
+    root.querySelectorAll('.tod-btn').forEach((btn) => {
+      btn.addEventListener('click', () => {
+        timeOfDay = ((btn as HTMLElement).dataset.tod || 'all') as TimeOfDayFilter;
+        setPressed('.tod-btn', 'data-tod', timeOfDay);
+        render();
+      });
+    });
+
+    rangeStartInput.addEventListener('change', () => {
+      if (rangeEndInput.value < rangeStartInput.value) {
+        rangeEndInput.value = rangeStartInput.value;
+      }
+      rangeEndInput.min = rangeStartInput.value;
+      if (windowPreset === 'custom') render();
+    });
+
+    rangeEndInput.addEventListener('change', () => {
+      if (windowPreset === 'custom') render();
+    });
+
+    void loadAvailability();
+  }
+</script>

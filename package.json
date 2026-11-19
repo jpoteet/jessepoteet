@@ -13,7 +13,9 @@
     "start": "astro dev",
     "build": "astro build",
     "preview": "astro preview",
-    "astro": "astro"
+    "astro": "astro",
+    "test:availability": "tsx scripts/test-availability.ts",
+    "pages:dev": "npm run build && wrangler pages dev dist"
   },
   "bugs": {
     "url": "https://github.com/jpoteet/jessepoteet/issues"
