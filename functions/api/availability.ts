@@ -71,7 +71,7 @@ export async function onRequestGet(context: {
       return json(
         unavailable(
           'missing_token',
-          'Availability is unavailable right now. You can still book a time on Jesse’s scheduling page.',
+          'Availability is unavailable right now. Try again in a few minutes.',
         ),
         503,
         { 'Cache-Control': 'no-store' },
@@ -93,7 +93,7 @@ export async function onRequestGet(context: {
     return json(
       unavailable(
         'upstream_error',
-        'Availability is unavailable right now. You can still book a time on Jesse’s scheduling page.',
+        'Availability is unavailable right now. Try again in a few minutes.',
       ),
       502,
       { 'Cache-Control': 'no-store' },

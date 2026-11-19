@@ -114,7 +114,7 @@ export function mockSuccess(now = new Date()): AvailabilitySuccess {
 export function unavailable(
   error: string,
   message =
-    'Availability is unavailable right now. You can still book a time on Jesse’s scheduling page.',
+    'Availability is unavailable right now. Try again in a few minutes.',
 ): AvailabilityError {
   return { ok: false, error, message };
 }

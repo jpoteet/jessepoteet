@@ -3,6 +3,7 @@
  * Run: npx tsx scripts/test-availability.ts
  */
 
+import { BOOKING_LINKS, resolveBookingMode } from '../src/config/availability';
 import { eventsToMergedBusy, mergeBusyIntervals } from '../src/lib/availability/busy';
 import { buildMockAvailabilityResponse } from '../src/lib/availability/mock';
 import { generateSlots, nextOpening } from '../src/lib/availability/slots';
@@ -91,6 +92,27 @@ assert(
 assert(!!nextOpening(payload.busy, payload.meta, 30, fixedNow), 'nextOpening finds a slot');
 assert(!JSON.stringify(payload).includes('Private meeting'), 'mock response has no event titles');
 assert(!JSON.stringify(payload).includes('cal-personal'), 'mock response has no calendar ids');
+
+assert(!resolveBookingMode(null).enabled, 'null book param is find-only');
+assert(!resolveBookingMode('').enabled, 'empty book param is find-only');
+assert(!resolveBookingMode('xyz').enabled, 'unknown book code is find-only');
+assert(!resolveBookingMode('  XYZ  ').enabled, 'unknown trimmed code is find-only');
+const book1 = resolveBookingMode('1');
+assert(book1.enabled && book1.url === BOOKING_LINKS['1'], 'book=1 maps to general Reclaim');
+const bookOis = resolveBookingMode(' OIS ');
+assert(
+  bookOis.enabled && bookOis.url === BOOKING_LINKS.ois,
+  'book=ois is case-insensitive and trimmed',
+);
+const bookAa = resolveBookingMode('aa');
+assert(bookAa.enabled && bookAa.url === BOOKING_LINKS.aa, 'book=aa maps to Alpine link');
+const bookOs = resolveBookingMode('os');
+assert(bookOs.enabled && bookOs.url === BOOKING_LINKS.os, 'book=os maps to Operator Stack link');
+assert(
+  !resolveBookingMode('ois').enabled ||
+    (resolveBookingMode('ois') as { url: string }).url !== BOOKING_LINKS.aa,
+  'ois never falls back to aa',
+);
 
 if (failed) {
   console.error(`\n${failed} assertion(s) failed`);

@@ -1,16 +1,12 @@
 ---
-import { personalAvailability } from '@/config/availability';
+import { BOOKING_LINKS, personalAvailability } from '@/config/availability';
 
 interface Props {
-  bookingUrl?: string;
-  bookingCta?: string;
   durations?: readonly number[];
   defaultDuration?: number;
 }
 
 const {
-  bookingUrl = personalAvailability.bookingUrl,
-  bookingCta = personalAvailability.bookingCta,
   durations = personalAvailability.durations,
   defaultDuration = personalAvailability.defaultDuration,
 } = Astro.props;
@@ -28,7 +24,7 @@ const placeholders = [
 <div
   id="availability-finder"
   class="availability-finder avail-panel avail-tilt-root"
-  data-booking-url={bookingUrl}
+  data-booking-links={JSON.stringify(BOOKING_LINKS)}
   data-default-duration={String(defaultDuration)}
   data-durations={JSON.stringify(durations)}
   data-placeholders={JSON.stringify(placeholders)}
@@ -60,6 +56,7 @@ const placeholders = [
       </div>
       <div class="avail-chip avail-mono" data-sync hidden>synced 0m</div>
       <div class="avail-chip" data-zone-chip>Detecting zone…</div>
+      <div class="avail-chip avail-chip-book" data-booking-badge hidden>Booking enabled</div>
     </div>
 
     <div class="avail-hero-stat" data-hero>
@@ -144,11 +141,22 @@ const placeholders = [
     </div>
     <div id="slot-results" class="mt-4" data-results></div>
 
-    <a href={bookingUrl} class="avail-cta" rel="noopener noreferrer" data-book-btn>
-      {bookingCta}
-      <span aria-hidden="true">↗</span>
-    </a>
-    <p class="avail-cta-note">Booking happens on Jesse’s scheduling page. Nothing is reserved here.</p>
+    <div class="avail-book-footer" data-book-footer hidden>
+      <p class="avail-pick-note" data-pick-note hidden></p>
+      <a
+        href="#"
+        class="avail-cta"
+        rel="noopener noreferrer"
+        target="_blank"
+        data-book-btn
+      >
+        Book a time
+        <span aria-hidden="true">↗</span>
+      </a>
+      <p class="avail-cta-note" data-book-note>
+        Opens the scheduling page in a new tab. Nothing is reserved here.
+      </p>
+    </div>
   </div>
 </div>
 
@@ -203,6 +211,12 @@ const placeholders = [
     const durations = JSON.parse(root.dataset.durations || '[15,30,60,90]') as number[];
     const placeholders = JSON.parse(root.dataset.placeholders || '[]') as string[];
     const defaultDuration = Number(root.dataset.defaultDuration || 30);
+    const bookingLinks = JSON.parse(root.dataset.bookingLinks || '{}') as Record<string, string>;
+    const bookParam = new URLSearchParams(window.location.search).get('book');
+    const bookingCode =
+      bookParam == null ? '' : bookParam.trim().toLowerCase();
+    const bookingUrl = bookingCode ? bookingLinks[bookingCode] || '' : '';
+    const bookingEnabled = Boolean(bookingUrl);
     let duration = defaultDuration;
     let windowPreset: WindowPreset = 'this-week';
     let timeOfDay: TimeOfDayFilter = 'all';
@@ -232,6 +246,44 @@ const placeholders = [
     const askInput = root.querySelector('[data-ask-input]') as HTMLInputElement;
     const askChips = root.querySelector('[data-ask-chips]') as HTMLElement;
     const askMsg = root.querySelector('[data-ask-msg]') as HTMLElement;
+    const pickNoteEl = root.querySelector('[data-pick-note]') as HTMLElement | null;
+    const bookBtn = root.querySelector('[data-book-btn]') as HTMLAnchorElement | null;
+    const bookFooter = root.querySelector('[data-book-footer]') as HTMLElement | null;
+    const bookingBadge = root.querySelector('[data-booking-badge]') as HTMLElement | null;
+
+    if (bookingEnabled && bookingUrl) {
+      if (bookFooter) bookFooter.hidden = false;
+      if (bookingBadge) bookingBadge.hidden = false;
+      if (bookBtn) bookBtn.href = bookingUrl;
+    }
+
+    function unavailableMessage() {
+      if (bookingEnabled && bookingUrl) {
+        return 'Availability is unavailable right now. You can still book a time with the button below.';
+      }
+      return 'Availability is unavailable right now. Try again in a few minutes.';
+    }
+
+    function updatePickNote() {
+      if (!pickNoteEl || !bookingEnabled) return;
+      if (!selectedSlotStart) {
+        pickNoteEl.hidden = true;
+        pickNoteEl.textContent = '';
+        return;
+      }
+      const label = formatTimeInZone(parseInstant(selectedSlotStart), visitorZone);
+      pickNoteEl.textContent = `Pick ${label} on the next page.`;
+      pickNoteEl.hidden = false;
+    }
+
+    function selectSlot(start: string | null) {
+      selectedSlotStart = start;
+      resultsEl.querySelectorAll('[data-slot-start]').forEach((other) => {
+        const el = other as HTMLElement;
+        other.setAttribute('aria-pressed', el.dataset.slotStart === start ? 'true' : 'false');
+      });
+      updatePickNote();
+    }
 
     zoneChipEl.textContent = friendlyZoneName(visitorZone);
     zoneChipEl.title = `Times shown in ${friendlyZoneName(visitorZone)}. Jesse’s open hours are Mountain Time.`;
@@ -401,7 +453,7 @@ const placeholders = [
       showSkeleton(false);
       setLive('error', 'Availability is unavailable right now');
       statusEl.innerHTML = `<div class="avail-empty"><strong>Availability is unavailable right now</strong>${escapeHtml(
-        loadError || 'You can still book a time on Jesse’s scheduling page.',
+        loadError || unavailableMessage(),
       )}</div>`;
     }
 
@@ -504,7 +556,15 @@ const placeholders = [
                 .map((slot, slotIndex) => {
                   const label = formatTimeInZone(parseInstant(slot.start), visitorZone);
                   const pressed = selectedSlotStart === slot.start ? 'true' : 'false';
-                  return `<li style="display:contents"><button type="button" class="avail-slot" data-slot-start="${escapeHtml(slot.start)}" aria-pressed="${pressed}" style="animation-delay: ${Math.min(slotIndex, 12) * 0.028}s">${escapeHtml(label)}</button></li>`;
+                  const delay = Math.min(slotIndex, 12) * 0.028;
+                  const slotBtn = `<button type="button" class="avail-slot" data-slot-start="${escapeHtml(slot.start)}" aria-pressed="${pressed}" style="animation-delay: ${delay}s">${escapeHtml(label)}</button>`;
+                  if (!bookingEnabled || !bookingUrl) {
+                    return `<li style="display:contents">${slotBtn}</li>`;
+                  }
+                  return `<li class="avail-slot-row" style="animation-delay: ${delay}s">
+                    ${slotBtn}
+                    <a class="avail-slot-book" href="${escapeHtml(bookingUrl)}" target="_blank" rel="noopener noreferrer" data-book-slot="${escapeHtml(slot.start)}">Book this time</a>
+                  </li>`;
                 })
                 .join('')}
             </ul>
@@ -514,13 +574,17 @@ const placeholders = [
 
       resultsEl.querySelectorAll('[data-slot-start]').forEach((btn) => {
         btn.addEventListener('click', () => {
-          selectedSlotStart = (btn as HTMLElement).dataset.slotStart || null;
-          resultsEl.querySelectorAll('[data-slot-start]').forEach((other) => {
-            other.setAttribute('aria-pressed', other === btn ? 'true' : 'false');
-          });
+          selectSlot((btn as HTMLElement).dataset.slotStart || null);
         });
       });
 
+      resultsEl.querySelectorAll('[data-book-slot]').forEach((link) => {
+        link.addEventListener('click', () => {
+          selectSlot((link as HTMLElement).dataset.bookSlot || null);
+        });
+      });
+
+      updatePickNote();
       attachTilt();
     }
 
@@ -576,9 +640,7 @@ const placeholders = [
           render({ animateHero: true });
           return;
         }
-        loadError =
-          json.message ||
-          'Availability is unavailable right now. You can still book a time on Jesse’s scheduling page.';
+        loadError = json.message || unavailableMessage();
         data = null;
         renderError();
       } catch {
@@ -588,8 +650,7 @@ const placeholders = [
           render({ animateHero: true });
           return;
         }
-        loadError =
-          'Availability is unavailable right now. You can still book a time on Jesse’s scheduling page.';
+        loadError = unavailableMessage();
         data = null;
         renderError();
       }
@@ -652,6 +713,12 @@ const placeholders = [
         setDuration(map[event.key]);
       }
     });
+
+    if (bookBtn && bookingEnabled) {
+      bookBtn.addEventListener('click', () => {
+        updatePickNote();
+      });
+    }
 
     window.setInterval(updateSyncLabel, 30000);
     window.setInterval(updateTminus, 1000);

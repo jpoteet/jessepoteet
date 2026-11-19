@@ -20,10 +20,6 @@ export type AvailabilityProfile = {
   headline: string;
   /** Supporting sentence under the headline */
   lead: string;
-  /** Reclaim (or other) booking page. Display-only link; no booking on-site. */
-  bookingUrl: string;
-  /** Label for the booking CTA */
-  bookingCta: string;
   /** Meeting lengths offered, in minutes */
   durations: readonly number[];
   /** Default duration when the page loads */
@@ -38,6 +34,35 @@ export type AvailabilityProfile = {
     logoAlt?: string;
   };
 };
+
+/**
+ * URL `?book=` codes that unlock booking CTAs on /availability.
+ * Keys are matched case-insensitively after trim.
+ * Unknown codes stay find-only (never fall back to another link).
+ * Do not surface brand names or logos from these codes on the page.
+ */
+export const BOOKING_LINKS = {
+  '1': 'https://app.reclaim.ai/m/jessepoteet/flexible-quick-meeting',
+  ois: 'https://calendly.com/jesse-poteet-optimizeis',
+  aa: 'https://app.reclaim.ai/m/alpineapparelco',
+  os: 'https://app.reclaim.ai/m/operatorstack',
+} as const;
+
+export type BookingCode = keyof typeof BOOKING_LINKS;
+
+export type BookingMode =
+  | { enabled: false }
+  | { enabled: true; code: BookingCode; url: string };
+
+/** Resolve `?book=` into find-only or a mapped booking URL. */
+export function resolveBookingMode(raw: string | null | undefined): BookingMode {
+  if (raw == null) return { enabled: false };
+  const code = raw.trim().toLowerCase();
+  if (!code) return { enabled: false };
+  const url = (BOOKING_LINKS as Record<string, string>)[code];
+  if (!url) return { enabled: false };
+  return { enabled: true, code: code as BookingCode, url };
+}
 
 /** Jesse's open meeting hours and calendar rules (America/Denver). Easy to tweak. */
 export const AVAILABILITY_SCHEDULE = {
@@ -66,12 +91,10 @@ export const personalAvailability: AvailabilityProfile = {
   slug: 'availability',
   displayName: 'Jesse Poteet',
   description:
-    'See when Jesse Poteet is free and pick a time that works. Times show in your time zone. Booking happens on Jesse’s Reclaim page.',
+    'See when Jesse Poteet is free and pick a time that works. Times show in your time zone.',
   eyebrow: 'Availability',
   headline: 'Find a time that works',
-  lead: 'Pick a length and a window. I will show open starts in your time zone. When you are ready, head over to book.',
-  bookingUrl: 'https://app.reclaim.ai/m/jessepoteet/flexible-quick-meeting',
-  bookingCta: 'Book a time',
+  lead: 'Pick a length and a window. I will show open starts in your time zone.',
   durations: [15, 30, 60, 90],
   defaultDuration: 30,
 };
