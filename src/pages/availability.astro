@@ -12,7 +12,7 @@ const profile = personalAvailability;
   title={profile.headline}
   description={profile.description}
   personalOnly
-  bodyClass="avail-product dark"
+  bodyClass="avail-product"
 >
   <div class="avail-stage" data-avail-stage>
     <canvas class="avail-webgl" data-avail-webgl aria-hidden="true"></canvas>
@@ -23,6 +23,12 @@ const profile = personalAvailability;
     </div>
     <div class="avail-grid-motion" aria-hidden="true"></div>
     <div class="avail-noise" aria-hidden="true"></div>
+    <div class="avail-floats" aria-hidden="true">
+      <span class="avail-float" style="left: 8%; top: 18%; animation-delay: 0s">🎣</span>
+      <span class="avail-float" style="left: 86%; top: 22%; animation-delay: 1.2s">☕</span>
+      <span class="avail-float" style="left: 12%; top: 72%; animation-delay: 2.4s">🏔️</span>
+      <span class="avail-float" style="left: 78%; top: 68%; animation-delay: 0.6s">🌲</span>
+    </div>
 
     <article class="avail-shell">
       <header class="avail-enter" style="--enter-delay: 0.04s">
@@ -36,7 +42,7 @@ const profile = personalAvailability;
         </div>
         <h1 class="avail-brand">{profile.displayName}</h1>
         <p class="avail-lead">{profile.lead}</p>
-        <p class="avail-funline" data-funline>Quiet mornings. Clear calendar. Real work.</p>
+        <p class="avail-funline" data-funline>Quiet mornings. Clear calendar. Real work. ☀️</p>
       </header>
 
       <div class="avail-enter" style="--enter-delay: 0.12s">
@@ -54,20 +60,21 @@ const profile = personalAvailability;
 </BaseLayout>
 
 <style is:global>
-  @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap');
+  @import url('https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,500;9..144,650&family=JetBrains+Mono:wght@400;500;600&family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap');
 </style>
 
 <script is:inline>
-  document.documentElement.classList.add('dark');
+  document.documentElement.classList.remove('dark');
 </script>
 
 <script is:inline>
   (function () {
     var funLines = [
-      'Quiet mornings. Clear calendar. Real work.',
-      'Probably outside when the inbox goes quiet.',
-      'Coffee first. Then the next open slot.',
-      'Colorado light, then deep work.',
+      'Quiet mornings. Clear calendar. Real work. ☀️',
+      'Probably outside when the inbox goes quiet. 🎣',
+      'Coffee first. Then the next open slot. ☕',
+      'Colorado light, then deep work. 🏔️',
+      'Leave a little room for the river. 🌲',
     ];
     function clock(zone) {
       return new Intl.DateTimeFormat('en-GB', {

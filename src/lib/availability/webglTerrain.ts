@@ -58,13 +58,14 @@ export function createTerrain(options: TerrainOptions): TerrainHandle | null {
     varying float vElev;
     varying float vFog;
     void main(){
-      vec3 low = vec3(0.05, 0.08, 0.12);
-      vec3 mid = vec3(0.12, 0.28, 0.32);
-      vec3 high = vec3(0.55, 0.78, 0.82);
+      // Soft sunrise pastels for the light theme
+      vec3 low = vec3(0.96, 0.90, 0.84);
+      vec3 mid = vec3(0.92, 0.72, 0.58);
+      vec3 high = vec3(0.62, 0.78, 0.88);
       vec3 col = mix(low, mid, smoothstep(-0.2, 0.8, vElev));
-      col = mix(col, high, smoothstep(0.9, 1.6, vElev) * 0.35);
-      col = mix(col, vec3(0.03, 0.04, 0.06), vFog);
-      float alpha = 0.55 * (1.0 - vFog * 0.85);
+      col = mix(col, high, smoothstep(0.9, 1.6, vElev) * 0.4);
+      col = mix(col, vec3(0.97, 0.95, 0.92), vFog);
+      float alpha = 0.42 * (1.0 - vFog * 0.8);
       gl_FragColor = vec4(col, alpha);
     }
   `;

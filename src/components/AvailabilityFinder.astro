@@ -62,7 +62,7 @@ const placeholders = [
     <div class="avail-hero-stat" data-hero>
       <div class="avail-hero-top">
         <p class="avail-hero-label">Next opening</p>
-        <p class="avail-tminus avail-mono" data-tminus>T-minus --</p>
+        <p class="avail-tminus avail-mono" data-tminus>opens in --</p>
       </div>
       <p class="avail-hero-value" data-next-opening aria-live="polite">Loading…</p>
       <p class="avail-hero-meta" data-next-meta></p>
@@ -200,6 +200,16 @@ const placeholders = [
   function isLocalHost() {
     const host = window.location.hostname;
     return host === 'localhost' || host === '127.0.0.1';
+  }
+
+  /** Dev-only mock slots for local screenshots. Never on by default in production. */
+  function allowMockSlots() {
+    if (isLocalHost()) return true;
+    const params = new URLSearchParams(window.location.search);
+    if (params.get('mock') !== '1') return false;
+    // Preview hosts only. Production domain stays find/API-only.
+    const host = window.location.hostname;
+    return host.endsWith('.pages.dev') || host === '127.0.0.1' || host === 'localhost';
   }
 
   function prefersReducedMotion() {
@@ -415,12 +425,12 @@ const placeholders = [
 
     function updateTminus() {
       if (!nextOpeningIso) {
-        tminusEl.textContent = 'T-minus --';
+        tminusEl.textContent = 'opens in --';
         return;
       }
       const ms = parseInstant(nextOpeningIso).getTime() - Date.now();
       if (ms <= 0) {
-        tminusEl.textContent = 'T-minus 00:00:00';
+        tminusEl.textContent = 'open now';
         return;
       }
       const total = Math.floor(ms / 1000);
@@ -430,8 +440,8 @@ const placeholders = [
       const pad = (n: number) => String(n).padStart(2, '0');
       tminusEl.textContent =
         h > 48
-          ? `T-minus ${Math.floor(h / 24)}d ${pad(h % 24)}h`
-          : `T-minus ${pad(h)}:${pad(m)}:${pad(s)}`;
+          ? `opens in ${Math.floor(h / 24)}d ${pad(h % 24)}h`
+          : `opens in ${pad(h)}:${pad(m)}:${pad(s)}`;
     }
 
     function setLive(state: 'loading' | 'live' | 'error', label: string) {
@@ -634,7 +644,7 @@ const placeholders = [
           render({ animateHero: true });
           return;
         }
-        if (isLocalHost()) {
+        if (allowMockSlots()) {
           data = buildMockAvailabilityResponse();
           fetchedAt = Date.now();
           render({ animateHero: true });
@@ -644,7 +654,7 @@ const placeholders = [
         data = null;
         renderError();
       } catch {
-        if (isLocalHost()) {
+        if (allowMockSlots()) {
           data = buildMockAvailabilityResponse();
           fetchedAt = Date.now();
           render({ animateHero: true });

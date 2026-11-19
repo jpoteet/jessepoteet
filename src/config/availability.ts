@@ -94,7 +94,7 @@ export const personalAvailability: AvailabilityProfile = {
     'See when Jesse Poteet is free and pick a time that works. Times show in your time zone.',
   eyebrow: 'Availability',
   headline: 'Find a time that works',
-  lead: 'Pick a length and a window. I will show open starts in your time zone.',
+  lead: 'Pick a length and a window. I will show open starts in your time zone. Easy, friendly, and a little sunny.',
   durations: [15, 30, 60, 90],
   defaultDuration: 30,
 };
