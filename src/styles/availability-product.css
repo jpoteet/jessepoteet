@@ -1029,6 +1029,12 @@ body.avail-app {
   border-color: transparent;
 }
 
+.avail-cal-jump-btn.is-active:hover {
+  background: var(--ap-blue);
+  color: #fff;
+  filter: brightness(0.92);
+}
+
 .avail-cal-board {
   display: flex;
   flex-direction: column;
