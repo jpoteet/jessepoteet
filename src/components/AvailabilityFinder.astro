@@ -16,27 +16,57 @@ const {
 } = Astro.props;
 
 const defaultIndex = Math.max(0, durations.indexOf(defaultDuration));
+
+const placeholders = [
+  'an hour next Tuesday afternoon',
+  '30 min this week before noon',
+  '90 minutes sometime next week',
+  '15 minutes tomorrow morning',
+];
 ---
 
 <div
   id="availability-finder"
-  class="availability-finder avail-panel"
+  class="availability-finder avail-panel avail-tilt-root"
   data-booking-url={bookingUrl}
   data-default-duration={String(defaultDuration)}
   data-durations={JSON.stringify(durations)}
+  data-placeholders={JSON.stringify(placeholders)}
 >
   <div class="avail-panel-inner">
+    <form class="avail-ask" data-ask-form>
+      <label class="avail-ask-label" for="avail-ask-input">Ask in plain English</label>
+      <div class="avail-ask-row">
+        <span class="avail-ask-prompt" aria-hidden="true">›</span>
+        <input
+          id="avail-ask-input"
+          class="avail-ask-input"
+          type="text"
+          autocomplete="off"
+          spellcheck="false"
+          placeholder={placeholders[0]}
+          data-ask-input
+        />
+        <button type="submit" class="avail-ask-go">Parse</button>
+      </div>
+      <div class="avail-ask-chips" data-ask-chips hidden></div>
+      <p class="avail-ask-msg" data-ask-msg hidden></p>
+    </form>
+
     <div class="avail-status-row" aria-live="polite">
       <div class="avail-live" data-live data-state="loading">
         <span class="avail-live-dot" aria-hidden="true"></span>
-        <span data-live-label>Connecting to calendar…</span>
+        <span data-live-label>Connecting…</span>
       </div>
-      <div class="avail-chip" data-sync hidden>synced just now</div>
-      <div class="avail-chip" data-zone-chip>Detecting time zone…</div>
+      <div class="avail-chip avail-mono" data-sync hidden>synced 0m</div>
+      <div class="avail-chip" data-zone-chip>Detecting zone…</div>
     </div>
 
     <div class="avail-hero-stat" data-hero>
-      <p class="avail-hero-label">Next opening</p>
+      <div class="avail-hero-top">
+        <p class="avail-hero-label">Next opening</p>
+        <p class="avail-tminus avail-mono" data-tminus>T-minus --</p>
+      </div>
       <p class="avail-hero-value" data-next-opening aria-live="polite">Loading…</p>
       <p class="avail-hero-meta" data-next-meta></p>
     </div>
@@ -62,17 +92,17 @@ const defaultIndex = Math.max(0, durations.indexOf(defaultDuration));
               data-index={i}
               aria-pressed={mins === defaultDuration ? 'true' : 'false'}
             >
-              {mins} min
+              <span class="avail-mono">{mins}</span> min
             </button>
           ))
         }
       </div>
       <p class="avail-hint">
-        Tip: press <span class="avail-kbd">1</span>
+        Keys <span class="avail-kbd">1</span>
         <span class="avail-kbd">2</span>
         <span class="avail-kbd">3</span>
         <span class="avail-kbd">4</span>
-        to switch length
+        switch length
       </p>
     </section>
 
@@ -81,15 +111,9 @@ const defaultIndex = Math.max(0, durations.indexOf(defaultDuration));
     <section aria-labelledby="window-heading">
       <h2 id="window-heading" class="avail-section-label">2. When should we look?</h2>
       <div class="avail-pills" role="group" aria-label="Date window">
-        <button type="button" class="avail-pill window-btn" data-window="this-week" aria-pressed="true">
-          This week
-        </button>
-        <button type="button" class="avail-pill window-btn" data-window="next-week" aria-pressed="false">
-          Next week
-        </button>
-        <button type="button" class="avail-pill window-btn" data-window="custom" aria-pressed="false">
-          Custom range
-        </button>
+        <button type="button" class="avail-pill window-btn" data-window="this-week" aria-pressed="true">This week</button>
+        <button type="button" class="avail-pill window-btn" data-window="next-week" aria-pressed="false">Next week</button>
+        <button type="button" class="avail-pill window-btn" data-window="custom" aria-pressed="false">Custom range</button>
       </div>
 
       <div id="custom-range" class="avail-date-grid hidden" data-custom-range hidden>
@@ -103,7 +127,7 @@ const defaultIndex = Math.max(0, durations.indexOf(defaultDuration));
         </label>
       </div>
 
-      <div class="avail-pills" style="margin-top: 0.85rem;" role="group" aria-label="Morning or afternoon">
+      <div class="avail-pills" style="margin-top: 0.75rem;" role="group" aria-label="Morning or afternoon">
         <button type="button" class="avail-pill tod-btn" data-tod="all" aria-pressed="true">All times</button>
         <button type="button" class="avail-pill tod-btn" data-tod="morning" aria-pressed="false">Morning</button>
         <button type="button" class="avail-pill tod-btn" data-tod="afternoon" aria-pressed="false">Afternoon</button>
@@ -113,29 +137,24 @@ const defaultIndex = Math.max(0, durations.indexOf(defaultDuration));
     <div class="avail-divider" aria-hidden="true"></div>
 
     <p class="avail-status" data-status>Checking the calendar…</p>
-
     <div class="avail-skeleton" data-skeleton hidden>
       <div class="avail-skel-line lg"></div>
-      <div class="avail-skel-line" style="width: 72%;"></div>
-      <div class="avail-skel-line" style="width: 54%;"></div>
-      <div class="avail-skel-line lg" style="margin-top: 0.5rem;"></div>
-      <div class="avail-skel-line" style="width: 66%;"></div>
+      <div class="avail-skel-line" style="width: 70%;"></div>
+      <div class="avail-skel-line" style="width: 52%;"></div>
     </div>
-
     <div id="slot-results" class="mt-4" data-results></div>
 
     <a href={bookingUrl} class="avail-cta" rel="noopener noreferrer" data-book-btn>
       {bookingCta}
       <span aria-hidden="true">↗</span>
     </a>
-    <p class="avail-cta-note">
-      Booking happens on Jesse’s scheduling page. Nothing is reserved here.
-    </p>
+    <p class="avail-cta-note">Booking happens on Jesse’s scheduling page. Nothing is reserved here.</p>
   </div>
 </div>
 
 <script>
   import { buildMockAvailabilityResponse } from '@/lib/availability/mock';
+  import { parseAvailabilityAsk } from '@/lib/availability/parseQuery';
   import {
     dayHeatStrip,
     filterByTimeOfDay,
@@ -182,6 +201,7 @@ const defaultIndex = Math.max(0, durations.indexOf(defaultDuration));
   const root = document.getElementById('availability-finder');
   if (root) {
     const durations = JSON.parse(root.dataset.durations || '[15,30,60,90]') as number[];
+    const placeholders = JSON.parse(root.dataset.placeholders || '[]') as string[];
     const defaultDuration = Number(root.dataset.defaultDuration || 30);
     let duration = defaultDuration;
     let windowPreset: WindowPreset = 'this-week';
@@ -190,6 +210,7 @@ const defaultIndex = Math.max(0, durations.indexOf(defaultDuration));
     let loadError: string | null = null;
     let fetchedAt: number | null = null;
     let selectedSlotStart: string | null = null;
+    let nextOpeningIso: string | null = null;
     let heroAnimToken = 0;
     const visitorZone = detectVisitorTimeZone();
 
@@ -197,6 +218,7 @@ const defaultIndex = Math.max(0, durations.indexOf(defaultDuration));
     const resultsEl = root.querySelector('[data-results]') as HTMLElement;
     const nextEl = root.querySelector('[data-next-opening]') as HTMLElement;
     const nextMetaEl = root.querySelector('[data-next-meta]') as HTMLElement;
+    const tminusEl = root.querySelector('[data-tminus]') as HTMLElement;
     const liveEl = root.querySelector('[data-live]') as HTMLElement;
     const liveLabelEl = root.querySelector('[data-live-label]') as HTMLElement;
     const syncEl = root.querySelector('[data-sync]') as HTMLElement;
@@ -206,6 +228,10 @@ const defaultIndex = Math.max(0, durations.indexOf(defaultDuration));
     const durationSegment = root.querySelector('[data-duration-segment]') as HTMLElement;
     const rangeStartInput = root.querySelector('#range-start') as HTMLInputElement;
     const rangeEndInput = root.querySelector('#range-end') as HTMLInputElement;
+    const askForm = root.querySelector('[data-ask-form]') as HTMLFormElement;
+    const askInput = root.querySelector('[data-ask-input]') as HTMLInputElement;
+    const askChips = root.querySelector('[data-ask-chips]') as HTMLElement;
+    const askMsg = root.querySelector('[data-ask-msg]') as HTMLElement;
 
     zoneChipEl.textContent = friendlyZoneName(visitorZone);
     zoneChipEl.title = `Times shown in ${friendlyZoneName(visitorZone)}. Jesse’s open hours are Mountain Time.`;
@@ -219,13 +245,20 @@ const defaultIndex = Math.max(0, durations.indexOf(defaultDuration));
       visitorZone,
     );
 
+    // Rotating ask placeholders
+    if (placeholders.length && !prefersReducedMotion()) {
+      let pi = 0;
+      window.setInterval(() => {
+        if (document.activeElement === askInput || askInput.value) return;
+        pi = (pi + 1) % placeholders.length;
+        askInput.placeholder = placeholders[pi];
+      }, 3800);
+    }
+
     function setPressed(selector: string, attr: string, value: string) {
       root!.querySelectorAll(selector).forEach((btn) => {
         const el = btn as HTMLElement;
-        el.setAttribute(
-          'aria-pressed',
-          el.getAttribute(attr) === value ? 'true' : 'false',
-        );
+        el.setAttribute('aria-pressed', el.getAttribute(attr) === value ? 'true' : 'false');
       });
     }
 
@@ -239,13 +272,68 @@ const defaultIndex = Math.max(0, durations.indexOf(defaultDuration));
       }, 480);
     }
 
-    function setDuration(next: number) {
+    function setDuration(next: number, opts: { animate?: boolean } = {}) {
       if (!durations.includes(next)) return;
       duration = next;
-      const index = durations.indexOf(next);
-      durationSegment.style.setProperty('--seg-index', String(index));
+      durationSegment.style.setProperty('--seg-index', String(durations.indexOf(next)));
       setPressed('.duration-btn', 'data-duration', String(duration));
       selectedSlotStart = null;
+      if (opts.animate !== false) flashPanel();
+      render({ animateHero: true });
+    }
+
+    function applyAsk(raw: string) {
+      const parsed = parseAvailabilityAsk(raw, {
+        visitorTimeZone: visitorZone,
+        durations,
+      });
+      if (!parsed.ok) {
+        askChips.hidden = true;
+        askChips.innerHTML = '';
+        askMsg.hidden = false;
+        askMsg.textContent = parsed.message;
+        return;
+      }
+
+      askMsg.hidden = true;
+      askChips.hidden = false;
+      askChips.innerHTML = parsed.chips
+        .map(
+          (chip) =>
+            `<button type="button" class="avail-ask-chip" data-chip-kind="${chip.kind}">${escapeHtml(chip.label)} <span aria-hidden="true">×</span></button>`,
+        )
+        .join('');
+
+      setDuration(parsed.durationMinutes, { animate: false });
+      timeOfDay = parsed.timeOfDay;
+      setPressed('.tod-btn', 'data-tod', timeOfDay);
+      windowPreset = parsed.windowPreset;
+      setPressed('.window-btn', 'data-window', windowPreset);
+      const showCustom = windowPreset === 'custom';
+      customWrap.hidden = !showCustom;
+      customWrap.classList.toggle('hidden', !showCustom);
+      if (parsed.rangeStartKey) rangeStartInput.value = parsed.rangeStartKey;
+      if (parsed.rangeEndKey) rangeEndInput.value = parsed.rangeEndKey;
+
+      askChips.querySelectorAll('[data-chip-kind]').forEach((btn) => {
+        btn.addEventListener('click', () => {
+          const kind = (btn as HTMLElement).dataset.chipKind;
+          if (kind === 'tod') {
+            timeOfDay = 'all';
+            setPressed('.tod-btn', 'data-tod', 'all');
+          } else if (kind === 'window') {
+            windowPreset = 'this-week';
+            setPressed('.window-btn', 'data-window', 'this-week');
+            customWrap.hidden = true;
+            customWrap.classList.add('hidden');
+          }
+          btn.remove();
+          if (!askChips.children.length) askChips.hidden = true;
+          flashPanel();
+          render({ animateHero: true });
+        });
+      });
+
       flashPanel();
       render({ animateHero: true });
     }
@@ -270,8 +358,28 @@ const defaultIndex = Math.max(0, durations.indexOf(defaultDuration));
       }
       const mins = Math.max(0, Math.floor((Date.now() - fetchedAt) / 60000));
       syncEl.hidden = false;
-      syncEl.textContent =
-        mins === 0 ? 'synced just now' : `synced ${mins} min ago`;
+      syncEl.textContent = mins === 0 ? 'synced 0m' : `synced ${mins}m`;
+    }
+
+    function updateTminus() {
+      if (!nextOpeningIso) {
+        tminusEl.textContent = 'T-minus --';
+        return;
+      }
+      const ms = parseInstant(nextOpeningIso).getTime() - Date.now();
+      if (ms <= 0) {
+        tminusEl.textContent = 'T-minus 00:00:00';
+        return;
+      }
+      const total = Math.floor(ms / 1000);
+      const h = Math.floor(total / 3600);
+      const m = Math.floor((total % 3600) / 60);
+      const s = total % 60;
+      const pad = (n: number) => String(n).padStart(2, '0');
+      tminusEl.textContent =
+        h > 48
+          ? `T-minus ${Math.floor(h / 24)}d ${pad(h % 24)}h`
+          : `T-minus ${pad(h)}:${pad(m)}:${pad(s)}`;
     }
 
     function setLive(state: 'loading' | 'live' | 'error', label: string) {
@@ -287,15 +395,13 @@ const defaultIndex = Math.max(0, durations.indexOf(defaultDuration));
     function renderError() {
       nextEl.textContent = 'Unavailable right now';
       nextMetaEl.textContent = '';
+      nextOpeningIso = null;
+      updateTminus();
       resultsEl.innerHTML = '';
       showSkeleton(false);
-      setLive(
-        'error',
-        'Availability is unavailable right now',
-      );
+      setLive('error', 'Availability is unavailable right now');
       statusEl.innerHTML = `<div class="avail-empty"><strong>Availability is unavailable right now</strong>${escapeHtml(
-        loadError ||
-          'You can still book a time on Jesse’s scheduling page.',
+        loadError || 'You can still book a time on Jesse’s scheduling page.',
       )}</div>`;
     }
 
@@ -303,7 +409,6 @@ const defaultIndex = Math.max(0, durations.indexOf(defaultDuration));
       const token = ++heroAnimToken;
       if (animate && !prefersReducedMotion()) {
         nextEl.dataset.animate = 'false';
-        // restart CSS animation
         void nextEl.offsetWidth;
         nextEl.dataset.animate = 'true';
       } else {
@@ -311,7 +416,6 @@ const defaultIndex = Math.max(0, durations.indexOf(defaultDuration));
       }
       nextEl.textContent = openingText;
       nextMetaEl.textContent = metaText;
-      // clear animate flag after run so it can retrigger
       window.setTimeout(() => {
         if (token === heroAnimToken) nextEl.dataset.animate = 'false';
       }, 500);
@@ -338,18 +442,17 @@ const defaultIndex = Math.max(0, durations.indexOf(defaultDuration));
       const opening = nextOpening(data.busy, data.meta, duration);
       if (opening) {
         const start = parseInstant(opening.start);
+        nextOpeningIso = opening.start;
         renderHero(
           `${formatShortDate(start, visitorZone)} · ${formatTimeInZone(start, visitorZone)}`,
-          `${duration} minutes · your time zone`,
+          `${duration} min · ${friendlyZoneName(visitorZone)}`,
           !!opts.animateHero,
         );
       } else {
-        renderHero(
-          `No openings for ${duration} minutes`,
-          'in the next few weeks',
-          !!opts.animateHero,
-        );
+        nextOpeningIso = null;
+        renderHero(`No openings for ${duration} min`, 'in the next few weeks', !!opts.animateHero);
       }
+      updateTminus();
 
       const query =
         windowPreset === 'custom'
@@ -380,22 +483,20 @@ const defaultIndex = Math.max(0, durations.indexOf(defaultDuration));
         let detail = 'Nothing open in that window.';
         if (hint) detail += ` The next day with room is ${hint.label}.`;
         else detail += ' There is not another opening in the loaded range either.';
-
-        statusEl.innerHTML = `<div class="avail-empty"><strong>Quiet calendar for that filter</strong>${escapeHtml(detail)}</div>`;
+        statusEl.innerHTML = `<div class="avail-empty"><strong>Quiet for that filter</strong>${escapeHtml(detail)}</div>`;
         resultsEl.innerHTML = '';
         return;
       }
 
-      statusEl.textContent = `${slots.length} open start${slots.length === 1 ? '' : 's'} in this window.`;
-
+      statusEl.innerHTML = `<span class="avail-mono">${slots.length}</span> open start${slots.length === 1 ? '' : 's'} in this window.`;
       resultsEl.innerHTML = groups
         .map((group, index) => {
           const dayDate = parseInstant(group.slots[0].start);
           return `
-          <section class="avail-day" style="animation-delay: ${Math.min(index, 8) * 0.05}s" aria-labelledby="day-${group.dateKey}">
+          <section class="avail-day avail-tilt-card" style="animation-delay: ${Math.min(index, 8) * 0.045}s" aria-labelledby="day-${group.dateKey}">
             <div class="avail-day-head">
               <h3 id="day-${group.dateKey}" class="avail-day-title">${escapeHtml(group.label)}</h3>
-              <p class="avail-day-count">${group.slots.length} open</p>
+              <p class="avail-day-count avail-mono">${group.slots.length} open</p>
             </div>
             ${heatHtml(dayDate)}
             <ul class="avail-slots">
@@ -403,7 +504,7 @@ const defaultIndex = Math.max(0, durations.indexOf(defaultDuration));
                 .map((slot, slotIndex) => {
                   const label = formatTimeInZone(parseInstant(slot.start), visitorZone);
                   const pressed = selectedSlotStart === slot.start ? 'true' : 'false';
-                  return `<li style="display:contents"><button type="button" class="avail-slot" data-slot-start="${escapeHtml(slot.start)}" aria-pressed="${pressed}" style="animation-delay: ${Math.min(slotIndex, 12) * 0.03}s">${escapeHtml(label)}</button></li>`;
+                  return `<li style="display:contents"><button type="button" class="avail-slot" data-slot-start="${escapeHtml(slot.start)}" aria-pressed="${pressed}" style="animation-delay: ${Math.min(slotIndex, 12) * 0.028}s">${escapeHtml(label)}</button></li>`;
                 })
                 .join('')}
             </ul>
@@ -415,12 +516,42 @@ const defaultIndex = Math.max(0, durations.indexOf(defaultDuration));
         btn.addEventListener('click', () => {
           selectedSlotStart = (btn as HTMLElement).dataset.slotStart || null;
           resultsEl.querySelectorAll('[data-slot-start]').forEach((other) => {
-            other.setAttribute(
-              'aria-pressed',
-              other === btn ? 'true' : 'false',
-            );
+            other.setAttribute('aria-pressed', other === btn ? 'true' : 'false');
           });
         });
+      });
+
+      attachTilt();
+    }
+
+    function attachTilt() {
+      if (prefersReducedMotion()) return;
+      root!.querySelectorAll('.avail-tilt-card').forEach((card) => {
+        const el = card as HTMLElement;
+        el.onpointermove = (e) => {
+          const r = el.getBoundingClientRect();
+          const px = (e.clientX - r.left) / r.width - 0.5;
+          const py = (e.clientY - r.top) / r.height - 0.5;
+          el.style.transform = `perspective(900px) rotateX(${(-py * 4).toFixed(2)}deg) rotateY(${(px * 5).toFixed(2)}deg) translateY(-1px)`;
+        };
+        el.onpointerleave = () => {
+          el.style.transform = '';
+        };
+      });
+    }
+
+    // Panel tilt
+    if (!prefersReducedMotion()) {
+      root.addEventListener('pointermove', (e) => {
+        const r = root.getBoundingClientRect();
+        const px = (e.clientX - r.left) / r.width - 0.5;
+        const py = (e.clientY - r.top) / r.height - 0.5;
+        root.style.setProperty('--tilt-x', `${(-py * 1.4).toFixed(3)}deg`);
+        root.style.setProperty('--tilt-y', `${(px * 1.8).toFixed(3)}deg`);
+      });
+      root.addEventListener('pointerleave', () => {
+        root.style.setProperty('--tilt-x', '0deg');
+        root.style.setProperty('--tilt-y', '0deg');
       });
     }
 
@@ -428,29 +559,23 @@ const defaultIndex = Math.max(0, durations.indexOf(defaultDuration));
       statusEl.textContent = 'Checking the calendar…';
       resultsEl.innerHTML = '';
       showSkeleton(true);
-      setLive('loading', 'Connecting to calendar…');
+      setLive('loading', 'Connecting…');
       loadError = null;
-
       try {
-        const res = await fetch('/api/availability', {
-          headers: { Accept: 'application/json' },
-        });
+        const res = await fetch('/api/availability', { headers: { Accept: 'application/json' } });
         const json = (await res.json()) as AvailabilityResponse;
-
         if (json.ok) {
           data = json;
           fetchedAt = Date.now();
           render({ animateHero: true });
           return;
         }
-
         if (isLocalHost()) {
           data = buildMockAvailabilityResponse();
           fetchedAt = Date.now();
           render({ animateHero: true });
           return;
         }
-
         loadError =
           json.message ||
           'Availability is unavailable right now. You can still book a time on Jesse’s scheduling page.';
@@ -470,16 +595,18 @@ const defaultIndex = Math.max(0, durations.indexOf(defaultDuration));
       }
     }
 
+    askForm.addEventListener('submit', (e) => {
+      e.preventDefault();
+      applyAsk(askInput.value);
+    });
+
     root.querySelectorAll('.duration-btn').forEach((btn) => {
-      btn.addEventListener('click', () => {
-        setDuration(Number((btn as HTMLElement).dataset.duration));
-      });
+      btn.addEventListener('click', () => setDuration(Number((btn as HTMLElement).dataset.duration)));
     });
 
     root.querySelectorAll('.window-btn').forEach((btn) => {
       btn.addEventListener('click', () => {
-        windowPreset = ((btn as HTMLElement).dataset.window ||
-          'this-week') as WindowPreset;
+        windowPreset = ((btn as HTMLElement).dataset.window || 'this-week') as WindowPreset;
         setPressed('.window-btn', 'data-window', windowPreset);
         const showCustom = windowPreset === 'custom';
         customWrap.hidden = !showCustom;
@@ -501,25 +628,17 @@ const defaultIndex = Math.max(0, durations.indexOf(defaultDuration));
     });
 
     rangeStartInput.addEventListener('change', () => {
-      if (rangeEndInput.value < rangeStartInput.value) {
-        rangeEndInput.value = rangeStartInput.value;
-      }
+      if (rangeEndInput.value < rangeStartInput.value) rangeEndInput.value = rangeStartInput.value;
       rangeEndInput.min = rangeStartInput.value;
       if (windowPreset === 'custom') render();
     });
-
     rangeEndInput.addEventListener('change', () => {
       if (windowPreset === 'custom') render();
     });
 
     window.addEventListener('keydown', (event) => {
       const target = event.target as HTMLElement | null;
-      if (
-        target &&
-        (target.tagName === 'INPUT' ||
-          target.tagName === 'TEXTAREA' ||
-          target.isContentEditable)
-      ) {
+      if (target && (target.tagName === 'INPUT' || target.tagName === 'TEXTAREA' || target.isContentEditable)) {
         return;
       }
       const map: Record<string, number> = {
@@ -528,14 +647,14 @@ const defaultIndex = Math.max(0, durations.indexOf(defaultDuration));
         '3': durations[2],
         '4': durations[3],
       };
-      const next = map[event.key];
-      if (next) {
+      if (map[event.key]) {
         event.preventDefault();
-        setDuration(next);
+        setDuration(map[event.key]);
       }
     });
 
     window.setInterval(updateSyncLabel, 30000);
+    window.setInterval(updateTminus, 1000);
     void loadAvailability();
   }
 </script>

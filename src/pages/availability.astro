@@ -6,23 +6,6 @@ import { personalAvailability } from '@/config/availability';
 import '@/styles/availability-product.css';
 
 const profile = personalAvailability;
-
-const floatEmojis = [
-  { emoji: '🎣', x: '8%', y: '18%', delay: '0s' },
-  { emoji: '🏕️', x: '88%', y: '14%', delay: '1.2s' },
-  { emoji: '🍳', x: '12%', y: '72%', delay: '2.1s' },
-  { emoji: '🏔️', x: '90%', y: '68%', delay: '0.6s' },
-  { emoji: '☕', x: '78%', y: '42%', delay: '1.8s' },
-  { emoji: '📖', x: '6%', y: '48%', delay: '2.8s' },
-];
-
-const funLines = [
-  'Probably fly fishing when not in a meeting 🎣',
-  'Fuelled by coffee and Colorado mornings ☕🏔️',
-  'Kitchen experiments count as R&D 🍳',
-  'Camping weekends keep the calendar honest 🏕️',
-  'Faith, family, then the next open slot 📖',
-];
 ---
 
 <BaseLayout
@@ -31,7 +14,8 @@ const funLines = [
   personalOnly
   bodyClass="avail-product dark"
 >
-  <div class="avail-stage">
+  <div class="avail-stage" data-avail-stage>
+    <canvas class="avail-webgl" data-avail-webgl aria-hidden="true"></canvas>
     <div class="avail-aurora" aria-hidden="true">
       <span class="avail-blob avail-blob-a"></span>
       <span class="avail-blob avail-blob-b"></span>
@@ -39,32 +23,27 @@ const funLines = [
     </div>
     <div class="avail-grid-motion" aria-hidden="true"></div>
     <div class="avail-noise" aria-hidden="true"></div>
-    <div class="avail-floats" aria-hidden="true">
-      {
-        floatEmojis.map((item) => (
-          <span
-            class="avail-float"
-            style={`left:${item.x};top:${item.y};animation-delay:${item.delay}`}
-          >
-            {item.emoji}
-          </span>
-        ))
-      }
-    </div>
 
     <article class="avail-shell">
-      <header class="avail-enter" style="--enter-delay: 0.05s">
-        <p class="avail-kicker">{profile.eyebrow}</p>
+      <header class="avail-enter" style="--enter-delay: 0.04s">
+        <div class="avail-topbar">
+          <p class="avail-kicker">{profile.eyebrow}</p>
+          <div class="avail-hud" data-hud aria-hidden="false">
+            <span class="avail-hud-item"><span class="avail-hud-key">UTC</span> <span data-clock-utc class="avail-mono">--:--:--</span></span>
+            <span class="avail-hud-sep" aria-hidden="true"></span>
+            <span class="avail-hud-item"><span class="avail-hud-key">MT</span> <span data-clock-mt class="avail-mono">--:--:--</span></span>
+          </div>
+        </div>
         <h1 class="avail-brand">{profile.displayName}</h1>
         <p class="avail-lead">{profile.lead}</p>
-        <p class="avail-funline" data-funline aria-live="polite">{funLines[0]}</p>
+        <p class="avail-funline" data-funline>Quiet mornings. Clear calendar. Real work.</p>
       </header>
 
-      <div class="avail-enter" style="--enter-delay: 0.16s">
+      <div class="avail-enter" style="--enter-delay: 0.12s">
         <AvailabilityTools />
       </div>
 
-      <div class="avail-enter" style="--enter-delay: 0.28s">
+      <div class="avail-enter" style="--enter-delay: 0.2s">
         <AvailabilityFinder
           bookingUrl={profile.bookingUrl}
           bookingCta={profile.bookingCta}
@@ -84,22 +63,93 @@ const funLines = [
   document.documentElement.classList.add('dark');
 </script>
 
-<script define:vars={{ funLines }}>
-  const el = document.querySelector('[data-funline]');
-  if (el && Array.isArray(funLines) && funLines.length > 1) {
-    const reduce = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
-    if (!reduce) {
-      let i = 0;
-      window.setInterval(() => {
-        i = (i + 1) % funLines.length;
-        el.style.opacity = '0';
-        el.style.transform = 'translateY(6px)';
-        window.setTimeout(() => {
-          el.textContent = funLines[i];
-          el.style.opacity = '1';
-          el.style.transform = 'none';
-        }, 220);
-      }, 4200);
+<script>
+  const funLines = [
+    'Quiet mornings. Clear calendar. Real work.',
+    'Probably outside when the inbox goes quiet.',
+    'Coffee first. Then the next open slot.',
+    'Colorado light, then deep work.',
+  ];
+
+  const utcEl = document.querySelector('[data-clock-utc]');
+  const mtEl = document.querySelector('[data-clock-mt]');
+  const funEl = document.querySelector('[data-funline]');
+  const reduce = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+  function tickClocks() {
+    const now = new Date();
+    if (utcEl) utcEl.textContent = formatTimeInZone(now, 'UTC').replace(' ', '') + 'Z';
+    // Use 24h mono style for HUD feel
+    const fmt = new Intl.DateTimeFormat('en-GB', {
+      timeZone: 'America/Denver',
+      hour: '2-digit',
+      minute: '2-digit',
+      second: '2-digit',
+      hourCycle: 'h23',
+    });
+    if (mtEl) mtEl.textContent = fmt.format(now);
+    const utcFmt = new Intl.DateTimeFormat('en-GB', {
+      timeZone: 'UTC',
+      hour: '2-digit',
+      minute: '2-digit',
+      second: '2-digit',
+      hourCycle: 'h23',
+    });
+    if (utcEl) utcEl.textContent = `${utcFmt.format(now)}Z`;
+  }
+  tickClocks();
+  window.setInterval(tickClocks, 1000);
+
+  if (funEl && !reduce) {
+    let i = 0;
+    window.setInterval(() => {
+      i = (i + 1) % funLines.length;
+      funEl.animate(
+        [
+          { opacity: 1, transform: 'translateY(0)' },
+          { opacity: 0, transform: 'translateY(4px)' },
+        ],
+        { duration: 180, fill: 'forwards', easing: 'cubic-bezier(0.22, 1, 0.36, 1)' },
+      ).finished.then(() => {
+        funEl.textContent = funLines[i];
+        funEl.animate(
+          [
+            { opacity: 0, transform: 'translateY(4px)' },
+            { opacity: 1, transform: 'translateY(0)' },
+          ],
+          { duration: 280, fill: 'forwards', easing: 'cubic-bezier(0.22, 1, 0.36, 1)' },
+        );
+      });
+    }, 5200);
+  }
+
+  // Lazy WebGL terrain
+  const canvas = document.querySelector('[data-avail-webgl]') as HTMLCanvasElement | null;
+  const lowPower =
+    reduce ||
+    (navigator.hardwareConcurrency && navigator.hardwareConcurrency <= 4) ||
+    matchMedia('(max-width: 700px)').matches;
+
+  if (canvas && !lowPower) {
+    const boot = () => {
+      void import('@/lib/availability/webglTerrain').then(({ createTerrain }) => {
+        const handle = createTerrain({ canvas, reducedMotion: reduce });
+        if (!handle) canvas.style.display = 'none';
+        window.addEventListener(
+          'pagehide',
+          () => {
+            handle?.destroy();
+          },
+          { once: true },
+        );
+      });
+    };
+    if ('requestIdleCallback' in window) {
+      (window as Window & { requestIdleCallback: (cb: () => void) => void }).requestIdleCallback(boot);
+    } else {
+      window.setTimeout(boot, 400);
     }
+  } else if (canvas) {
+    canvas.style.display = 'none';
   }
 </script>
