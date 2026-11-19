@@ -18,10 +18,10 @@ const {
 const defaultIndex = Math.max(0, durations.indexOf(defaultDuration));
 
 const placeholders = [
+  '30 minutes sometime in the next 3 weeks',
   'an hour next Tuesday afternoon',
-  '30 min this week before noon',
-  '90 minutes sometime next week',
-  '15 minutes tomorrow morning',
+  'quick 15 min call tomorrow morning',
+  'anything Friday',
 ];
 ---
 
@@ -33,139 +33,116 @@ const placeholders = [
   data-durations={JSON.stringify(durations)}
   data-placeholders={JSON.stringify(placeholders)}
 >
-  <aside class="avail-rail">
-    <div class="avail-rail-scroll">
-      <header class="avail-hero-block">
-        <p class="avail-greeting" data-greeting>Hey there</p>
-        <h1 class="avail-brand">{headline}</h1>
-        <p class="avail-lead">{lead}</p>
-        <p class="avail-funline" data-funline>Quiet mornings. Clear calendar. Real work. ☀️</p>
-      </header>
-
-      <div class="avail-hero-stat" data-hero>
-        <div class="avail-hero-top">
-          <p class="avail-hero-label">Next opening</p>
-          <p class="avail-tminus avail-mono" data-tminus>opens in --</p>
-        </div>
-        <p class="avail-hero-value" data-next-opening aria-live="polite">Loading…</p>
-        <p class="avail-hero-meta" data-next-meta></p>
+  <header class="avail-top">
+    <form class="avail-ask-hero" data-ask-form>
+      <h1 class="avail-ask-title">When works for you?</h1>
+      <div class="avail-ask-row">
+        <input
+          id="avail-ask-input"
+          class="avail-ask-input"
+          type="text"
+          autocomplete="off"
+          spellcheck="false"
+          maxlength="300"
+          placeholder={placeholders[0]}
+          data-ask-input
+          aria-label="When works for you"
+        />
+        <button type="submit" class="avail-ask-go" data-ask-go>Find it</button>
       </div>
+      <p class="avail-ask-reply" data-ask-reply hidden></p>
+      <p class="avail-ask-msg" data-ask-msg hidden></p>
+      <div class="avail-ask-chips" data-ask-chips hidden></div>
+    </form>
 
-      <form class="avail-ask" data-ask-form>
-        <label class="avail-ask-label" for="avail-ask-input">Ask in plain English</label>
-        <div class="avail-ask-row">
-          <span class="avail-ask-prompt" aria-hidden="true">›</span>
-          <input
-            id="avail-ask-input"
-            class="avail-ask-input"
-            type="text"
-            autocomplete="off"
-            spellcheck="false"
-            placeholder={placeholders[0]}
-            data-ask-input
-          />
-          <button type="submit" class="avail-ask-go">Parse</button>
-        </div>
-        <div class="avail-ask-chips" data-ask-chips hidden></div>
-        <p class="avail-ask-msg" data-ask-msg hidden></p>
-      </form>
+    <div class="avail-meta-row" aria-live="polite">
+      <p class="avail-live-line" data-live data-state="loading">
+        <span class="avail-live-dot" aria-hidden="true"></span>
+        <span data-live-label>Connecting…</span>
+        <span class="avail-live-sep" aria-hidden="true">·</span>
+        <span>times in <span data-zone-chip>…</span></span>
+        <span class="avail-chip-book" data-booking-badge hidden> · booking on</span>
+      </p>
+      <p class="avail-next-mini" data-hero>
+        <span class="avail-mono" data-tminus>opens in --</span>
+        <span data-next-opening>Loading…</span>
+        <span class="avail-next-meta" data-next-meta hidden></span>
+      </p>
+    </div>
 
-      <div class="avail-status-row" aria-live="polite">
-        <div class="avail-live" data-live data-state="loading">
-          <span class="avail-live-dot" aria-hidden="true"></span>
-          <span data-live-label>Connecting…</span>
-        </div>
-        <div class="avail-chip avail-mono" data-sync hidden>synced 0m</div>
-        <div class="avail-chip" data-zone-chip>Detecting zone…</div>
-        <div class="avail-chip avail-chip-book" data-booking-badge hidden>Booking enabled</div>
+    <div class="avail-adjust-bar">
+      <div
+        class="avail-adjust-group"
+        role="group"
+        aria-label="Meeting length"
+        data-duration-segment
+        style={`--seg-count: ${durations.length}; --seg-index: ${defaultIndex};`}
+      >
+        {
+          durations.map((mins, i) => (
+            <button
+              type="button"
+              class={`duration-btn avail-pill avail-chip-tone avail-chip-tone-${i % 8}`}
+              data-duration={mins}
+              data-index={i}
+              aria-pressed={mins === defaultDuration ? 'true' : 'false'}
+            >
+              {mins}m
+            </button>
+          ))
+        }
       </div>
-
-      <section aria-labelledby="length-heading">
-        <h2 id="length-heading" class="avail-section-label">How long?</h2>
-        <div
-          class="avail-chip-row"
-          role="group"
-          aria-label="Meeting length"
-          data-duration-segment
-          style={`--seg-count: ${durations.length}; --seg-index: ${defaultIndex};`}
-        >
-          {
-            durations.map((mins, i) => (
-              <button
-                type="button"
-                class={`duration-btn avail-pill avail-chip-tone avail-chip-tone-${i % 8}`}
-                data-duration={mins}
-                data-index={i}
-                aria-pressed={mins === defaultDuration ? 'true' : 'false'}
-              >
-                <span class="avail-mono">{mins}</span> min
-              </button>
-            ))
-          }
+      <div class="avail-adjust-group" role="group" aria-label="Week">
+        <button type="button" class="avail-pill avail-chip-tone avail-chip-tone-0 window-btn" data-window="this-week" aria-pressed="true">This week</button>
+        <button type="button" class="avail-pill avail-chip-tone avail-chip-tone-4 window-btn" data-window="next-week" aria-pressed="false">Next week</button>
+      </div>
+      <div class="avail-adjust-group" role="group" aria-label="Time of day">
+        <button type="button" class="avail-pill avail-chip-tone avail-chip-tone-5 tod-btn" data-tod="all" aria-pressed="true">All</button>
+        <button type="button" class="avail-pill avail-chip-tone avail-chip-tone-3 tod-btn" data-tod="morning" aria-pressed="false">AM</button>
+        <button type="button" class="avail-pill avail-chip-tone avail-chip-tone-1 tod-btn" data-tod="afternoon" aria-pressed="false">PM</button>
+      </div>
+      <div class="avail-adjust-wrap">
+        <button type="button" class="avail-adjust-toggle" data-adjust-toggle aria-expanded="false">Adjust</button>
+        <div class="avail-adjust-panel" data-adjust-panel hidden>
+          <button type="button" class="avail-pill window-btn" data-window="custom" aria-pressed="false">Custom range</button>
+          <div id="custom-range" class="avail-date-grid" data-custom-range hidden>
+            <label class="avail-date-field">
+              <span>From</span>
+              <input type="date" id="range-start" />
+            </label>
+            <label class="avail-date-field">
+              <span>Through</span>
+              <input type="date" id="range-end" />
+            </label>
+          </div>
+          <div class="avail-book-footer" data-book-footer hidden>
+            <p class="avail-pick-note" data-pick-note hidden></p>
+            <a href="#" class="avail-cta" rel="noopener noreferrer" target="_blank" data-book-btn>
+              Book a time <span aria-hidden="true">↗</span>
+            </a>
+          </div>
         </div>
-        <p class="avail-hint">
-          Keys <span class="avail-kbd">1</span>
-          <span class="avail-kbd">2</span>
-          <span class="avail-kbd">3</span>
-          <span class="avail-kbd">4</span>
-        </p>
-      </section>
-
-      <section aria-labelledby="window-heading">
-        <h2 id="window-heading" class="avail-section-label">When?</h2>
-        <div class="avail-pills" role="group" aria-label="Date window">
-          <button type="button" class="avail-pill avail-chip-tone avail-chip-tone-0 window-btn" data-window="this-week" aria-pressed="true">This week</button>
-          <button type="button" class="avail-pill avail-chip-tone avail-chip-tone-4 window-btn" data-window="next-week" aria-pressed="false">Next week</button>
-          <button type="button" class="avail-pill avail-chip-tone avail-chip-tone-7 window-btn" data-window="custom" aria-pressed="false">Custom</button>
-        </div>
-
-        <div id="custom-range" class="avail-date-grid hidden" data-custom-range hidden>
-          <label class="avail-date-field">
-            <span>From</span>
-            <input type="date" id="range-start" />
-          </label>
-          <label class="avail-date-field">
-            <span>Through</span>
-            <input type="date" id="range-end" />
-          </label>
-        </div>
-
-        <div class="avail-pills" style="margin-top: 0.65rem;" role="group" aria-label="Morning or afternoon">
-          <button type="button" class="avail-pill avail-chip-tone avail-chip-tone-5 tod-btn" data-tod="all" aria-pressed="true">All</button>
-          <button type="button" class="avail-pill avail-chip-tone avail-chip-tone-3 tod-btn" data-tod="morning" aria-pressed="false">Morning</button>
-          <button type="button" class="avail-pill avail-chip-tone avail-chip-tone-1 tod-btn" data-tod="afternoon" aria-pressed="false">Afternoon</button>
-        </div>
-      </section>
-
-      <div class="avail-book-footer" data-book-footer hidden>
-        <p class="avail-pick-note" data-pick-note hidden></p>
-        <a
-          href="#"
-          class="avail-cta"
-          rel="noopener noreferrer"
-          target="_blank"
-          data-book-btn
-        >
-          Book a time
-          <span aria-hidden="true">↗</span>
-        </a>
-        <p class="avail-cta-note" data-book-note>
-          Opens the scheduling page in a new tab. Nothing is reserved here.
-        </p>
       </div>
     </div>
-  </aside>
+  </header>
 
   <section class="avail-workspace" aria-label="Open times">
     <div class="avail-workspace-bar">
-      <p class="avail-status" data-status>Checking the calendar…</p>
+      <div class="avail-cal-nav">
+        <button type="button" class="avail-cal-nav-btn" data-week-prev aria-label="Previous week">‹</button>
+        <div class="avail-cal-nav-center">
+          <p class="avail-cal-week-label" data-week-label>This week</p>
+          <p class="avail-status" data-status>Checking the calendar…</p>
+        </div>
+        <button type="button" class="avail-cal-nav-btn" data-week-next aria-label="Next week">›</button>
+      </div>
+      <div class="avail-cal-jump" data-week-jump aria-label="Jump to a week"></div>
     </div>
     <div class="avail-skeleton" data-skeleton hidden>
       <div class="avail-skel-line lg"></div>
       <div class="avail-skel-line" style="width: 70%;"></div>
-      <div class="avail-skel-line" style="width: 52%;"></div>
     </div>
-    <div id="slot-results" class="avail-board" data-results></div>
+    <div id="slot-results" class="avail-board avail-cal-board" data-results></div>
   </section>
 </div>
 
@@ -173,10 +150,8 @@ const placeholders = [
   import { buildMockAvailabilityResponse } from '@/lib/availability/mock';
   import { parseAvailabilityAsk } from '@/lib/availability/parseQuery';
   import {
-    dayHeatStrip,
     filterByTimeOfDay,
     generateSlots,
-    groupSlotsByDay,
     nextDateWithRoom,
     nextOpening,
   } from '@/lib/availability/slots';
@@ -190,6 +165,8 @@ const placeholders = [
     parseInstant,
     startOfDayInZone,
     startOfWeekMondayInZone,
+    weekdayInZone,
+    zonedLocalToUtc,
   } from '@/lib/availability/time';
   import type {
     AvailabilityResponse,
@@ -227,19 +204,6 @@ const placeholders = [
     return detectVisitorTimeZone();
   }
 
-  function greetingForMountain(now = new Date()) {
-    const hour = Number(
-      new Intl.DateTimeFormat('en-US', {
-        timeZone: 'America/Denver',
-        hour: 'numeric',
-        hourCycle: 'h23',
-      }).format(now),
-    );
-    if (hour < 12) return 'Good morning';
-    if (hour < 17) return 'Good afternoon';
-    return 'Good evening';
-  }
-
   function prefersReducedMotion() {
     return window.matchMedia('(prefers-reduced-motion: reduce)').matches;
   }
@@ -264,18 +228,22 @@ const placeholders = [
     let selectedSlotStart: string | null = null;
     let nextOpeningIso: string | null = null;
     let heroAnimToken = 0;
+    let viewMonday = startOfWeekMondayInZone(new Date(), resolveVisitorZone());
+    let mobileDayKey = dateKeyInZone(new Date(), resolveVisitorZone());
+    let highlightStarts = new Set<string>();
+    let preferredDays: string[] = [];
+    let asking = false;
     const visitorZone = resolveVisitorZone();
 
     const statusEl = root.querySelector('[data-status]') as HTMLElement;
-    const greetingEl = root.querySelector('[data-greeting]') as HTMLElement | null;
-    const funlineEl = root.querySelector('[data-funline]') as HTMLElement | null;
+    const weekLabelEl = root.querySelector('[data-week-label]') as HTMLElement | null;
+    const weekJumpEl = root.querySelector('[data-week-jump]') as HTMLElement | null;
     const resultsEl = root.querySelector('[data-results]') as HTMLElement;
     const nextEl = root.querySelector('[data-next-opening]') as HTMLElement;
     const nextMetaEl = root.querySelector('[data-next-meta]') as HTMLElement;
     const tminusEl = root.querySelector('[data-tminus]') as HTMLElement;
     const liveEl = root.querySelector('[data-live]') as HTMLElement;
     const liveLabelEl = root.querySelector('[data-live-label]') as HTMLElement;
-    const syncEl = root.querySelector('[data-sync]') as HTMLElement;
     const zoneChipEl = root.querySelector('[data-zone-chip]') as HTMLElement;
     const skeletonEl = root.querySelector('[data-skeleton]') as HTMLElement;
     const customWrap = root.querySelector('[data-custom-range]') as HTMLElement;
@@ -284,12 +252,16 @@ const placeholders = [
     const rangeEndInput = root.querySelector('#range-end') as HTMLInputElement;
     const askForm = root.querySelector('[data-ask-form]') as HTMLFormElement;
     const askInput = root.querySelector('[data-ask-input]') as HTMLInputElement;
+    const askGo = root.querySelector('[data-ask-go]') as HTMLButtonElement | null;
     const askChips = root.querySelector('[data-ask-chips]') as HTMLElement;
+    const askReply = root.querySelector('[data-ask-reply]') as HTMLElement;
     const askMsg = root.querySelector('[data-ask-msg]') as HTMLElement;
     const pickNoteEl = root.querySelector('[data-pick-note]') as HTMLElement | null;
     const bookBtn = root.querySelector('[data-book-btn]') as HTMLAnchorElement | null;
     const bookFooter = root.querySelector('[data-book-footer]') as HTMLElement | null;
     const bookingBadge = root.querySelector('[data-booking-badge]') as HTMLElement | null;
+    const adjustToggle = root.querySelector('[data-adjust-toggle]') as HTMLButtonElement | null;
+    const adjustPanel = root.querySelector('[data-adjust-panel]') as HTMLElement | null;
 
     if (bookingEnabled && bookingUrl) {
       if (bookFooter) bookFooter.hidden = false;
@@ -326,30 +298,6 @@ const placeholders = [
     }
 
     zoneChipEl.textContent = friendlyZoneName(visitorZone);
-    zoneChipEl.title = `Times shown in ${friendlyZoneName(visitorZone)}. Jesse’s open hours are Mountain Time.`;
-
-    if (greetingEl) {
-      greetingEl.textContent = `${greetingForMountain()} 👋`;
-    }
-
-    const funLines = [
-      'Quiet mornings. Clear calendar. Real work. ☀️',
-      'Probably outside when the inbox goes quiet. 🎣',
-      'Coffee first. Then the next open slot. ☕',
-      'Colorado light, then deep work. 🏔️',
-      'Leave a little room for the river. 🌲',
-    ];
-    if (funlineEl && !prefersReducedMotion()) {
-      let fi = 0;
-      window.setInterval(() => {
-        fi = (fi + 1) % funLines.length;
-        funlineEl.style.opacity = '0';
-        window.setTimeout(() => {
-          funlineEl.textContent = funLines[fi];
-          funlineEl.style.opacity = '1';
-        }, 180);
-      }, 5200);
-    }
 
     const todayKey = dateKeyInZone(new Date(), visitorZone);
     rangeStartInput.min = todayKey;
@@ -397,38 +345,103 @@ const placeholders = [
       render({ animateHero: true });
     }
 
-    function applyAsk(raw: string) {
+    type AskApiResult = {
+      ok: boolean;
+      duration?: number;
+      rangeStart?: string;
+      rangeEnd?: string;
+      timeOfDay?: 'any' | 'morning' | 'afternoon';
+      preferredDays?: string[];
+      reply?: string;
+      source?: 'ai' | 'local';
+      message?: string;
+    };
+
+    function applyLocalAsk(raw: string): AskApiResult {
       const parsed = parseAvailabilityAsk(raw, {
         visitorTimeZone: visitorZone,
         durations,
       });
       if (!parsed.ok) {
+        return { ok: false, message: parsed.message };
+      }
+      return {
+        ok: true,
+        duration: parsed.durationMinutes,
+        rangeStart: parsed.rangeStartKey,
+        rangeEnd: parsed.rangeEndKey,
+        timeOfDay:
+          parsed.timeOfDay === 'all'
+            ? 'any'
+            : (parsed.timeOfDay as 'morning' | 'afternoon'),
+        reply: `Got it: ${parsed.summary}.`,
+        source: 'local',
+      };
+    }
+
+    function applyAskResult(result: AskApiResult) {
+      if (!result.ok) {
         askChips.hidden = true;
         askChips.innerHTML = '';
+        askReply.hidden = true;
+        askReply.textContent = '';
         askMsg.hidden = false;
-        askMsg.textContent = parsed.message;
+        askMsg.textContent = result.message || 'Could not understand that ask.';
         return;
       }
 
       askMsg.hidden = true;
+      askReply.hidden = false;
+      askReply.textContent = result.reply || 'Here is what I found.';
+
+      const chips: { kind: string; label: string }[] = [
+        { kind: 'duration', label: `${result.duration || duration} min` },
+      ];
+      if (result.rangeStart && result.rangeEnd) {
+        chips.push({
+          kind: 'window',
+          label:
+            result.rangeStart === result.rangeEnd
+              ? result.rangeStart
+              : `${result.rangeStart} to ${result.rangeEnd}`,
+        });
+      }
+      if (result.timeOfDay && result.timeOfDay !== 'any') {
+        chips.push({
+          kind: 'tod',
+          label: result.timeOfDay === 'morning' ? 'Morning' : 'Afternoon',
+        });
+      }
       askChips.hidden = false;
-      askChips.innerHTML = parsed.chips
+      askChips.innerHTML = chips
         .map(
           (chip) =>
             `<button type="button" class="avail-ask-chip" data-chip-kind="${chip.kind}">${escapeHtml(chip.label)} <span aria-hidden="true">×</span></button>`,
         )
         .join('');
 
-      setDuration(parsed.durationMinutes, { animate: false });
-      timeOfDay = parsed.timeOfDay;
+      setDuration(Number(result.duration || duration), { animate: false });
+      timeOfDay =
+        !result.timeOfDay || result.timeOfDay === 'any'
+          ? 'all'
+          : (result.timeOfDay as TimeOfDayFilter);
       setPressed('.tod-btn', 'data-tod', timeOfDay);
-      windowPreset = parsed.windowPreset;
-      setPressed('.window-btn', 'data-window', windowPreset);
-      const showCustom = windowPreset === 'custom';
-      customWrap.hidden = !showCustom;
-      customWrap.classList.toggle('hidden', !showCustom);
-      if (parsed.rangeStartKey) rangeStartInput.value = parsed.rangeStartKey;
-      if (parsed.rangeEndKey) rangeEndInput.value = parsed.rangeEndKey;
+
+      preferredDays = (result.preferredDays || []).map((d) => d.toLowerCase().slice(0, 3));
+      windowPreset = 'custom';
+      setPressed('.window-btn', 'data-window', 'custom');
+      customWrap.hidden = false;
+      customWrap.classList.remove('hidden');
+      openAdjust(true);
+      if (result.rangeStart) rangeStartInput.value = result.rangeStart;
+      if (result.rangeEnd) rangeEndInput.value = result.rangeEnd || result.rangeStart || rangeEndInput.value;
+      if (result.rangeStart) {
+        viewMonday = startOfWeekMondayInZone(
+          parseInstant(`${result.rangeStart}T17:00:00.000Z`),
+          visitorZone,
+        );
+        mobileDayKey = result.rangeStart;
+      }
 
       askChips.querySelectorAll('[data-chip-kind]').forEach((btn) => {
         btn.addEventListener('click', () => {
@@ -441,6 +454,8 @@ const placeholders = [
             setPressed('.window-btn', 'data-window', 'this-week');
             customWrap.hidden = true;
             customWrap.classList.add('hidden');
+            preferredDays = [];
+            highlightStarts = new Set();
           }
           btn.remove();
           if (!askChips.children.length) askChips.hidden = true;
@@ -450,7 +465,53 @@ const placeholders = [
       });
 
       flashPanel();
-      render({ animateHero: true });
+      render({ animateHero: true, markBest: true });
+    }
+
+    async function applyAsk(raw: string) {
+      const text = raw.trim().slice(0, 300);
+      if (!text || asking) return;
+      asking = true;
+      if (askGo) {
+        askGo.disabled = true;
+        askGo.textContent = 'Finding…';
+      }
+      askMsg.hidden = true;
+      askReply.hidden = true;
+
+      let result: AskApiResult | null = null;
+      try {
+        const res = await fetch('/api/ask', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json', Accept: 'application/json' },
+          body: JSON.stringify({
+            text,
+            timeZone: visitorZone,
+            today: dateKeyInZone(new Date(), visitorZone),
+            durations,
+          }),
+        });
+        result = (await res.json()) as AskApiResult;
+      } catch {
+        result = null;
+      }
+
+      if (!result || result.ok === false) {
+        // Always keep the page working: local parser fallback.
+        result = applyLocalAsk(text);
+        if (!result.ok && result.message) {
+          // keep message
+        } else if (result.ok && !result.reply) {
+          result.reply = 'Here is what I found.';
+        }
+      }
+
+      applyAskResult(result);
+      asking = false;
+      if (askGo) {
+        askGo.disabled = false;
+        askGo.textContent = 'Find it';
+      }
     }
 
     function windowExclusiveEnd(now = new Date()): Date {
@@ -464,16 +525,6 @@ const placeholders = [
       const monday = startOfWeekMondayInZone(now, visitorZone);
       if (windowPreset === 'this-week') return addDaysInZone(monday, 7, visitorZone);
       return addDaysInZone(monday, 14, visitorZone);
-    }
-
-    function updateSyncLabel() {
-      if (!fetchedAt) {
-        syncEl.hidden = true;
-        return;
-      }
-      const mins = Math.max(0, Math.floor((Date.now() - fetchedAt) / 60000));
-      syncEl.hidden = false;
-      syncEl.textContent = mins === 0 ? 'synced 0m' : `synced ${mins}m`;
     }
 
     function updateTminus() {
@@ -500,6 +551,12 @@ const placeholders = [
     function setLive(state: 'loading' | 'live' | 'error', label: string) {
       liveEl.dataset.state = state;
       liveLabelEl.textContent = label;
+    }
+
+    function openAdjust(open: boolean) {
+      if (!adjustPanel || !adjustToggle) return;
+      adjustPanel.hidden = !open;
+      adjustToggle.setAttribute('aria-expanded', open ? 'true' : 'false');
     }
 
     function showSkeleton(show: boolean) {
@@ -536,23 +593,98 @@ const placeholders = [
       }, 500);
     }
 
-    function heatHtml(dayDate: Date) {
-      if (!data) return '';
-      const cells = dayHeatStrip(dayDate, data.busy, data.meta);
-      return `<div class="avail-heat" aria-hidden="true">${cells
-        .map((c) => `<span data-open="${c.open ? 'true' : 'false'}"></span>`)
-        .join('')}</div>`;
+    function weekDays(monday: Date) {
+      return [0, 1, 2, 3, 4].map((i) => addDaysInZone(monday, i, visitorZone));
     }
 
-    function render(opts: { animateHero?: boolean } = {}) {
+    function syncViewFromPreset() {
+      const now = new Date();
+      if (windowPreset === 'this-week') {
+        viewMonday = startOfWeekMondayInZone(now, visitorZone);
+      } else if (windowPreset === 'next-week') {
+        viewMonday = addDaysInZone(startOfWeekMondayInZone(now, visitorZone), 7, visitorZone);
+      } else if (rangeStartInput.value) {
+        viewMonday = startOfWeekMondayInZone(
+          parseInstant(`${rangeStartInput.value}T17:00:00.000Z`),
+          visitorZone,
+        );
+      }
+    }
+
+    function updateWeekChrome() {
+      const days = weekDays(viewMonday);
+      const startLabel = formatShortDate(days[0], visitorZone);
+      const endLabel = formatShortDate(days[4], visitorZone);
+      if (weekLabelEl) weekLabelEl.textContent = `${startLabel} – ${endLabel}`;
+
+      if (weekJumpEl) {
+        const nowMon = startOfWeekMondayInZone(new Date(), visitorZone);
+        const jumps = [0, 1, 2, 3].map((i) => addDaysInZone(nowMon, i * 7, visitorZone));
+        weekJumpEl.innerHTML = jumps
+          .map((mon) => {
+            const key = dateKeyInZone(mon, visitorZone);
+            const active = dateKeyInZone(viewMonday, visitorZone) === key;
+            const label = new Intl.DateTimeFormat('en-US', {
+              timeZone: visitorZone,
+              month: 'short',
+              day: 'numeric',
+            }).format(mon);
+            return `<button type="button" class="avail-cal-jump-btn${active ? ' is-active' : ''}" data-jump-monday="${key}">Week of ${escapeHtml(label)}</button>`;
+          })
+          .join('');
+        weekJumpEl.querySelectorAll('[data-jump-monday]').forEach((btn) => {
+          btn.addEventListener('click', () => {
+            const key = (btn as HTMLElement).dataset.jumpMonday || '';
+            viewMonday = startOfWeekMondayInZone(
+              parseInstant(`${key}T17:00:00.000Z`),
+              visitorZone,
+            );
+            windowPreset = 'custom';
+            setPressed('.window-btn', 'data-window', 'custom');
+            customWrap.hidden = false;
+            customWrap.classList.remove('hidden');
+            const fri = addDaysInZone(viewMonday, 4, visitorZone);
+            rangeStartInput.value = dateKeyInZone(viewMonday, visitorZone);
+            rangeEndInput.value = dateKeyInZone(fri, visitorZone);
+            flashPanel();
+            render();
+          });
+        });
+      }
+    }
+
+    function markBestSlots(slots: { start: string }[]) {
+      highlightStarts = new Set();
+      const ranked = [...slots];
+      ranked.sort((a, b) => {
+        const wa = weekdayInZone(parseInstant(a.start), visitorZone);
+        const wb = weekdayInZone(parseInstant(b.start), visitorZone);
+        const names = ['sun', 'mon', 'tue', 'wed', 'thu', 'fri', 'sat'];
+        const pa = preferredDays.includes(names[wa]) ? 0 : 1;
+        const pb = preferredDays.includes(names[wb]) ? 0 : 1;
+        if (pa !== pb) return pa - pb;
+        return a.start.localeCompare(b.start);
+      });
+      ranked.slice(0, Math.min(4, ranked.length)).forEach((s) => highlightStarts.add(s.start));
+    }
+
+    function slotButtonHtml(slot: { start: string }, tone: number, delay = 0) {
+      const label = formatTimeInZone(parseInstant(slot.start), visitorZone);
+      const pressed = selectedSlotStart === slot.start ? 'true' : 'false';
+      const best = highlightStarts.has(slot.start) ? ' is-best' : '';
+      const slotBtn = `<button type="button" class="avail-slot avail-chip-tone-${tone}${best}" data-slot-start="${escapeHtml(slot.start)}" aria-pressed="${pressed}" style="animation-delay: ${delay}s">${escapeHtml(label)}</button>`;
+      if (!bookingEnabled || !bookingUrl) return slotBtn;
+      return `<span class="avail-slot-row">${slotBtn}<a class="avail-slot-book" href="${escapeHtml(bookingUrl)}" target="_blank" rel="noopener noreferrer" data-book-slot="${escapeHtml(slot.start)}">Book</a></span>`;
+    }
+
+    function render(opts: { animateHero?: boolean; markBest?: boolean } = {}) {
       if (!data) {
         renderError();
         return;
       }
 
       showSkeleton(false);
-      setLive('live', "Live from Jesse’s calendar");
-      updateSyncLabel();
+      setLive('live', "Live from Jesse's calendar");
 
       const opening = nextOpening(data.busy, data.meta, duration);
       if (opening) {
@@ -569,6 +701,15 @@ const placeholders = [
       }
       updateTminus();
 
+      if (windowPreset !== 'custom') syncViewFromPreset();
+      updateWeekChrome();
+
+      const weekEnd = addDaysInZone(viewMonday, 4, visitorZone);
+      const weekStartKey = dateKeyInZone(viewMonday, visitorZone);
+      const weekEndKey = dateKeyInZone(weekEnd, visitorZone);
+
+      // Filter range: intersection of UI filters and visible week for the grid,
+      // but status count uses the full filter window.
       const query =
         windowPreset === 'custom'
           ? {
@@ -583,11 +724,42 @@ const placeholders = [
               preset: windowPreset,
             };
 
-      let slots = generateSlots(data.busy, data.meta, query);
-      slots = filterByTimeOfDay(slots, visitorZone, timeOfDay);
-      const groups = groupSlotsByDay(slots, visitorZone);
+      let allSlots = generateSlots(data.busy, data.meta, query);
+      allSlots = filterByTimeOfDay(allSlots, visitorZone, timeOfDay);
 
-      if (!groups.length) {
+      const weekSlots = allSlots.filter((s) => {
+        const key = dateKeyInZone(parseInstant(s.start), visitorZone);
+        return key >= weekStartKey && key <= weekEndKey;
+      });
+
+      if (opts.markBest) {
+        markBestSlots(allSlots);
+      }
+
+      const days = weekDays(viewMonday);
+      const dayKeys = days.map((d) => dateKeyInZone(d, visitorZone));
+      if (!dayKeys.includes(mobileDayKey)) mobileDayKey = dayKeys[0];
+
+      const hostZone = data.meta.timeZone;
+      const ticks: number[] = [];
+      for (
+        let m = data.meta.openHours.startMinutes;
+        m < data.meta.openHours.endMinutes;
+        m += data.meta.slotIntervalMinutes
+      ) {
+        ticks.push(m);
+      }
+
+      const byDay = new Map<string, typeof weekSlots>();
+      for (const key of dayKeys) byDay.set(key, []);
+      for (const slot of weekSlots) {
+        const key = dateKeyInZone(parseInstant(slot.start), visitorZone);
+        byDay.get(key)?.push(slot);
+      }
+
+      statusEl.innerHTML = `<span class="avail-status-count">${allSlots.length}</span> open · week grid in ${escapeHtml(friendlyZoneName(visitorZone))} · Jesse 9am–2pm MT`;
+
+      if (!allSlots.length) {
         const hint = nextDateWithRoom(
           data.busy,
           data.meta,
@@ -597,66 +769,124 @@ const placeholders = [
         );
         let detail = 'Nothing open in that window.';
         if (hint) detail += ` The next day with room is ${hint.label}.`;
-        else detail += ' There is not another opening in the loaded range either.';
         statusEl.innerHTML = `<div class="avail-empty"><strong>Quiet for that filter</strong>${escapeHtml(detail)}</div>`;
-        resultsEl.className = 'avail-board';
-        resultsEl.innerHTML = '';
-        return;
       }
 
-      statusEl.innerHTML = `<span class="avail-status-count">${slots.length}</span> open start${slots.length === 1 ? '' : 's'} · Mountain Time open window 9am–2pm`;
-      resultsEl.className = 'avail-board';
-      resultsEl.innerHTML = groups
-        .map((group, index) => {
-          const dayDate = parseInstant(group.slots[0].start);
-          const tone = index % 8;
-          return `
-          <section class="avail-day-row avail-tilt-card" style="animation-delay: ${Math.min(index, 8) * 0.045}s; --day-tone: ${tone}" aria-labelledby="day-${group.dateKey}">
-            <div class="avail-day-label">
-              <span class="avail-day-swatch avail-chip-tone-${tone}" aria-hidden="true"></span>
-              <div>
-                <h3 id="day-${group.dateKey}" class="avail-day-title">${escapeHtml(group.label)}</h3>
-                <p class="avail-day-count">${group.slots.length} open</p>
-              </div>
-            </div>
-            <div class="avail-day-body">
-              ${heatHtml(dayDate)}
-              <ul class="avail-slots">
-                ${group.slots
-                  .map((slot, slotIndex) => {
-                    const label = formatTimeInZone(parseInstant(slot.start), visitorZone);
-                    const pressed = selectedSlotStart === slot.start ? 'true' : 'false';
-                    const delay = Math.min(slotIndex, 12) * 0.028;
-                    const slotBtn = `<button type="button" class="avail-slot avail-chip-tone-${tone}" data-slot-start="${escapeHtml(slot.start)}" aria-pressed="${pressed}" style="animation-delay: ${delay}s">${escapeHtml(label)}</button>`;
-                    if (!bookingEnabled || !bookingUrl) {
-                      return `<li style="display:contents">${slotBtn}</li>`;
-                    }
-                    return `<li class="avail-slot-row" style="animation-delay: ${delay}s">
-                      ${slotBtn}
-                      <a class="avail-slot-book" href="${escapeHtml(bookingUrl)}" target="_blank" rel="noopener noreferrer" data-book-slot="${escapeHtml(slot.start)}">Book</a>
-                    </li>`;
-                  })
-                  .join('')}
-              </ul>
-            </div>
-          </section>`;
+      const dayHeads = days
+        .map((d, i) => {
+          const key = dayKeys[i];
+          const label = new Intl.DateTimeFormat('en-US', {
+            timeZone: visitorZone,
+            weekday: 'short',
+            month: 'short',
+            day: 'numeric',
+          }).format(d);
+          const count = byDay.get(key)?.length || 0;
+          return `<div class="avail-cal-dayhead" data-day-key="${key}"><span>${escapeHtml(label)}</span><em>${count}</em></div>`;
         })
         .join('');
+
+      const labelParts = new Intl.DateTimeFormat('en-CA', {
+        timeZone: hostZone,
+        year: 'numeric',
+        month: '2-digit',
+        day: '2-digit',
+      }).formatToParts(days[0]);
+      const labelY = Number(labelParts.find((p) => p.type === 'year')?.value || 0);
+      const labelMo = Number(labelParts.find((p) => p.type === 'month')?.value || 0);
+      const labelD = Number(labelParts.find((p) => p.type === 'day')?.value || 0);
+
+      const rows = ticks
+        .map((hostMinutes) => {
+          const timeLabel = formatTimeInZone(
+            zonedLocalToUtc(labelY, labelMo, labelD, hostMinutes, hostZone),
+            visitorZone,
+          );
+
+          const cells = dayKeys
+            .map((key, dayIndex) => {
+              const daySlots = (byDay.get(key) || []).filter((slot) => {
+                const parts = new Intl.DateTimeFormat('en-US', {
+                  timeZone: hostZone,
+                  hour: '2-digit',
+                  minute: '2-digit',
+                  hourCycle: 'h23',
+                }).formatToParts(parseInstant(slot.start));
+                const h = Number(parts.find((p) => p.type === 'hour')?.value || 0);
+                const m = Number(parts.find((p) => p.type === 'minute')?.value || 0);
+                return h * 60 + m === hostMinutes;
+              });
+              const tone = dayIndex % 8;
+              const inner = daySlots.map((slot) => slotButtonHtml(slot, tone, 0)).join('');
+              return `<div class="avail-cal-cell" data-day-key="${key}">${inner || '<span class="avail-cal-empty" aria-hidden="true"></span>'}</div>`;
+            })
+            .join('');
+
+          return `<div class="avail-cal-time">${escapeHtml(timeLabel)}</div>${cells}`;
+        })
+        .join('');
+
+      const mobileSlots = byDay.get(mobileDayKey) || [];
+      const mobileTone = Math.max(0, dayKeys.indexOf(mobileDayKey)) % 8;
+      const mobileStrip = days
+        .map((d, i) => {
+          const key = dayKeys[i];
+          const short = new Intl.DateTimeFormat('en-US', {
+            timeZone: visitorZone,
+            weekday: 'short',
+          }).format(d);
+          const num = new Intl.DateTimeFormat('en-US', {
+            timeZone: visitorZone,
+            day: 'numeric',
+          }).format(d);
+          const count = byDay.get(key)?.length || 0;
+          const active = key === mobileDayKey ? ' is-active' : '';
+          return `<button type="button" class="avail-cal-mobile-day${active}" data-mobile-day="${key}"><span>${escapeHtml(short)}</span><strong>${escapeHtml(num)}</strong><em>${count}</em></button>`;
+        })
+        .join('');
+
+      resultsEl.className = 'avail-board avail-cal-board';
+      resultsEl.innerHTML = `
+        <div class="avail-cal" data-cal>
+          <div class="avail-cal-desktop" aria-hidden="false">
+            <div class="avail-cal-grid" style="--cal-rows: ${ticks.length}">
+              <div class="avail-cal-corner" aria-hidden="true"></div>
+              ${dayHeads}
+              ${rows}
+            </div>
+          </div>
+          <div class="avail-cal-mobile">
+            <div class="avail-cal-mobile-strip">${mobileStrip}</div>
+            <div class="avail-cal-mobile-list">
+              ${
+                mobileSlots.length
+                  ? mobileSlots
+                      .map((slot, i) => slotButtonHtml(slot, mobileTone, Math.min(i, 12) * 0.028))
+                      .join('')
+                  : '<div class="avail-empty"><strong>No opens this day</strong>Try another weekday in this week.</div>'
+              }
+            </div>
+          </div>
+        </div>`;
 
       resultsEl.querySelectorAll('[data-slot-start]').forEach((btn) => {
         btn.addEventListener('click', () => {
           selectSlot((btn as HTMLElement).dataset.slotStart || null);
         });
       });
-
       resultsEl.querySelectorAll('[data-book-slot]').forEach((link) => {
         link.addEventListener('click', () => {
           selectSlot((link as HTMLElement).dataset.bookSlot || null);
         });
       });
+      resultsEl.querySelectorAll('[data-mobile-day]').forEach((btn) => {
+        btn.addEventListener('click', () => {
+          mobileDayKey = (btn as HTMLElement).dataset.mobileDay || mobileDayKey;
+          render();
+        });
+      });
 
       updatePickNote();
-      attachTilt();
     }
 
     function attachTilt() {
@@ -729,7 +959,40 @@ const placeholders = [
 
     askForm.addEventListener('submit', (e) => {
       e.preventDefault();
-      applyAsk(askInput.value);
+      void applyAsk(askInput.value);
+    });
+
+    askInput.addEventListener('keydown', (e) => {
+      if (e.key === 'Enter' && !e.shiftKey) {
+        e.preventDefault();
+        void applyAsk(askInput.value);
+      }
+    });
+
+    root.querySelector('[data-week-prev]')?.addEventListener('click', () => {
+      viewMonday = addDaysInZone(viewMonday, -7, visitorZone);
+      windowPreset = 'custom';
+      setPressed('.window-btn', 'data-window', 'custom');
+      customWrap.hidden = false;
+      customWrap.classList.remove('hidden');
+      rangeStartInput.value = dateKeyInZone(viewMonday, visitorZone);
+      rangeEndInput.value = dateKeyInZone(addDaysInZone(viewMonday, 4, visitorZone), visitorZone);
+      selectedSlotStart = null;
+      flashPanel();
+      render();
+    });
+
+    root.querySelector('[data-week-next]')?.addEventListener('click', () => {
+      viewMonday = addDaysInZone(viewMonday, 7, visitorZone);
+      windowPreset = 'custom';
+      setPressed('.window-btn', 'data-window', 'custom');
+      customWrap.hidden = false;
+      customWrap.classList.remove('hidden');
+      rangeStartInput.value = dateKeyInZone(viewMonday, visitorZone);
+      rangeEndInput.value = dateKeyInZone(addDaysInZone(viewMonday, 4, visitorZone), visitorZone);
+      selectedSlotStart = null;
+      flashPanel();
+      render();
     });
 
     root.querySelectorAll('.duration-btn').forEach((btn) => {
@@ -743,7 +1006,11 @@ const placeholders = [
         const showCustom = windowPreset === 'custom';
         customWrap.hidden = !showCustom;
         customWrap.classList.toggle('hidden', !showCustom);
+        if (showCustom) openAdjust(true);
+        preferredDays = [];
+        highlightStarts = new Set();
         selectedSlotStart = null;
+        syncViewFromPreset();
         flashPanel();
         render({ animateHero: true });
       });
@@ -791,7 +1058,17 @@ const placeholders = [
       });
     }
 
-    window.setInterval(updateSyncLabel, 30000);
+    adjustToggle?.addEventListener('click', () => {
+      openAdjust(adjustPanel?.hidden !== false);
+    });
+
+    document.addEventListener('click', (e) => {
+      if (!adjustPanel || adjustPanel.hidden) return;
+      const t = e.target as Node;
+      if (adjustPanel.contains(t) || adjustToggle?.contains(t)) return;
+      openAdjust(false);
+    });
+
     window.setInterval(updateTminus, 1000);
     void loadAvailability();
   }
