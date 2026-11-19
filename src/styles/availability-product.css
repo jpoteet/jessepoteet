@@ -34,13 +34,14 @@ body.avail-app {
 }
 
 html:has(body.avail-app) {
-  height: 100%;
+  min-height: 100%;
 }
 
 body.avail-app {
-  height: 100%;
+  min-height: 100%;
   margin: 0;
-  overflow: hidden;
+  overflow-x: hidden;
+  overflow-y: auto;
   color: var(--ap-text);
   background: var(--ap-bg);
   font-family: var(--ap-font);
@@ -54,8 +55,8 @@ body.avail-app {
 }
 
 .avail-app-main {
-  height: 100dvh;
-  overflow: hidden;
+  min-height: 100dvh;
+  overflow: visible;
 }
 
 .avail-home-link {
@@ -82,9 +83,8 @@ body.avail-app {
   isolation: isolate;
   display: flex;
   flex-direction: column;
-  height: 100%;
-  min-height: 0;
-  overflow: hidden;
+  min-height: 100dvh;
+  overflow: visible;
   background:
     radial-gradient(ellipse 70% 40% at 10% 0%, rgba(37, 99, 235, 0.08), transparent 55%),
     radial-gradient(ellipse 50% 35% at 100% 0%, rgba(124, 58, 237, 0.07), transparent 50%),
@@ -157,15 +157,18 @@ body.avail-app {
   display: flex;
   flex-direction: column;
   flex: 1;
-  min-height: 0;
-  height: 100%;
-  padding: 0.65rem 0.85rem 0.55rem;
-  gap: 0.45rem;
+  width: 100%;
+  max-width: 72rem;
+  margin: 0 auto;
+  padding: 0.65rem 1rem 1.25rem;
+  gap: 0.65rem;
+  box-sizing: border-box;
 }
 
 .avail-app-shell > .availability-finder {
   flex: 1 1 auto;
-  min-height: 0;
+  width: 100%;
+  min-width: 0;
 }
 
 .avail-tools {
@@ -245,26 +248,24 @@ body.avail-app {
   transform: scale(1.05);
 }
 
-/* Single column: prompt on top, calendar fills rest. No nested scroll. */
+/* Single column page flow. Page scrolls; modules do not. */
 .avail-app-grid {
   position: relative;
   display: flex;
   flex-direction: column;
-  gap: 0.55rem;
-  flex: 1;
-  min-height: 0;
-  height: 100%;
-  overflow: hidden;
+  gap: 0.75rem;
+  width: 100%;
+  min-width: 0;
+  overflow: visible;
 }
 
 .avail-top {
   flex: 0 0 auto;
   display: flex;
   flex-direction: column;
-  gap: 0.45rem;
-  max-width: 52rem;
+  gap: 0.55rem;
   width: 100%;
-  margin: 0 auto;
+  min-width: 0;
 }
 
 .avail-ask-hero {
@@ -415,18 +416,79 @@ body.avail-app {
 .avail-ask-thread {
   display: flex;
   flex-direction: column;
+  gap: 0.65rem;
+  margin: 0.25rem 0 0;
+  width: 100%;
+  max-width: 40rem;
+  min-height: 0;
+}
+
+.avail-ask-turn {
+  display: flex;
+  align-items: flex-end;
   gap: 0.45rem;
-  margin: 0.15rem 0 0;
-  max-width: 36rem;
+  max-width: min(92%, 32rem);
+}
+
+.avail-ask-turn--user {
+  align-self: flex-end;
+  flex-direction: row-reverse;
+}
+
+.avail-ask-turn--assistant {
+  align-self: flex-start;
+}
+
+.avail-ask-avatar {
+  flex: 0 0 auto;
+  width: 1.85rem;
+  height: 1.85rem;
+  border-radius: 999px;
+  display: grid;
+  place-items: center;
+  font-size: 0.85rem;
+  line-height: 1;
+  background: #e2e8f0;
+  color: var(--ap-text);
+}
+
+.avail-ask-turn--assistant .avail-ask-avatar {
+  background: color-mix(in srgb, var(--ap-blue) 16%, white);
+  color: var(--ap-blue);
+}
+
+.avail-ask-turn--user .avail-ask-avatar {
+  background: color-mix(in srgb, var(--ap-text) 12%, white);
+  color: var(--ap-text);
+}
+
+.avail-ask-bubble-wrap {
+  display: flex;
+  flex-direction: column;
+  gap: 0.15rem;
+  min-width: 0;
+}
+
+.avail-ask-turn--user .avail-ask-bubble-wrap {
+  align-items: flex-end;
+}
+
+.avail-ask-who {
+  font-size: 0.68rem;
+  font-weight: 700;
+  color: var(--ap-faint);
+  letter-spacing: 0.01em;
 }
 
 .avail-ask-bubble {
-  max-width: min(92%, 28rem);
   padding: 0.55rem 0.8rem;
   border-radius: 14px;
   font-size: 0.9rem;
   line-height: 1.4;
-  animation: avail-reply-reveal 0.4s cubic-bezier(0.34, 1.45, 0.64, 1) both;
+}
+
+.avail-ask-turn.is-enter .avail-ask-bubble {
+  animation: avail-reply-reveal 0.35s cubic-bezier(0.34, 1.45, 0.64, 1) both;
 }
 
 .avail-ask-bubble p {
@@ -434,20 +496,18 @@ body.avail-app {
 }
 
 .avail-ask-bubble--user {
-  align-self: flex-end;
   background: color-mix(in srgb, var(--ap-text) 88%, white);
   color: #fff;
   border-bottom-right-radius: 5px;
   font-size: 0.84rem;
   padding: 0.42rem 0.7rem;
-  max-width: min(78%, 22rem);
 }
 
 .avail-ask-bubble--assistant {
-  align-self: flex-start;
   background: color-mix(in srgb, var(--ap-blue) 10%, white);
   color: var(--ap-text);
   border-bottom-left-radius: 5px;
+  min-height: 2.6rem;
 }
 
 .avail-ask-bubble--assistant.is-typing p::after {
@@ -482,11 +542,9 @@ body.avail-app {
   font-weight: 700;
   padding: 0.28rem 0.55rem;
   cursor: pointer;
-  transition: transform 0.22s cubic-bezier(0.34, 1.56, 0.64, 1);
-}
-
-.avail-ask-chip:hover {
-  transform: translateY(-1px) scale(1.05);
+  transition:
+    transform 0.22s cubic-bezier(0.34, 1.56, 0.64, 1),
+    filter 0.2s ease;
 }
 
 .avail-meta-row {
@@ -593,10 +651,14 @@ body.avail-app {
 }
 
 .avail-pill:hover,
-.duration-btn.avail-pill:hover,
-.avail-ask-chip:hover {
+.duration-btn.avail-pill:hover {
   transform: translateY(-1px) scale(1.04);
   background: color-mix(in srgb, var(--chip-bg, var(--ap-blue)) 8%, white);
+}
+
+.avail-ask-chip:hover {
+  transform: translateY(-1px) scale(1.04);
+  filter: brightness(0.95);
 }
 
 .avail-pill:active,
@@ -610,6 +672,15 @@ body.avail-app {
   background: var(--chip-bg, var(--ap-blue));
   color: #ffffff;
   border-color: var(--chip-bg, var(--ap-blue));
+}
+
+.avail-pill[aria-pressed='true']:hover,
+.duration-btn.avail-pill[aria-pressed='true']:hover {
+  background: var(--chip-bg, var(--ap-blue));
+  color: #ffffff;
+  border-color: var(--chip-bg, var(--ap-blue));
+  filter: brightness(0.92);
+  transform: translateY(-1px);
 }
 
 .avail-chip-tone-0 { --chip-bg: var(--ap-blue); --chip-ink: var(--ap-blue-ink); }
@@ -643,7 +714,7 @@ body.avail-app {
   position: absolute;
   right: 0;
   top: calc(100% + 0.35rem);
-  z-index: 40;
+  z-index: 80;
   width: min(18rem, 80vw);
   display: grid;
   gap: 0.55rem;
@@ -651,7 +722,7 @@ body.avail-app {
   border: 1px solid var(--ap-border);
   border-radius: 14px;
   background: var(--ap-surface);
-  box-shadow: var(--ap-shadow);
+  box-shadow: 0 16px 40px rgba(15, 23, 42, 0.16);
 }
 
 .avail-date-grid {
@@ -699,15 +770,28 @@ body.avail-app {
   display: flex;
   flex-direction: column;
   gap: 0.75rem;
-  max-width: 52rem;
   width: 100%;
-  margin: 0 auto;
+  min-width: 0;
 }
 
 .avail-best-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(12.5rem, 1fr));
+  grid-template-columns: 1fr;
   gap: 0.65rem;
+  width: 100%;
+  min-width: 0;
+}
+
+@media (min-width: 640px) {
+  .avail-best-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+@media (min-width: 1100px) {
+  .avail-best-grid {
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+  }
 }
 
 .avail-best-card {
@@ -717,6 +801,7 @@ body.avail-app {
   align-items: flex-start;
   gap: 0.2rem;
   margin: 0;
+  min-width: 0;
   border: 1.5px solid transparent;
   border-radius: 16px;
   padding: 1rem 1.05rem 0.95rem;
@@ -764,6 +849,14 @@ body.avail-app {
   font-size: 0.78rem;
   font-weight: 600;
   opacity: 0.9;
+  white-space: nowrap;
+}
+
+.avail-best-zone {
+  margin: 0.05rem 0 0;
+  font-size: 0.72rem;
+  font-weight: 550;
+  opacity: 0.82;
 }
 
 .avail-best-jesse {
@@ -824,17 +917,18 @@ body.avail-app {
   color: var(--ap-blue);
 }
 
-/* Calendar fills remaining viewport when expanded; overflow:hidden (no module scroll) */
+/* Calendar grows with fixed row heights; page scrolls (no module scroll) */
 .avail-workspace {
-  flex: 1 1 auto;
-  min-height: 0;
+  flex: 0 0 auto;
+  width: 100%;
+  min-width: 0;
   display: flex;
   flex-direction: column;
   border: 1px solid var(--ap-border);
   border-radius: 16px;
   background: rgba(255, 255, 255, 0.94);
   box-shadow: var(--ap-shadow);
-  overflow: hidden;
+  overflow: visible;
   animation: avail-cal-open 0.4s cubic-bezier(0.22, 1, 0.36, 1) both;
 }
 
@@ -936,37 +1030,28 @@ body.avail-app {
 }
 
 .avail-cal-board {
-  flex: 1;
-  min-height: 0;
   display: flex;
   flex-direction: column;
-  overflow: hidden;
-  padding: 0.45rem 0.55rem 0.55rem;
+  overflow: visible;
+  padding: 0.55rem 0.65rem 0.75rem;
 }
 
 .avail-cal {
   display: flex;
   flex-direction: column;
-  flex: 1;
-  min-height: 0;
-  height: 100%;
-  overflow: hidden;
+  overflow: visible;
 }
 
 .avail-cal-desktop {
   display: none;
-  flex: 1;
-  min-height: 0;
-  overflow: hidden;
+  overflow: visible;
 }
 
 .avail-cal-mobile {
   display: flex;
   flex-direction: column;
   gap: 0.55rem;
-  flex: 1;
-  min-height: 0;
-  overflow: hidden;
+  overflow: visible;
 }
 
 @media (min-width: 960px) {
@@ -981,12 +1066,11 @@ body.avail-app {
 }
 
 .avail-cal-grid {
+  --cal-row: 52px;
   display: grid;
-  grid-template-columns: 3.6rem repeat(5, minmax(0, 1fr));
-  grid-template-rows: auto minmax(0, 1fr);
+  grid-template-columns: 4.25rem repeat(5, minmax(0, 1fr));
+  grid-template-rows: auto auto;
   gap: 1px;
-  flex: 1;
-  min-height: 0;
   background: var(--ap-border);
   border: 1px solid var(--ap-border);
   border-radius: 12px;
@@ -1007,28 +1091,28 @@ body.avail-app {
   align-items: center;
   justify-content: space-between;
   gap: 0.25rem;
-  padding: 0.4rem 0.4rem;
-  font-size: 0.68rem;
+  padding: 0.55rem 0.5rem;
+  font-size: 0.78rem;
   font-weight: 750;
   color: var(--ap-ink);
 }
 
 .avail-cal-dayhead em {
   font-style: normal;
-  font-family: var(--ap-mono);
-  font-size: 0.62rem;
+  font-family: var(--ap-font);
+  font-size: 0.68rem;
+  font-weight: 700;
   color: #fff;
   background: var(--ap-blue);
   border-radius: 999px;
-  padding: 0.05rem 0.3rem;
+  padding: 0.08rem 0.35rem;
 }
 
 .avail-cal-times,
 .avail-cal-daycol {
   display: grid;
-  grid-template-rows: repeat(var(--tick-count, 10), minmax(0, 1fr));
+  grid-template-rows: repeat(var(--tick-count, 10), var(--cal-row, 52px));
   gap: 1px;
-  min-height: 0;
   background: var(--ap-border);
   position: relative;
 }
@@ -1036,15 +1120,18 @@ body.avail-app {
 .avail-cal-daycol > .avail-slot-wrap {
   display: flex;
   flex-direction: column;
-  min-height: 0;
-  border-radius: 6px;
+  min-height: var(--cal-row, 52px);
+  height: 100%;
+  border-radius: 8px;
   overflow: hidden;
+  z-index: 1;
 }
 
 .avail-cal-daycol > .avail-slot-wrap > .avail-slot {
   flex: 1 1 auto;
   border-radius: 0;
-  min-height: 0;
+  min-height: 100%;
+  height: 100%;
 }
 
 .avail-cal-times {
@@ -1053,17 +1140,19 @@ body.avail-app {
 
 .avail-cal-time {
   display: flex;
-  align-items: flex-start;
+  align-items: center;
   justify-content: flex-end;
-  padding: 0.2rem 0.35rem 0 0;
-  font-family: var(--ap-mono);
-  font-size: 0.58rem;
-  color: var(--ap-faint);
+  padding: 0 0.45rem 0 0;
+  font-family: var(--ap-font);
+  font-size: 0.8rem;
+  font-weight: 600;
+  color: var(--ap-muted);
+  line-height: 1.2;
 }
 
 .avail-cal-cell {
-  min-height: 0;
-  padding: 1px;
+  min-height: var(--cal-row, 52px);
+  padding: 2px;
   background: #f8fafc;
 }
 
@@ -1081,20 +1170,20 @@ body.avail-app {
   border-radius: 8px;
   width: 100%;
   height: 100%;
-  min-height: 0;
+  min-height: var(--cal-row, 52px);
   display: flex;
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  gap: 0.15rem;
+  gap: 0.1rem;
   background: var(--chip-bg, var(--ap-blue));
   color: #ffffff;
   font-family: var(--ap-font);
-  font-size: 1rem;
-  font-weight: 750;
+  font-size: 0.95rem;
+  font-weight: 780;
   letter-spacing: -0.02em;
   line-height: 1.1;
-  padding: 0.2rem 0.25rem;
+  padding: 0.35rem 0.4rem;
   cursor: pointer;
   z-index: 1;
   transition:
@@ -1217,9 +1306,7 @@ body.avail-app {
   flex-wrap: wrap;
   gap: 0.35rem;
   align-content: flex-start;
-  flex: 1;
-  min-height: 0;
-  overflow: hidden;
+  overflow: visible;
 }
 
 .avail-empty {
@@ -1385,7 +1472,7 @@ body.avail-app {
   .avail-pill,
   .avail-slot,
   .avail-ask-chip,
-  .avail-ask-bubble,
+  .avail-ask-turn.is-enter .avail-ask-bubble,
   .avail-ask-bubble--assistant.is-typing p::after,
   .avail-enter,
   .avail-best-card,
@@ -1415,43 +1502,12 @@ body.avail-app {
   }
 }
 
-/* Mobile: page may scroll as a whole; still no nested module scrollbars */
 @media (max-width: 959px) {
-  body.avail-app {
-    overflow: auto;
-  }
-
-  .avail-app-main,
-  .avail-stage,
-  .avail-app-shell,
-  .avail-app-grid {
-    height: auto;
-    min-height: 100dvh;
-    overflow: visible;
-  }
-
   .avail-home-link {
     position: static;
     display: inline-block;
     margin: 0.35rem 0 0.15rem;
     padding-left: 0.15rem;
-  }
-
-  .avail-picks {
-    overflow: visible;
-    flex: 0 0 auto;
-  }
-
-  .avail-workspace {
-    min-height: 18rem;
-    overflow: visible;
-  }
-
-  .avail-cal-board,
-  .avail-cal,
-  .avail-cal-mobile,
-  .avail-cal-mobile-list {
-    overflow: visible;
   }
 
   .avail-adjust-wrap {
@@ -1464,5 +1520,9 @@ body.avail-app {
 
   .avail-ask-go {
     padding: 0.75rem 1rem;
+  }
+
+  .avail-cal-grid {
+    --cal-row: 48px;
   }
 }

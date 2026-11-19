@@ -87,6 +87,10 @@ export async function onRequestPost(context: {
     ? body.durations.map(Number).filter((n) => [15, 30, 60, 90].includes(n))
     : [15, 30, 60, 90];
   const history = clampHistory(body.history);
+  const now =
+    typeof body.today === 'string' && /^\d{4}-\d{2}-\d{2}$/.test(body.today)
+      ? new Date(`${body.today}T17:00:00.000Z`)
+      : undefined;
 
   const aiResult = await runAskAi(context.env, {
     text,
@@ -100,6 +104,6 @@ export async function onRequestPost(context: {
     return json({ ok: true, ...aiResult, source: 'ai' });
   }
 
-  const local = localAskFallback(text, { timeZone });
+  const local = localAskFallback(text, { timeZone, now });
   return json({ ok: true, ...local, source: 'local' });
 }

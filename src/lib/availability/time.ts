@@ -207,3 +207,22 @@ export function friendlyZoneName(timeZone: string): string {
   }
   return timeZone.replace(/_/g, ' ');
 }
+
+/** Short zone label for tight UI (CST, MT, PDT). */
+export function shortZoneAbbr(timeZone: string, at: Date = new Date()): string {
+  try {
+    const parts = new Intl.DateTimeFormat('en-US', {
+      timeZone,
+      timeZoneName: 'short',
+    }).formatToParts(at);
+    const name = parts.find((p) => p.type === 'timeZoneName')?.value;
+    if (name) {
+      // Normalize "GMT-7" style leftovers to a readable fallback.
+      if (/^GMT/i.test(name)) return friendlyZoneName(timeZone).replace(/ Time$/i, '');
+      return name;
+    }
+  } catch {
+    /* fall through */
+  }
+  return friendlyZoneName(timeZone);
+}

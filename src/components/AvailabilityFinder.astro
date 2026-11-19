@@ -182,6 +182,7 @@ const placeholders = [
     formatTimeInZone,
     friendlyZoneName,
     parseInstant,
+    shortZoneAbbr,
     startOfDayInZone,
     startOfWeekMondayInZone,
     weekdayInZone,
@@ -255,10 +256,14 @@ const placeholders = [
     let calendarOpen = false;
     const visitorZone = resolveVisitorZone();
     const hostZoneLabel = 'Mountain';
+    const visitorZoneShort = shortZoneAbbr(visitorZone);
     type AskTurn = { role: 'user' | 'assistant'; content: string };
+    type SlotItem = { start: string; durationMinutes: number };
     const askHistory: AskTurn[] = [];
     const MAX_ASK_HISTORY = 6;
     let typeToken = 0;
+    let lastSlots: SlotItem[] = [];
+    let applyTimer: number | null = null;
 
     const statusEl = root.querySelector('[data-status]') as HTMLElement;
     const weekLabelEl = root.querySelector('[data-week-label]') as HTMLElement | null;
@@ -329,60 +334,144 @@ const placeholders = [
       while (askHistory.length > MAX_ASK_HISTORY) askHistory.shift();
     }
 
-    function renderAskThread(opts: { typing?: string } = {}) {
-      const turns = [...askHistory];
-      if (opts.typing != null) {
-        turns.push({ role: 'assistant', content: opts.typing });
-      }
-      if (!turns.length) {
+    function turnHtml(turn: AskTurn, opts: { typing?: boolean; enter?: boolean } = {}) {
+      const who = turn.role === 'user' ? 'You' : "Jesse's assistant";
+      const icon = turn.role === 'user' ? '👤' : '✦';
+      const typingClass = opts.typing ? ' is-typing' : '';
+      const enterClass = opts.enter ? ' is-enter' : '';
+      return `<div class="avail-ask-turn avail-ask-turn--${turn.role}${enterClass}" data-ask-role="${turn.role}">
+        <div class="avail-ask-avatar" aria-hidden="true">${icon}</div>
+        <div class="avail-ask-bubble-wrap">
+          <span class="avail-ask-who">${who}</span>
+          <div class="avail-ask-bubble avail-ask-bubble--${turn.role}${typingClass}" data-ask-bubble>
+            <p data-ask-text>${escapeHtml(turn.content || (opts.typing ? '…' : ''))}</p>
+          </div>
+        </div>
+      </div>`;
+    }
+
+    /** Rebuild committed history only (no per-token remount). */
+    function renderAskThread() {
+      if (!askHistory.length) {
         askThread.hidden = true;
         askThread.innerHTML = '';
         return;
       }
       askThread.hidden = false;
-      // Keep the thread light: show at most the last 4 bubbles.
-      const visible = turns.slice(-4);
-      askThread.innerHTML = visible
-        .map((turn, i) => {
-          const isTyping =
-            opts.typing != null &&
-            turn.role === 'assistant' &&
-            i === visible.length - 1 &&
-            turn.content === opts.typing;
-          const typingClass = isTyping ? ' is-typing' : '';
-          return `<div class="avail-ask-bubble avail-ask-bubble--${turn.role}${typingClass}"><p>${escapeHtml(turn.content || (isTyping ? '…' : ''))}</p></div>`;
-        })
-        .join('');
+      const visible = askHistory.slice(-4);
+      askThread.innerHTML = visible.map((turn) => turnHtml(turn)).join('');
+    }
+
+    function appendUserBubble(text: string) {
+      askThread.hidden = false;
+      // Trim to last 3 committed turns before adding the new user bubble.
+      const keep = askHistory.slice(0, -1).slice(-3);
+      askThread.innerHTML =
+        keep.map((turn) => turnHtml(turn)).join('') +
+        turnHtml({ role: 'user', content: text }, { enter: true });
+    }
+
+    function ensureTypingBubble(): HTMLElement {
+      let turn = askThread.querySelector(
+        '.avail-ask-turn--assistant[data-typing="1"]',
+      ) as HTMLElement | null;
+      if (!turn) {
+        askThread.insertAdjacentHTML(
+          'beforeend',
+          turnHtml({ role: 'assistant', content: '' }, { typing: true, enter: true }).replace(
+            'class="avail-ask-turn avail-ask-turn--assistant is-enter"',
+            'class="avail-ask-turn avail-ask-turn--assistant is-enter" data-typing="1"',
+          ),
+        );
+        turn = askThread.querySelector(
+          '.avail-ask-turn--assistant[data-typing="1"]',
+        ) as HTMLElement;
+      }
+      return turn;
     }
 
     function typeAssistantReply(full: string): Promise<void> {
       const token = ++typeToken;
+      const safe = full || 'Here are some good options.';
       return new Promise((resolve) => {
-        if (prefersReducedMotion() || !full) {
-          pushAskHistory('assistant', full || 'Here are some good options.');
+        if (prefersReducedMotion()) {
+          pushAskHistory('assistant', safe);
           renderAskThread();
           resolve();
           return;
         }
+        const turn = ensureTypingBubble();
+        const textEl = turn.querySelector('[data-ask-text]') as HTMLElement;
+        const bubble = turn.querySelector('[data-ask-bubble]') as HTMLElement;
+        bubble.classList.add('is-typing');
         let char = 0;
         const tick = () => {
           if (token !== typeToken) {
             resolve();
             return;
           }
-          char = Math.min(full.length, char + (char < 24 ? 1 : 2));
-          renderAskThread({ typing: full.slice(0, char) });
-          if (char >= full.length) {
-            pushAskHistory('assistant', full);
-            renderAskThread();
+          char = Math.min(safe.length, char + (char < 24 ? 1 : 2));
+          textEl.textContent = safe.slice(0, char) || '…';
+          if (char >= safe.length) {
+            bubble.classList.remove('is-typing');
+            turn.removeAttribute('data-typing');
+            pushAskHistory('assistant', safe);
             resolve();
             return;
           }
           window.setTimeout(tick, 16 + Math.random() * 22);
         };
-        renderAskThread({ typing: '' });
-        window.setTimeout(tick, 80);
+        textEl.textContent = '…';
+        window.setTimeout(tick, 60);
       });
+    }
+
+    function formatChipRange(startKey: string, endKey: string) {
+      if (!startKey) return '';
+      const start = parseInstant(`${startKey}T17:00:00.000Z`);
+      const end = parseInstant(`${(endKey || startKey)}T17:00:00.000Z`);
+      const monthDay = (d: Date) =>
+        new Intl.DateTimeFormat('en-US', {
+          timeZone: visitorZone,
+          month: 'short',
+          day: 'numeric',
+        }).format(d);
+      if (startKey === endKey) return monthDay(start);
+      const sameMonth =
+        new Intl.DateTimeFormat('en-US', { timeZone: visitorZone, month: 'short' }).format(
+          start,
+        ) ===
+        new Intl.DateTimeFormat('en-US', { timeZone: visitorZone, month: 'short' }).format(end);
+      if (sameMonth) {
+        const month = new Intl.DateTimeFormat('en-US', {
+          timeZone: visitorZone,
+          month: 'short',
+        }).format(start);
+        const d1 = new Intl.DateTimeFormat('en-US', {
+          timeZone: visitorZone,
+          day: 'numeric',
+        }).format(start);
+        const d2 = new Intl.DateTimeFormat('en-US', {
+          timeZone: visitorZone,
+          day: 'numeric',
+        }).format(end);
+        return `${month} ${d1} to ${d2}`;
+      }
+      return `${monthDay(start)} to ${monthDay(end)}`;
+    }
+
+    function defaultRangeEndKey() {
+      return dateKeyInZone(
+        addDaysInZone(startOfDayInZone(new Date(), visitorZone), 13, visitorZone),
+        visitorZone,
+      );
+    }
+
+    function showAskSkeleton() {
+      // Keep layout height stable while AI thinks; do not remount cards yet.
+      if (!bestCardsEl.children.length || bestCardsEl.querySelector('.avail-empty')) {
+        skeletonEl.hidden = false;
+      }
     }
 
     function updatePickNote() {
@@ -410,7 +499,7 @@ const placeholders = [
       updatePickNote();
     }
 
-    zoneChipEl.textContent = friendlyZoneName(visitorZone);
+    zoneChipEl.textContent = visitorZoneShort;
 
     const todayKey = dateKeyInZone(new Date(), visitorZone);
     rangeStartInput.min = todayKey;
@@ -507,14 +596,14 @@ const placeholders = [
       }, 480);
     }
 
-    function setDuration(next: number, opts: { animate?: boolean } = {}) {
+    function setDuration(next: number, opts: { animate?: boolean; render?: boolean } = {}) {
       if (!durations.includes(next)) return;
       duration = next;
       durationSegment.style.setProperty('--seg-index', String(durations.indexOf(next)));
       setPressed('.duration-btn', 'data-duration', String(duration));
       selectedSlotStart = null;
       if (opts.animate !== false) flashPanel();
-      render({ animateHero: true });
+      if (opts.render !== false) render({ animateHero: true });
     }
 
     type AskApiResult = {
@@ -530,62 +619,113 @@ const placeholders = [
     };
 
     function applyLocalAsk(raw: string): AskApiResult {
+      const lower = raw.toLowerCase();
+      let forceDuration: number | null = null;
+      if (/\b(podcast|interview|recording)\b/.test(lower)) forceDuration = 90;
+      else if (/\b(workshop|strategy|deep dive|roadmap)\b/.test(lower)) forceDuration = 60;
+      else if (/\b(quick intro|quick call|hello|catch up)\b/.test(lower)) forceDuration = 15;
+
       const parsed = parseAvailabilityAsk(raw, {
         visitorTimeZone: visitorZone,
         durations,
       });
       if (!parsed.ok) {
+        if (/\b(weekend|saturday|sunday|evening|tonight)\b/.test(lower)) {
+          const today = dateKeyInZone(new Date(), visitorZone);
+          const end = dateKeyInZone(
+            addDaysInZone(startOfDayInZone(new Date(), visitorZone), 13, visitorZone),
+            visitorZone,
+          );
+          return {
+            ok: true,
+            duration: forceDuration || 30,
+            rangeStart: today,
+            rangeEnd: end,
+            timeOfDay: 'any',
+            reply:
+              'Jesse meets weekdays 9am to 2pm Mountain. Here are the closest options in that window.',
+            source: 'local',
+          };
+        }
         return { ok: false, message: parsed.message };
+      }
+      const duration = forceDuration || parsed.durationMinutes;
+      let reply = `Got it: ${parsed.summary}. Here are some good options with Jesse.`;
+      if (forceDuration === 90 && /\b(podcast|interview)\b/.test(lower)) {
+        reply =
+          "Podcast interviews tend to run long, so I'd suggest 90 minutes with Jesse to be safe. Here are some good options.";
+      } else if (forceDuration === 60) {
+        reply = `That sounds like real thinking time with Jesse. I'd set this to ${duration} minutes. Here are some solid windows.`;
+      } else if (forceDuration === 15) {
+        reply = `A quick intro with Jesse fits nicely in ${duration} minutes. Here are a few openings.`;
+      } else if (/\b(weekend|saturday|sunday|evening)\b/.test(lower)) {
+        reply =
+          'Jesse meets weekdays 9am to 2pm Mountain. Here are the closest options in that window.';
+      }
+      let rangeStart = parsed.rangeStartKey;
+      let rangeEnd = parsed.rangeEndKey;
+      const namedDay =
+        /\b(today|tomorrow|monday|tuesday|wednesday|thursday|friday|saturday|sunday)\b/i.test(
+          lower,
+        );
+      if (forceDuration && !namedDay && rangeStart && rangeEnd && rangeStart === rangeEnd) {
+        rangeStart = todayKey;
+        rangeEnd = dateKeyInZone(
+          addDaysInZone(startOfDayInZone(new Date(), visitorZone), 13, visitorZone),
+          visitorZone,
+        );
       }
       return {
         ok: true,
-        duration: parsed.durationMinutes,
-        rangeStart: parsed.rangeStartKey,
-        rangeEnd: parsed.rangeEndKey,
+        duration,
+        rangeStart,
+        rangeEnd,
         timeOfDay:
           parsed.timeOfDay === 'all'
             ? 'any'
             : (parsed.timeOfDay as 'morning' | 'afternoon'),
-        reply: `Got it: ${parsed.summary}.`,
+        reply,
         source: 'local',
       };
     }
 
-    async function applyAskResult(result: AskApiResult) {
-      if (!result.ok) {
-        askChips.hidden = true;
-        askChips.innerHTML = '';
-        askMsg.hidden = false;
-        askMsg.textContent = result.message || 'Could not understand that ask.';
-        await typeAssistantReply(
-          result.message ||
-            'I could not quite parse that. Try something like “30 minutes next week”.',
-        );
-        return;
-      }
+    function bindAskChips() {
+      askChips.querySelectorAll('[data-chip-kind]').forEach((btn) => {
+        btn.addEventListener('click', () => {
+          const kind = (btn as HTMLElement).dataset.chipKind;
+          if (kind === 'duration') {
+            setDuration(defaultDuration, { animate: false, render: false });
+          } else if (kind === 'tod') {
+            timeOfDay = 'all';
+            setPressed('.tod-btn', 'data-tod', 'all');
+          } else if (kind === 'window') {
+            windowPreset = 'custom';
+            setPressed('.window-btn', 'data-window', 'custom');
+            customWrap.hidden = false;
+            customWrap.classList.remove('hidden');
+            rangeStartInput.value = todayKey;
+            rangeEndInput.value = defaultRangeEndKey();
+            preferredDays = [];
+            highlightStarts = new Set();
+            viewMonday = startOfWeekMondayInZone(new Date(), visitorZone);
+            mobileDayKey = todayKey;
+          }
+          btn.remove();
+          if (!askChips.children.length) askChips.hidden = true;
+          flashPanel();
+          render({ animateHero: true, markBest: true, animateCards: true });
+        });
+      });
+    }
 
-      askMsg.hidden = true;
-      const reply = result.reply || 'Here are some good options.';
-      await typeAssistantReply(reply);
-
-      const workspace = root!.querySelector('[data-workspace]') as HTMLElement | null;
-      if (workspace) {
-        workspace.classList.remove('is-match-reveal');
-        void workspace.offsetWidth;
-        workspace.classList.add('is-match-reveal');
-        window.setTimeout(() => workspace.classList.remove('is-match-reveal'), 1200);
-      }
-
+    function paintAskChips(result: AskApiResult) {
       const chips: { kind: string; label: string }[] = [
         { kind: 'duration', label: `${result.duration || duration} min` },
       ];
       if (result.rangeStart && result.rangeEnd) {
         chips.push({
           kind: 'window',
-          label:
-            result.rangeStart === result.rangeEnd
-              ? result.rangeStart
-              : `${result.rangeStart} to ${result.rangeEnd}`,
+          label: formatChipRange(result.rangeStart, result.rangeEnd),
         });
       }
       if (result.timeOfDay && result.timeOfDay !== 'any') {
@@ -601,8 +741,11 @@ const placeholders = [
             `<button type="button" class="avail-ask-chip" data-chip-kind="${chip.kind}">${escapeHtml(chip.label)} <span aria-hidden="true">×</span></button>`,
         )
         .join('');
+      bindAskChips();
+    }
 
-      setDuration(Number(result.duration || duration), { animate: false });
+    function commitAskFilters(result: AskApiResult) {
+      setDuration(Number(result.duration || duration), { animate: false, render: false });
       timeOfDay =
         !result.timeOfDay || result.timeOfDay === 'any'
           ? 'all'
@@ -614,9 +757,10 @@ const placeholders = [
       setPressed('.window-btn', 'data-window', 'custom');
       customWrap.hidden = false;
       customWrap.classList.remove('hidden');
-      openAdjust(true);
       if (result.rangeStart) rangeStartInput.value = result.rangeStart;
-      if (result.rangeEnd) rangeEndInput.value = result.rangeEnd || result.rangeStart || rangeEndInput.value;
+      if (result.rangeEnd) {
+        rangeEndInput.value = result.rangeEnd || result.rangeStart || rangeEndInput.value;
+      }
       if (result.rangeStart) {
         viewMonday = startOfWeekMondayInZone(
           parseInstant(`${result.rangeStart}T17:00:00.000Z`),
@@ -624,31 +768,39 @@ const placeholders = [
         );
         mobileDayKey = result.rangeStart;
       }
+    }
 
-      askChips.querySelectorAll('[data-chip-kind]').forEach((btn) => {
-        btn.addEventListener('click', () => {
-          const kind = (btn as HTMLElement).dataset.chipKind;
-          if (kind === 'tod') {
-            timeOfDay = 'all';
-            setPressed('.tod-btn', 'data-tod', 'all');
-          } else if (kind === 'window') {
-            windowPreset = 'this-week';
-            setPressed('.window-btn', 'data-window', 'this-week');
-            customWrap.hidden = true;
-            customWrap.classList.add('hidden');
-            preferredDays = [];
-            highlightStarts = new Set();
-          }
-          btn.remove();
-          if (!askChips.children.length) askChips.hidden = true;
+    async function applyAskResult(result: AskApiResult) {
+      if (!result.ok) {
+        askChips.hidden = true;
+        askChips.innerHTML = '';
+        askMsg.hidden = false;
+        askMsg.textContent = result.message || 'Could not understand that ask.';
+        await typeAssistantReply(
+          result.message ||
+            'I could not quite parse that. Try something like “30 minutes next week”.',
+        );
+        skeletonEl.hidden = true;
+        return;
+      }
+
+      askMsg.hidden = true;
+      const reply = result.reply || 'Here are some good options with Jesse.';
+      await typeAssistantReply(reply);
+
+      // Debounce the heavy remount so typing never fights the cards/calendar.
+      if (applyTimer != null) window.clearTimeout(applyTimer);
+      await new Promise<void>((resolve) => {
+        applyTimer = window.setTimeout(() => {
+          applyTimer = null;
+          commitAskFilters(result);
+          paintAskChips(result);
+          setCalendarOpen(false);
           flashPanel();
-          render({ animateHero: true });
-        });
+          render({ animateHero: true, markBest: true, animateCards: true });
+          resolve();
+        }, 40);
       });
-
-      flashPanel();
-      setCalendarOpen(false);
-      render({ animateHero: true, markBest: true, animateCards: true });
     }
 
     async function applyAsk(raw: string) {
@@ -664,7 +816,8 @@ const placeholders = [
       askMsg.hidden = true;
       askInput.value = '';
       pushAskHistory('user', text);
-      renderAskThread({ typing: '' });
+      appendUserBubble(text);
+      showAskSkeleton();
 
       // Send prior turns only (exclude the user message we just pushed).
       const historyPayload = askHistory.slice(0, -1).slice(-MAX_ASK_HISTORY);
@@ -692,7 +845,7 @@ const placeholders = [
         const local = applyLocalAsk(text);
         if (local.ok) {
           result = local;
-          if (!result.reply) result.reply = 'Here are some good options.';
+          if (!result.reply) result.reply = 'Here are some good options with Jesse.';
         } else if (result && result.ok === false && result.message) {
           // keep API error message if present
         } else {
@@ -975,13 +1128,14 @@ const placeholders = [
     }
 
     function renderBestCards(
-      slots: { start: string; durationMinutes: number }[],
+      slots: SlotItem[],
       opts: { animate?: boolean } = {},
     ) {
-      const best = pickBestOptions(slots, 4);
+      const source = slots;
+      const best = pickBestOptions(source, 4);
       highlightStarts = new Set(best.map((s) => s.start));
 
-      if (!slots.length) {
+      if (!source.length) {
         const hint = nextDateWithRoom(
           data!.busy,
           data!.meta,
@@ -1016,7 +1170,8 @@ const placeholders = [
           return `<article class="avail-best-card avail-chip-tone-${tone}${pressed ? ' is-selected' : ''}" style="animation-delay: ${delay}" data-best-start="${escapeHtml(slot.start)}">
             <p class="avail-best-day">${escapeHtml(formatCardDay(start))}</p>
             <p class="avail-best-time">${escapeHtml(visitorTime)}</p>
-            <p class="avail-best-meta">${slot.durationMinutes} min · ${escapeHtml(friendlyZoneName(visitorZone))}</p>
+            <p class="avail-best-meta">${slot.durationMinutes} min</p>
+            <p class="avail-best-zone">${escapeHtml(visitorZoneShort)}</p>
             ${showJesse ? `<p class="avail-best-jesse">${escapeHtml(jesseTime)} ${hostZoneLabel}</p>` : ''}
             ${cta}
           </article>`;
@@ -1028,8 +1183,8 @@ const placeholders = [
           const t = e.target as HTMLElement;
           if (t.closest('[data-book-slot]')) return;
           selectSlot((card as HTMLElement).dataset.bestStart || null);
-          renderBestCards(slots);
-          if (calendarOpen) renderCalendar(slots);
+          renderBestCards(lastSlots);
+          if (calendarOpen) renderCalendar(lastSlots);
         });
       });
       bestCardsEl.querySelectorAll('[data-book-slot]').forEach((link) => {
@@ -1039,8 +1194,11 @@ const placeholders = [
       });
     }
 
-    function renderCalendar(allSlots: { start: string; durationMinutes: number }[]) {
+    function renderCalendar(allSlots: SlotItem[]) {
       if (!data || !calendarOpen) return;
+      // Always prefer the shared computed set so cards/calendar/empty stay in sync.
+      const slots = allSlots.length ? allSlots : lastSlots;
+      allSlots = slots;
 
       if (windowPreset !== 'custom') syncViewFromPreset();
       updateWeekChrome();
@@ -1074,7 +1232,7 @@ const placeholders = [
         byDay.get(key)?.push(slot);
       }
 
-      statusEl.innerHTML = `<span class="avail-status-count">${allSlots.length}</span> open · week grid in ${escapeHtml(friendlyZoneName(visitorZone))} · Jesse 9am–2pm MT`;
+      statusEl.innerHTML = `<span class="avail-status-count">${allSlots.length}</span> open · week grid in ${escapeHtml(visitorZoneShort)} · Jesse 9am–2pm MT`;
 
       const dayHeads = days
         .map((d, i) => {
@@ -1227,7 +1385,7 @@ const placeholders = [
         nextOpeningIso = opening.start;
         renderHero(
           `${formatShortDate(start, visitorZone)} · ${formatTimeInZone(start, visitorZone)}`,
-          `${duration} min · ${friendlyZoneName(visitorZone)}`,
+          `${duration} min · ${visitorZoneShort}`,
           !!opts.animateHero,
         );
       } else {
@@ -1238,13 +1396,14 @@ const placeholders = [
 
       let allSlots = generateSlots(data.busy, data.meta, currentQuery());
       allSlots = filterByTimeOfDay(allSlots, visitorZone, timeOfDay);
+      lastSlots = allSlots;
 
       if (opts.markBest) markBestSlots(allSlots);
 
-      renderBestCards(allSlots, {
+      renderBestCards(lastSlots, {
         animate: opts.animateCards !== false || !!opts.markBest || !!opts.animateHero,
       });
-      if (calendarOpen) renderCalendar(allSlots);
+      if (calendarOpen) renderCalendar(lastSlots);
       updatePickNote();
     }
 
@@ -1386,9 +1545,12 @@ const placeholders = [
     calToggle.addEventListener('click', () => {
       setCalendarOpen(!calendarOpen);
       if (calendarOpen && data) {
+        // Recompute once so calendar matches current filters/cards.
         let allSlots = generateSlots(data.busy, data.meta, currentQuery());
         allSlots = filterByTimeOfDay(allSlots, visitorZone, timeOfDay);
-        renderCalendar(allSlots);
+        lastSlots = allSlots;
+        renderBestCards(lastSlots, { animate: false });
+        renderCalendar(lastSlots);
       }
     });
 
