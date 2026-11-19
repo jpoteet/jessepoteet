@@ -1,6 +1,7 @@
 ---
 import AvailabilityLayout from '@/layouts/AvailabilityLayout.astro';
 import AvailabilityFinder from '@/components/AvailabilityFinder.astro';
+import AvailabilityTools from '@/components/AvailabilityTools.astro';
 import { personalAvailability } from '@/config/availability';
 import '@/styles/availability-product.css';
 
@@ -30,6 +31,7 @@ const profile = personalAvailability;
         headline={profile.headline}
         lead={profile.lead}
       />
+      <AvailabilityTools />
     </div>
   </div>
 </AvailabilityLayout>

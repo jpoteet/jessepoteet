@@ -159,7 +159,90 @@ body.avail-app {
   flex: 1;
   min-height: 0;
   height: 100%;
-  padding: 0.65rem 0.85rem 0.75rem;
+  padding: 0.65rem 0.85rem 0.55rem;
+  gap: 0.45rem;
+}
+
+.avail-app-shell > .availability-finder {
+  flex: 1 1 auto;
+  min-height: 0;
+}
+
+.avail-tools {
+  flex: 0 0 auto;
+  margin: 0;
+  padding: 0.15rem 0 0.1rem;
+}
+
+.avail-tools-label {
+  margin: 0 0 0.4rem;
+  font-size: 0.65rem;
+  font-weight: 700;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--ap-faint);
+}
+
+.avail-marquee {
+  overflow: hidden;
+  mask-image: linear-gradient(90deg, transparent, black 6%, black 94%, transparent);
+}
+
+.avail-marquee-track {
+  display: flex;
+  width: max-content;
+  gap: 0.45rem;
+  animation: avail-marquee 42s linear infinite;
+}
+
+.avail-marquee:hover .avail-marquee-track {
+  animation-play-state: paused;
+}
+
+.avail-tool {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  flex: 0 0 auto;
+  border: 1px solid var(--ap-border);
+  border-radius: 999px;
+  padding: 0.35rem 0.7rem;
+  background: rgba(255, 255, 255, 0.72);
+  color: var(--ap-faint);
+  font-size: 0.72rem;
+  font-weight: 650;
+  transition:
+    color 0.2s ease,
+    border-color 0.2s ease,
+    background 0.2s ease,
+    box-shadow 0.2s ease,
+    transform 0.2s ease;
+}
+
+.avail-tool svg {
+  color: currentColor;
+  opacity: 0.72;
+  filter: grayscale(1);
+  transition:
+    opacity 0.2s ease,
+    color 0.2s ease,
+    filter 0.2s ease,
+    transform 0.2s ease;
+}
+
+.avail-tool:hover {
+  color: var(--ap-text);
+  border-color: color-mix(in srgb, var(--brand) 42%, transparent);
+  background: color-mix(in srgb, var(--brand) 10%, white);
+  box-shadow: 0 6px 16px color-mix(in srgb, var(--brand) 16%, transparent);
+  transform: translateY(-1px);
+}
+
+.avail-tool:hover svg {
+  color: var(--brand);
+  opacity: 1;
+  filter: none;
+  transform: scale(1.05);
 }
 
 /* Single column: prompt on top, calendar fills rest. No nested scroll. */
@@ -201,12 +284,29 @@ body.avail-app {
   max-width: 18ch;
 }
 
+.avail-funline {
+  margin: 0;
+  min-height: 1.35em;
+  font-size: 0.88rem;
+  font-weight: 550;
+  color: var(--ap-faint);
+  line-height: 1.35;
+  transition: opacity 0.2s ease;
+}
+
 .avail-jesse-clock {
   margin: 0;
   font-size: 0.82rem;
   font-weight: 550;
   color: var(--ap-muted);
   line-height: 1.35;
+}
+
+.avail-empty-fun {
+  margin: 0.55rem 0 0;
+  color: var(--ap-faint);
+  font-size: 0.82rem;
+  font-weight: 550;
 }
 
 .avail-jesse-clock [data-clock-mt] {
@@ -1219,6 +1319,15 @@ body.avail-app {
   }
 }
 
+@keyframes avail-marquee {
+  from {
+    transform: translateX(0);
+  }
+  to {
+    transform: translateX(-50%);
+  }
+}
+
 .avail-enter {
   animation: avail-enter 0.55s cubic-bezier(0.22, 1, 0.36, 1) both;
   animation-delay: var(--enter-delay, 0ms);
@@ -1234,6 +1343,7 @@ body.avail-app {
   .avail-enter,
   .avail-best-card,
   .avail-workspace,
+  .avail-marquee-track,
   .avail-ask-glow::before,
   .avail-ask-glow::after {
     animation: none !important;
@@ -1247,6 +1357,14 @@ body.avail-app {
   .avail-enter {
     opacity: 1;
     transform: none;
+  }
+
+  .avail-marquee-track {
+    transform: none;
+    flex-wrap: wrap;
+    width: auto;
+    max-width: 100%;
+    justify-content: flex-start;
   }
 }
 

@@ -40,7 +40,10 @@ const placeholders = [
       <h1 class="avail-ask-title avail-enter" style="--enter-delay: 0ms">
         Looking for time to connect with Jesse?
       </h1>
-      <p class="avail-jesse-clock avail-enter" style="--enter-delay: 80ms" data-jesse-clock>
+      <p class="avail-funline avail-enter" style="--enter-delay: 50ms" data-funline>
+        Leave a little room for the river. 🌲
+      </p>
+      <p class="avail-jesse-clock avail-enter" style="--enter-delay: 90ms" data-jesse-clock>
         It's currently <span data-clock-mt>--:-- --</span> in Jesse's timezone (Mountain)
       </p>
       <div class="avail-ask-glow avail-enter" style="--enter-delay: 140ms">
@@ -277,6 +280,26 @@ const placeholders = [
     const askChips = root.querySelector('[data-ask-chips]') as HTMLElement;
     const askReply = root.querySelector('[data-ask-reply]') as HTMLElement;
     const askMsg = root.querySelector('[data-ask-msg]') as HTMLElement;
+    const funlineEl = root.querySelector('[data-funline]') as HTMLElement | null;
+    const funLines = [
+      'Leave a little room for the river. 🌲',
+      'Colorado light, then deep work. 🏔️',
+      'Quiet mornings. Clear calendar. Real work. ☀️',
+      'Probably outside when the inbox goes quiet. 🎣',
+      'Coffee first. Then the next open slot. ☕',
+      'Tents, snacks, and no Slack. 🏕️',
+      'Baseball on in the background. ⚾',
+      'Family time beats another meeting. 👨‍👩‍👧‍👦',
+      'The kitchen is the other workshop. 🍳',
+    ];
+    const thinkingLines = [
+      'Checking the calendar for something that fits. 🎣',
+      'Looking for a slot that leaves river time intact. 🌲',
+      'Finding an opening between the real work. ☀️',
+      'Hunting a clean window before dinner plans. 🍳',
+    ];
+    let funPaused = false;
+    let funIndex = 0;
     const pickNoteEl = root.querySelector('[data-pick-note]') as HTMLElement | null;
     const bookBtn = root.querySelector('[data-book-btn]') as HTMLAnchorElement | null;
     const bookFooter = root.querySelector('[data-book-footer]') as HTMLElement | null;
@@ -334,6 +357,27 @@ const placeholders = [
     );
     customWrap.hidden = false;
     customWrap.classList.remove('hidden');
+
+    function setFunline(text: string) {
+      if (!funlineEl) return;
+      if (prefersReducedMotion()) {
+        funlineEl.textContent = text;
+        return;
+      }
+      funlineEl.style.opacity = '0';
+      window.setTimeout(() => {
+        funlineEl.textContent = text;
+        funlineEl.style.opacity = '1';
+      }, 160);
+    }
+
+    if (funlineEl) {
+      window.setInterval(() => {
+        if (funPaused || document.hidden) return;
+        funIndex = (funIndex + 1) % funLines.length;
+        setFunline(funLines[funIndex]);
+      }, prefersReducedMotion() ? 7000 : 5200);
+    }
 
     // Typing + rotating ask placeholders
     if (placeholders.length) {
@@ -546,6 +590,8 @@ const placeholders = [
       const text = raw.trim().slice(0, 300);
       if (!text || asking) return;
       asking = true;
+      funPaused = true;
+      setFunline(thinkingLines[Math.floor(Math.random() * thinkingLines.length)]);
       if (askGo) {
         askGo.disabled = true;
         askGo.textContent = 'Finding…';
@@ -582,6 +628,9 @@ const placeholders = [
 
       applyAskResult(result);
       asking = false;
+      funPaused = false;
+      funIndex = (funIndex + 1) % funLines.length;
+      setFunline(funLines[funIndex]);
       if (askGo) {
         askGo.disabled = false;
         askGo.textContent = 'Find it';
@@ -867,7 +916,7 @@ const placeholders = [
         );
         let detail = 'Nothing open in that window.';
         if (hint) detail += ` The next day with room is ${hint.label}.`;
-        bestCardsEl.innerHTML = `<div class="avail-empty"><strong>Quiet for that filter</strong>${escapeHtml(detail)}</div>`;
+        bestCardsEl.innerHTML = `<div class="avail-empty"><strong>Quiet for that filter</strong>${escapeHtml(detail)}<p class="avail-empty-fun">${escapeHtml(funLines[funIndex % funLines.length])}</p></div>`;
         calToggle.hidden = true;
         return;
       }
