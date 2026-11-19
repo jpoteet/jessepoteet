@@ -6,7 +6,7 @@ import { personalAvailability } from '@/config/availability';
 const profile = personalAvailability;
 ---
 
-<BaseLayout title={profile.headline} description={profile.description}>
+<BaseLayout title={profile.headline} description={profile.description} personalOnly>
   <div class="relative overflow-hidden">
     <div
       class="pointer-events-none absolute inset-0 -z-10 bg-[radial-gradient(ellipse_at_top,_rgba(31,61,50,0.08),_transparent_55%),linear-gradient(180deg,_#f3f5f2_0%,_var(--color-canvas)_42%)] dark:bg-[radial-gradient(ellipse_at_top,_rgba(143,186,159,0.12),_transparent_50%),linear-gradient(180deg,_#121612_0%,_var(--color-dark-canvas)_45%)]"

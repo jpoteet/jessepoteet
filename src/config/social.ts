@@ -36,6 +36,14 @@ export const brandSameAs = [
   'https://packed.ink',
 ] as const;
 
-export function getResolvedSameAs(): string[] {
+const personalSameAs = [
+  'https://jpoteet.us/linkedin',
+  'https://jpoteet.us/instagram',
+  'https://jpoteet.us/twitter',
+  'https://jpoteet.us/patreon',
+] as const;
+
+export function getResolvedSameAs(options?: { personalOnly?: boolean }): string[] {
+  if (options?.personalOnly) return [...personalSameAs];
   return [...brandSameAs];
 }
