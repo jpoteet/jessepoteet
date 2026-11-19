@@ -47,15 +47,28 @@ Custom domain: `jessepoteet.com` on the Cloudflare Pages project **jessepoteet**
 
 ## Environment variables
 
-Set these in the Cloudflare Pages project (**Settings** → **Environment variables**), for Production and Preview as needed. Never commit secrets.
+Set these in the Cloudflare Pages project for **Production** and **Preview**. Never commit secrets.
+
+With `wrangler.toml` present (`pages_build_output_dir` + `keep_vars = true`), **encrypted Secrets still work**. Prefer **Secret** (encrypted) over plain-text Variable for tokens. If `/api/availability` returns `missing_token` after a config deploy, the secret was missing, plain-text-only, or only set on one environment.
 
 | Variable | Required | Purpose |
 | --- | --- | --- |
 | `CONTACT_WEBHOOK_URL` | Yes (for form delivery) | n8n webhook URL. The function POSTs validated JSON here. |
 | `CONTACT_WEBHOOK_SECRET` | No | If set, sent as the `X-Webhook-Secret` request header so n8n can verify the caller. |
-| `RECLAIM_API_TOKEN` | Yes (for live availability) | Bearer token for `GET https://api.app.reclaim.ai/api/events`. Set as an encrypted Pages secret. Never expose to the client. |
+| `RECLAIM_API_TOKEN` | Yes (for live availability) | Bearer token for `GET https://api.app.reclaim.ai/api/events`. **Must be a Secret (Encrypt)**. Never expose to the client. |
 | `ALLOW_MOCK_AVAILABILITY` | No (dev only) | When `true` and `RECLAIM_API_TOKEN` is missing, `/api/availability` returns mock busy intervals. Do not enable in production. |
 | `NODE_VERSION` | No | Pin Node for builds, e.g. `22`. |
+
+#### Restore `RECLAIM_API_TOKEN` (production `missing_token`)
+
+1. Cloudflare dashboard → **Workers & Pages** → **jessepoteet**
+2. **Settings** → **Variables and Secrets** (or Environment variables)
+3. Select **Production**
+4. **Add** → choose type **Secret** (Encrypt), name exactly `RECLAIM_API_TOKEN`, paste the Reclaim API token, save
+5. Repeat for **Preview** if preview should hit live Reclaim
+6. **Deployments** → **Retry deployment** on the latest Production deploy (or push an empty commit) so Functions pick up the secret
+
+Confirm with `GET https://jessepoteet.com/api/availability` → `"ok": true`.
 
 ### Availability API
 

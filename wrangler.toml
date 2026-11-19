@@ -1,10 +1,18 @@
 # Cloudflare Pages project config (Functions + bindings).
-# When this file is present it becomes the source of truth for Pages config.
-# See README for dashboard fallback if the AI binding does not attach on deploy.
+# This file is the source of truth for Pages *config* (AI binding, build dir).
+# Encrypted dashboard Secrets (e.g. RECLAIM_API_TOKEN) are still honored at
+# runtime. Plain-text dashboard vars can be wiped by deploys unless keep_vars
+# is true — so we keep them.
+#
+# Local AI: npx wrangler pages dev dist --ai=AI
+# (requires CLOUDFLARE_API_TOKEN for remote AI)
 
 name = "jessepoteet"
 compatibility_date = "2024-11-12"
 pages_build_output_dir = "dist"
+
+# Preserve dashboard Variables & Secrets across deploys that use this file.
+keep_vars = true
 
 # Workers AI: available in Pages Functions as context.env.AI
 [ai]
