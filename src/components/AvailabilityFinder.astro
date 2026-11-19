@@ -64,7 +64,7 @@ const placeholders = [
         <span class="avail-chip-book" data-booking-badge hidden> · booking on</span>
       </p>
       <p class="avail-next-mini" data-hero>
-        <span class="avail-mono" data-tminus>opens in --</span>
+        <span data-tminus>opens in --</span>
         <span data-next-opening>Loading…</span>
         <span class="avail-next-meta" data-next-meta hidden></span>
       </p>
@@ -537,15 +537,21 @@ const placeholders = [
         tminusEl.textContent = 'open now';
         return;
       }
-      const total = Math.floor(ms / 1000);
-      const h = Math.floor(total / 3600);
-      const m = Math.floor((total % 3600) / 60);
-      const s = total % 60;
-      const pad = (n: number) => String(n).padStart(2, '0');
-      tminusEl.textContent =
-        h > 48
-          ? `opens in ${Math.floor(h / 24)}d ${pad(h % 24)}h`
-          : `opens in ${pad(h)}:${pad(m)}:${pad(s)}`;
+      const totalMin = Math.floor(ms / 60000);
+      const days = Math.floor(totalMin / (60 * 24));
+      const hours = Math.floor((totalMin % (60 * 24)) / 60);
+      const mins = totalMin % 60;
+      if (days >= 2) {
+        tminusEl.textContent = `opens in ${days} days`;
+      } else if (days === 1) {
+        tminusEl.textContent =
+          hours > 0 ? `opens in 1 day ${hours}h` : 'opens in 1 day';
+      } else if (hours >= 1) {
+        tminusEl.textContent =
+          mins > 0 ? `opens in ${hours}h ${mins}m` : `opens in ${hours}h`;
+      } else {
+        tminusEl.textContent = `opens in ${Math.max(mins, 1)} min`;
+      }
     }
 
     function setLive(state: 'loading' | 'live' | 'error', label: string) {

@@ -107,20 +107,41 @@ body.avail-app {
 
 .avail-hud {
   display: inline-flex;
-  align-items: center;
-  gap: 0.35rem;
+  align-items: baseline;
+  flex-wrap: wrap;
+  gap: 0.2rem 0.35rem;
   border: 1px solid var(--ap-border);
   border-radius: 999px;
-  padding: 0.22rem 0.55rem;
+  padding: 0.28rem 0.7rem;
   background: var(--ap-surface);
-  font-size: 0.68rem;
+  font-family: var(--ap-font);
+  font-size: 0.72rem;
+  font-weight: 600;
   color: var(--ap-muted);
+  line-height: 1.2;
 }
 
-.avail-hud-key {
-  color: var(--ap-faint);
+.avail-hud-time {
+  color: var(--ap-text);
   font-weight: 700;
-  letter-spacing: 0.04em;
+  font-variant-numeric: tabular-nums;
+}
+
+.avail-hud-sep {
+  color: var(--ap-faint);
+  font-weight: 500;
+}
+
+.avail-hud-hint {
+  color: var(--ap-faint);
+  font-weight: 650;
+  font-size: 0.68rem;
+}
+
+@media (max-width: 380px) {
+  .avail-hud-hint {
+    font-size: 0.62rem;
+  }
 }
 
 .avail-app-main {
