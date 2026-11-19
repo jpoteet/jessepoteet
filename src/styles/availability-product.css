@@ -29,8 +29,10 @@ body.avail-app {
   --ap-accent: #2563eb;
   --ap-ink: #0f172a;
   --ap-font: "Plus Jakarta Sans", "Segoe UI", sans-serif;
+  --ap-display: "Inter Tight", "Segoe UI", system-ui, sans-serif;
   --ap-mono: "JetBrains Mono", "SF Mono", ui-monospace, monospace;
   --ap-shadow: 0 8px 24px rgba(15, 23, 42, 0.06);
+  --ap-display-tracking: -0.025em;
 }
 
 html:has(body.avail-app) {
@@ -277,10 +279,10 @@ body.avail-app {
 
 .avail-ask-title {
   margin: 0;
-  font-family: "Fraunces", Georgia, serif;
+  font-family: var(--ap-display);
   font-size: clamp(1.85rem, 4.2vw, 2.65rem);
-  font-weight: 650;
-  letter-spacing: -0.035em;
+  font-weight: 700;
+  letter-spacing: -0.03em;
   line-height: 1.12;
   color: var(--ap-text);
   max-width: 18ch;
@@ -645,7 +647,9 @@ body.avail-app {
 
 .avail-next-mini [data-next-opening] {
   color: var(--ap-text);
-  font-weight: 650;
+  font-family: var(--ap-display);
+  font-weight: 700;
+  letter-spacing: var(--ap-display-tracking);
 }
 
 .avail-adjust-bar {
@@ -864,16 +868,19 @@ body.avail-app {
 
 .avail-best-day {
   margin: 0;
+  font-family: var(--ap-display);
   font-size: 0.78rem;
-  font-weight: 650;
+  font-weight: 600;
+  letter-spacing: var(--ap-display-tracking);
   opacity: 0.92;
 }
 
 .avail-best-time {
   margin: 0.1rem 0 0;
+  font-family: var(--ap-display);
   font-size: clamp(1.55rem, 3.4vw, 2rem);
-  font-weight: 780;
-  letter-spacing: -0.04em;
+  font-weight: 800;
+  letter-spacing: -0.03em;
   line-height: 1.05;
 }
 
@@ -1008,8 +1015,10 @@ body.avail-app {
 
 .avail-cal-week-label {
   margin: 0;
-  font-weight: 750;
+  font-family: var(--ap-display);
+  font-weight: 700;
   font-size: 0.88rem;
+  letter-spacing: var(--ap-display-tracking);
 }
 
 .avail-status {
@@ -1131,8 +1140,10 @@ body.avail-app {
   justify-content: space-between;
   gap: 0.25rem;
   padding: 0.55rem 0.5rem;
+  font-family: var(--ap-display);
   font-size: 0.78rem;
-  font-weight: 750;
+  font-weight: 700;
+  letter-spacing: var(--ap-display-tracking);
   color: var(--ap-ink);
 }
 
@@ -1217,10 +1228,10 @@ body.avail-app {
   gap: 0.1rem;
   background: var(--chip-bg, var(--ap-blue));
   color: #ffffff;
-  font-family: var(--ap-font);
+  font-family: var(--ap-display);
   font-size: 0.95rem;
-  font-weight: 780;
-  letter-spacing: -0.02em;
+  font-weight: 700;
+  letter-spacing: var(--ap-display-tracking);
   line-height: 1.1;
   padding: 0.35rem 0.4rem;
   cursor: pointer;
@@ -1317,7 +1328,10 @@ body.avail-app {
 }
 
 .avail-cal-mobile-day strong {
+  font-family: var(--ap-display);
   font-size: 0.88rem;
+  font-weight: 700;
+  letter-spacing: var(--ap-display-tracking);
   color: var(--ap-text);
 }
 
