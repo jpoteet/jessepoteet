@@ -16,6 +16,11 @@ export type AskEnv = {
   };
 };
 
+export type AskTurn = {
+  role: 'user' | 'assistant';
+  content: string;
+};
+
 export type AskPayload = {
   duration: number;
   rangeStart: string;
@@ -28,6 +33,8 @@ export type AskPayload = {
 
 const ALLOWED_DURATIONS = [15, 30, 60, 90] as const;
 const MAX_INPUT = 300;
+const MAX_HISTORY_TURNS = 6;
+const MAX_REPLY = 280;
 const MODEL = '@cf/meta/llama-3.3-70b-instruct-fp8-fast';
 const MODEL_FALLBACK = '@cf/meta/llama-3.1-8b-instruct';
 
@@ -108,6 +115,20 @@ export function clampInput(text: unknown): string | null {
   return trimmed;
 }
 
+/** Cap and sanitize prior turns for follow-up asks. */
+export function clampHistory(raw: unknown): AskTurn[] {
+  if (!Array.isArray(raw)) return [];
+  const turns: AskTurn[] = [];
+  for (const item of raw) {
+    if (!item || typeof item !== 'object') continue;
+    const role = (item as { role?: unknown }).role;
+    const content = clampInput((item as { content?: unknown }).content);
+    if ((role !== 'user' && role !== 'assistant') || !content) continue;
+    turns.push({ role, content: content.slice(0, 220) });
+  }
+  return turns.slice(-MAX_HISTORY_TURNS);
+}
+
 function bookableBounds(timeZone: string, now = new Date()) {
   const start = dateKeyInZone(now, timeZone);
   const endDate = addDaysInZone(
@@ -153,8 +174,8 @@ function sanitizeReply(raw: unknown): string {
   // Copy rules: no em dashes
   s = s.replace(/\u2014/g, ',').replace(/\u2013/g, '-');
   s = s.replace(/\bstreamlined\b/gi, 'simple');
-  if (s.length > 180) s = `${s.slice(0, 177)}...`;
-  if (!s) s = 'Here is what I found.';
+  if (s.length > MAX_REPLY) s = `${s.slice(0, MAX_REPLY - 3)}...`;
+  if (!s) s = 'Here are some good options.';
   return s;
 }
 
@@ -185,6 +206,30 @@ export function validateAskResult(
   };
 }
 
+/** Friendlier local replies when AI is offline. */
+function localReplyFor(text: string, summary: string, duration: number): string {
+  const lower = text.toLowerCase();
+  if (/\b(podcast|interview|recording)\b/.test(lower) && duration >= 60) {
+    return `Podcast interviews tend to run long, so let's block ${duration} minutes to be safe. Here are some good options.`;
+  }
+  if (/\b(workshop|strategy|deep dive|roadmap|planning session)\b/.test(lower) && duration >= 60) {
+    return `That sounds like real thinking time. I set this to ${duration} minutes. Here are some solid windows.`;
+  }
+  if (/\b(quick|intro|introduction|hello|catch up|coffee)\b/.test(lower) && duration <= 30) {
+    return `A quick intro fits nicely in ${duration} minutes. Here are a few openings.`;
+  }
+  if (/\b(weekend|saturday|sunday|evening|tonight|after\s*5|after\s*6)\b/.test(lower)) {
+    return `Jesse meets weekdays 9am to 2pm Mountain. Here are the closest options in that window.`;
+  }
+  if (/\b(earlier|sooner|asap)\b/.test(lower)) {
+    return `Looking earlier for you. Here is what is open soonest.`;
+  }
+  if (/\b(next week|following week)\b/.test(lower)) {
+    return `Next week it is. Here are some good options.`;
+  }
+  return `Got it: ${summary}. Here are some good options.`;
+}
+
 export function localAskFallback(
   text: string,
   opts: { timeZone: string; now?: Date },
@@ -195,10 +240,33 @@ export function localAskFallback(
     durations: ALLOWED_DURATIONS,
   });
   const bounds = bookableBounds(opts.timeZone, opts.now);
+  const lower = text.toLowerCase();
+
+  // Heuristic duration upgrades when the local parser is length-agnostic.
+  let forceDuration: number | null = null;
+  if (/\b(podcast|interview|recording)\b/.test(lower)) forceDuration = 90;
+  else if (/\b(workshop|strategy|deep dive|roadmap)\b/.test(lower)) forceDuration = 60;
+  else if (/\b(quick intro|quick call|hello|catch up)\b/.test(lower)) forceDuration = 15;
+
   if (!parsed.ok) {
+    // Weekend / evening asks still get a helpful reply + weekday window.
+    if (/\b(weekend|saturday|sunday|evening|tonight)\b/.test(lower)) {
+      return validateAskResult(
+        {
+          duration: forceDuration || 30,
+          rangeStart: bounds.start,
+          rangeEnd: bounds.end,
+          timeOfDay: 'any',
+          reply:
+            'Jesse meets weekdays 9am to 2pm Mountain. Here are the closest options in that window.',
+          source: 'local',
+        },
+        opts,
+      );
+    }
     return validateAskResult(
       {
-        duration: 30,
+        duration: forceDuration || 30,
         rangeStart: bounds.start,
         rangeEnd: bounds.end,
         timeOfDay: 'any',
@@ -208,16 +276,18 @@ export function localAskFallback(
       opts,
     );
   }
+
+  const duration = forceDuration || parsed.durationMinutes;
   return validateAskResult(
     {
-      duration: parsed.durationMinutes,
+      duration,
       rangeStart: parsed.rangeStartKey || bounds.start,
       rangeEnd: parsed.rangeEndKey || parsed.rangeStartKey || bounds.start,
       timeOfDay:
         parsed.timeOfDay === 'all'
           ? 'any'
           : (parsed.timeOfDay as 'morning' | 'afternoon'),
-      reply: `Got it: ${parsed.summary}.`,
+      reply: localReplyFor(text, parsed.summary, duration),
       source: 'local',
     },
     opts,
@@ -237,6 +307,49 @@ function extractJsonObject(text: string): Record<string, unknown> | null {
   }
 }
 
+function buildSystemPrompt(input: {
+  timeZone: string;
+  today: string;
+  durations: number[];
+}): string {
+  const openStartH = Math.floor(AVAILABILITY_SCHEDULE.openHours.startMinutes / 60);
+  const openEndH = Math.floor(AVAILABILITY_SCHEDULE.openHours.endMinutes / 60);
+  const noticeH = Math.round(AVAILABILITY_SCHEDULE.minNoticeMinutes / 60);
+  const horizon = AVAILABILITY_SCHEDULE.lookAheadDays;
+
+  return `You help visitors find time with Jesse Poteet on his /meet page.
+You are writing as a warm, knowledgeable friend of Jesse: concise, human, lightly playful. Never stiff or corporate.
+
+Return ONLY a JSON object with keys:
+duration (one of ${input.durations.join('/')}),
+rangeStart (YYYY-MM-DD),
+rangeEnd (YYYY-MM-DD),
+timeOfDay ("any" | "morning" | "afternoon"),
+preferredDays (optional array of mon/tue/wed/thu/fri),
+reply (1 to 2 short sentences in Jesse's voice).
+
+Hard facts (use these; do not invent others):
+- Jesse meets weekdays only, ${openStartH}am to ${openEndH}pm Mountain Time (America/Denver). No weekends, no evenings.
+- Allowed meeting lengths: ${input.durations.join(', ')} minutes.
+- Minimum notice: about ${noticeH} hours.
+- Bookable horizon: about ${horizon} days from today.
+- Today is ${input.today} in timezone ${input.timeZone}.
+
+Critical rules:
+- NEVER invent, list, or claim specific open times, slot counts, or calendar free/busy. The server computes real availability from filters. Your job is only to set filters and write the reply that introduces the options below.
+- NEVER reveal calendar details, event names, titles, or why a day is busy.
+- Reply copy: 1 to 2 short sentences. No em dashes. Never say "streamlined". Do not name Jesse's town.
+- Smart length suggestions when the visitor is vague about duration:
+  - quick intro / hello / catch-up → 15 or 30
+  - podcast interview / recording → prefer 90 (say interviews tend to run long)
+  - workshop / strategy / deep dive / planning → 60 or 90
+- If they ask for weekends or evenings, explain Jesse meets weekdays ${openStartH}am to ${openEndH}pm Mountain and still offer the closest weekday options (set a sensible weekday range).
+- Follow-ups refine prior filters. Examples: "anything earlier?" keeps duration and pulls rangeStart toward today; "what about next week?" shifts the range to next week; "make it shorter" steps duration down.
+- If the user says "next N weeks" or "sometime in the next N weeks", set range from today through today+N weeks.
+- If only a weekday is named (like Friday), set rangeStart/rangeEnd to that upcoming weekday.
+- Default duration to 30 when unclear.`;
+}
+
 export async function runAskAi(
   env: AskEnv,
   input: {
@@ -244,34 +357,24 @@ export async function runAskAi(
     timeZone: string;
     today: string;
     durations: number[];
+    history?: AskTurn[];
   },
 ): Promise<AskPayload | null> {
   if (!env.AI || typeof env.AI.run !== 'function') return null;
 
-  const system = `You parse calendar availability requests for Jesse Poteet.
-Return ONLY a JSON object with keys:
-duration (one of ${input.durations.join('/')}),
-rangeStart (YYYY-MM-DD),
-rangeEnd (YYYY-MM-DD),
-timeOfDay ("any" | "morning" | "afternoon"),
-preferredDays (optional array of mon/tue/wed/thu/fri),
-reply (one short friendly sentence, no em dashes, never say streamlined).
-Today is ${input.today} in timezone ${input.timeZone}.
-Jesse is bookable weekdays only. Keep rangeStart/rangeEnd within about ${AVAILABILITY_SCHEDULE.lookAheadDays} days from today.
-If the user says "next N weeks" or "sometime in the next N weeks", set range from today through today+N weeks.
-If only a weekday is named (like Friday), set rangeStart/rangeEnd to that upcoming weekday.
-Default duration to 30 when unclear.`;
-
-  const messages = [
+  const system = buildSystemPrompt(input);
+  const history = (input.history || []).slice(-MAX_HISTORY_TURNS);
+  const messages: { role: string; content: string }[] = [
     { role: 'system', content: system },
+    ...history.map((t) => ({ role: t.role, content: t.content })),
     { role: 'user', content: input.text },
   ];
 
   const tryModel = async (model: string) => {
     const result = await env.AI!.run(model, {
       messages,
-      max_tokens: 280,
-      temperature: 0.2,
+      max_tokens: 360,
+      temperature: 0.35,
     });
     const text =
       typeof result === 'string'

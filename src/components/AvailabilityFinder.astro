@@ -62,7 +62,7 @@ const placeholders = [
           <button type="submit" class="avail-ask-go" data-ask-go>Find it</button>
         </div>
       </div>
-      <p class="avail-ask-reply" data-ask-reply hidden></p>
+      <div class="avail-ask-thread" data-ask-thread hidden aria-live="polite"></div>
       <p class="avail-ask-msg" data-ask-msg hidden></p>
       <div class="avail-ask-chips" data-ask-chips hidden></div>
     </form>
@@ -255,6 +255,10 @@ const placeholders = [
     let calendarOpen = false;
     const visitorZone = resolveVisitorZone();
     const hostZoneLabel = 'Mountain';
+    type AskTurn = { role: 'user' | 'assistant'; content: string };
+    const askHistory: AskTurn[] = [];
+    const MAX_ASK_HISTORY = 6;
+    let typeToken = 0;
 
     const statusEl = root.querySelector('[data-status]') as HTMLElement;
     const weekLabelEl = root.querySelector('[data-week-label]') as HTMLElement | null;
@@ -278,7 +282,7 @@ const placeholders = [
     const askInput = root.querySelector('[data-ask-input]') as HTMLInputElement;
     const askGo = root.querySelector('[data-ask-go]') as HTMLButtonElement | null;
     const askChips = root.querySelector('[data-ask-chips]') as HTMLElement;
-    const askReply = root.querySelector('[data-ask-reply]') as HTMLElement;
+    const askThread = root.querySelector('[data-ask-thread]') as HTMLElement;
     const askMsg = root.querySelector('[data-ask-msg]') as HTMLElement;
     const funlineEl = root.querySelector('[data-funline]') as HTMLElement | null;
     const funLines = [
@@ -315,9 +319,70 @@ const placeholders = [
 
     function unavailableMessage() {
       if (bookingEnabled && bookingUrl) {
-        return 'Availability is unavailable right now. You can still book a time with the button below.';
+        return "Jesse's calendar is taking a short break. You can still book a time with the button below.";
       }
-      return 'Availability is unavailable right now. Try again in a few minutes.';
+      return "Jesse's calendar is taking a short break. Try again in a few minutes.";
+    }
+
+    function pushAskHistory(role: AskTurn['role'], content: string) {
+      askHistory.push({ role, content: content.slice(0, 220) });
+      while (askHistory.length > MAX_ASK_HISTORY) askHistory.shift();
+    }
+
+    function renderAskThread(opts: { typing?: string } = {}) {
+      const turns = [...askHistory];
+      if (opts.typing != null) {
+        turns.push({ role: 'assistant', content: opts.typing });
+      }
+      if (!turns.length) {
+        askThread.hidden = true;
+        askThread.innerHTML = '';
+        return;
+      }
+      askThread.hidden = false;
+      // Keep the thread light: show at most the last 4 bubbles.
+      const visible = turns.slice(-4);
+      askThread.innerHTML = visible
+        .map((turn, i) => {
+          const isTyping =
+            opts.typing != null &&
+            turn.role === 'assistant' &&
+            i === visible.length - 1 &&
+            turn.content === opts.typing;
+          const typingClass = isTyping ? ' is-typing' : '';
+          return `<div class="avail-ask-bubble avail-ask-bubble--${turn.role}${typingClass}"><p>${escapeHtml(turn.content || (isTyping ? '…' : ''))}</p></div>`;
+        })
+        .join('');
+    }
+
+    function typeAssistantReply(full: string): Promise<void> {
+      const token = ++typeToken;
+      return new Promise((resolve) => {
+        if (prefersReducedMotion() || !full) {
+          pushAskHistory('assistant', full || 'Here are some good options.');
+          renderAskThread();
+          resolve();
+          return;
+        }
+        let char = 0;
+        const tick = () => {
+          if (token !== typeToken) {
+            resolve();
+            return;
+          }
+          char = Math.min(full.length, char + (char < 24 ? 1 : 2));
+          renderAskThread({ typing: full.slice(0, char) });
+          if (char >= full.length) {
+            pushAskHistory('assistant', full);
+            renderAskThread();
+            resolve();
+            return;
+          }
+          window.setTimeout(tick, 16 + Math.random() * 22);
+        };
+        renderAskThread({ typing: '' });
+        window.setTimeout(tick, 80);
+      });
     }
 
     function updatePickNote() {
@@ -486,23 +551,23 @@ const placeholders = [
       };
     }
 
-    function applyAskResult(result: AskApiResult) {
+    async function applyAskResult(result: AskApiResult) {
       if (!result.ok) {
         askChips.hidden = true;
         askChips.innerHTML = '';
-        askReply.hidden = true;
-        askReply.textContent = '';
         askMsg.hidden = false;
         askMsg.textContent = result.message || 'Could not understand that ask.';
+        await typeAssistantReply(
+          result.message ||
+            'I could not quite parse that. Try something like “30 minutes next week”.',
+        );
         return;
       }
 
       askMsg.hidden = true;
-      askReply.hidden = false;
-      askReply.textContent = result.reply || 'Here is what I found.';
-      askReply.classList.remove('is-reveal');
-      void askReply.offsetWidth;
-      askReply.classList.add('is-reveal');
+      const reply = result.reply || 'Here are some good options.';
+      await typeAssistantReply(reply);
+
       const workspace = root!.querySelector('[data-workspace]') as HTMLElement | null;
       if (workspace) {
         workspace.classList.remove('is-match-reveal');
@@ -597,7 +662,12 @@ const placeholders = [
         askGo.textContent = 'Finding…';
       }
       askMsg.hidden = true;
-      askReply.hidden = true;
+      askInput.value = '';
+      pushAskHistory('user', text);
+      renderAskThread({ typing: '' });
+
+      // Send prior turns only (exclude the user message we just pushed).
+      const historyPayload = askHistory.slice(0, -1).slice(-MAX_ASK_HISTORY);
 
       let result: AskApiResult | null = null;
       try {
@@ -609,6 +679,7 @@ const placeholders = [
             timeZone: visitorZone,
             today: dateKeyInZone(new Date(), visitorZone),
             durations,
+            history: historyPayload,
           }),
         });
         result = (await res.json()) as AskApiResult;
@@ -618,23 +689,27 @@ const placeholders = [
 
       if (!result || result.ok === false) {
         // Always keep the page working: local parser fallback.
-        result = applyLocalAsk(text);
-        if (!result.ok && result.message) {
-          // keep message
-        } else if (result.ok && !result.reply) {
-          result.reply = 'Here is what I found.';
+        const local = applyLocalAsk(text);
+        if (local.ok) {
+          result = local;
+          if (!result.reply) result.reply = 'Here are some good options.';
+        } else if (result && result.ok === false && result.message) {
+          // keep API error message if present
+        } else {
+          result = local;
         }
       }
 
-      applyAskResult(result);
+      await applyAskResult(result);
       asking = false;
       funPaused = false;
       funIndex = (funIndex + 1) % funLines.length;
       setFunline(funLines[funIndex]);
       if (askGo) {
         askGo.disabled = false;
-        askGo.textContent = 'Find it';
+        askGo.textContent = askHistory.length ? 'Ask again' : 'Find it';
       }
+      askInput.focus();
     }
 
     function windowExclusiveEnd(now = new Date()): Date {
@@ -698,18 +773,18 @@ const placeholders = [
     }
 
     function renderError() {
-      nextEl.textContent = 'Unavailable right now';
+      nextEl.textContent = 'Paused for a moment';
       nextMetaEl.textContent = '';
       nextOpeningIso = null;
       updateTminus();
       resultsEl.innerHTML = '';
-      bestCardsEl.innerHTML = `<div class="avail-empty"><strong>Availability is unavailable right now</strong>${escapeHtml(
+      bestCardsEl.innerHTML = `<div class="avail-empty"><strong>Calendar paused</strong>${escapeHtml(
         loadError || unavailableMessage(),
       )}</div>`;
       calToggle.hidden = true;
       setCalendarOpen(false);
       showSkeleton(false);
-      setLive('error', 'Availability is unavailable right now');
+      setLive('error', 'Calendar paused');
       statusEl.textContent = '';
     }
 
