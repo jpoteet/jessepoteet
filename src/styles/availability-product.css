@@ -230,10 +230,17 @@ body.avail-app {
 
 .avail-float {
   position: absolute;
-  font-size: clamp(1.1rem, 2vw, 1.5rem);
-  opacity: 0.22;
+  font-size: clamp(1.25rem, 2.5vw, 1.85rem);
+  opacity: 0.42;
   animation: avail-float 9s ease-in-out infinite;
   user-select: none;
+  filter: saturate(1.15);
+  z-index: 0;
+}
+
+.avail-float-sm {
+  font-size: clamp(1rem, 1.8vw, 1.35rem);
+  opacity: 0.32;
 }
 
 .avail-app-shell {
@@ -488,10 +495,6 @@ body.avail-app {
   transition: transform 0.22s cubic-bezier(0.34, 1.56, 0.64, 1);
 }
 
-.avail-ask-chip:hover {
-  transform: scale(1.05);
-}
-
 .avail-ask-msg {
   margin: 0;
   color: var(--ap-muted);
@@ -616,9 +619,16 @@ body.avail-app {
 }
 
 .avail-pill:hover,
-.duration-btn.avail-pill:hover {
+.duration-btn.avail-pill:hover,
+.avail-ask-chip:hover {
   opacity: 1;
   transform: translateY(-2px) scale(1.05);
+}
+
+.avail-pill:active,
+.duration-btn.avail-pill:active,
+.avail-slot:active {
+  transform: translateY(0) scale(0.97);
 }
 
 .avail-pill[aria-pressed='true'],
@@ -1076,7 +1086,9 @@ body.avail-app {
   }
 }
 
-/* Mobile: allow page scroll of the whole app content */
+/* Mobile: page can scroll when content exceeds the viewport, but the
+   board still stretches to fill leftover space so nothing looks cut off
+   or stranded above empty dead space. */
 @media (max-width: 959px) {
   body.avail-app {
     overflow: auto;
@@ -1095,16 +1107,22 @@ body.avail-app {
   }
 
   .avail-app-shell {
+    display: flex;
+    flex-direction: column;
     height: auto;
     min-height: calc(100dvh - var(--ap-chrome-h) - 1.5rem);
   }
 
   .avail-app-grid {
+    display: flex;
+    flex-direction: column;
     height: auto;
+    flex: 1;
     min-height: calc(100dvh - var(--ap-chrome-h) - 1.5rem);
   }
 
   .avail-rail {
+    flex: 0 0 auto;
     overflow: visible;
   }
 
@@ -1113,6 +1131,7 @@ body.avail-app {
   }
 
   .avail-workspace {
-    min-height: 55vh;
+    flex: 1 1 auto;
+    min-height: 14rem;
   }
 }

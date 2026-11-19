@@ -59,7 +59,7 @@ Set these in the Cloudflare Pages project (**Settings** → **Environment variab
 
 ### Availability API
 
-`GET /api/availability` returns merged busy intervals only (no titles, attendees, descriptions, or calendar ids), plus schedule meta (open hours, timezone, look-ahead). The `/meet` page computes open slots in the browser and re-filters instantly when length or window changes. Responses are edge-cached for about 7 minutes. `/availability` 301-redirects to `/meet` (query string preserved).
+`GET /api/availability` returns merged busy intervals only (no titles, attendees, descriptions, or calendar ids), plus schedule meta (open hours, timezone, look-ahead). The `/meet` page computes open slots in the browser and re-filters instantly when length or window changes. Responses are edge-cached for about 7 minutes.
 
 ### Contact webhook payload
 
