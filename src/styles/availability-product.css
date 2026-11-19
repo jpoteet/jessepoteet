@@ -936,10 +936,10 @@ body.avail-app {
 .avail-best-time {
   margin: 0.1rem 0 0;
   font-family: var(--ap-display);
-  font-size: clamp(1.55rem, 3.4vw, 2rem);
+  font-size: clamp(1.15rem, 2.6vw, 1.55rem);
   font-weight: 800;
   letter-spacing: -0.03em;
-  line-height: 1.05;
+  line-height: 1.15;
 }
 
 .avail-best-meta {
@@ -1231,12 +1231,18 @@ body.avail-app {
   display: flex;
   flex-direction: column;
   min-height: var(--cal-row, 52px);
-  height: var(--cal-row, 52px);
-  max-height: var(--cal-row, 52px);
+  height: 100%;
   border-radius: 8px;
   overflow: hidden;
   z-index: 1;
   grid-column: 1;
+}
+
+.avail-cal-daycol > .avail-slot-wrap.is-half {
+  height: calc(var(--cal-row, 52px) * 0.5);
+  min-height: calc(var(--cal-row, 52px) * 0.5);
+  max-height: calc(var(--cal-row, 52px) * 0.5);
+  align-self: start;
 }
 
 .avail-cal-daycol > .avail-slot-wrap > .avail-slot {
@@ -1244,6 +1250,14 @@ body.avail-app {
   border-radius: 0;
   min-height: 100%;
   height: 100%;
+}
+
+.avail-slot-range {
+  display: block;
+  text-align: center;
+  line-height: 1.15;
+  font-size: 0.78rem;
+  padding: 0 0.15rem;
 }
 
 .avail-cal-times {
@@ -1283,7 +1297,7 @@ body.avail-app {
   border-radius: 8px;
   width: 100%;
   height: 100%;
-  min-height: var(--cal-row, 52px);
+  min-height: 0;
   display: flex;
   flex-direction: column;
   align-items: center;
@@ -1292,17 +1306,22 @@ body.avail-app {
   background: var(--chip-bg, var(--ap-blue));
   color: #ffffff;
   font-family: var(--ap-display);
-  font-size: 0.95rem;
+  font-size: 0.88rem;
   font-weight: 700;
   letter-spacing: var(--ap-display-tracking);
   line-height: 1.1;
-  padding: 0.35rem 0.4rem;
+  padding: 0.3rem 0.35rem;
   cursor: pointer;
   z-index: 1;
   transition:
     transform 0.22s cubic-bezier(0.34, 1.56, 0.64, 1),
     box-shadow 0.2s ease,
     filter 0.2s ease;
+}
+
+.avail-cal-daycol > .avail-slot-wrap.is-half > .avail-slot {
+  font-size: 0.68rem;
+  padding: 0.1rem 0.2rem;
 }
 
 .avail-slot:hover {

@@ -176,6 +176,38 @@ export function formatTimeInZone(date: Date, timeZone: string): string {
   }).format(date);
 }
 
+/**
+ * Visitor-facing range label, e.g. "9:00 to 10:30 AM" or "11:30 AM to 1:00 PM".
+ */
+export function formatTimeRangeInZone(
+  start: Date,
+  end: Date,
+  timeZone: string,
+): string {
+  const dtf = new Intl.DateTimeFormat('en-US', {
+    timeZone,
+    hour: 'numeric',
+    minute: '2-digit',
+    hour12: true,
+  });
+  const startParts = dtf.formatToParts(start);
+  const endParts = dtf.formatToParts(end);
+  const grab = (parts: Intl.DateTimeFormatPart[], type: string) =>
+    parts.find((p) => p.type === type)?.value || '';
+  const startHour = grab(startParts, 'hour');
+  const startMin = grab(startParts, 'minute');
+  const startPeriod = grab(startParts, 'dayPeriod');
+  const endHour = grab(endParts, 'hour');
+  const endMin = grab(endParts, 'minute');
+  const endPeriod = grab(endParts, 'dayPeriod');
+  const startClock = `${startHour}:${startMin}`;
+  const endClock = `${endHour}:${endMin}`;
+  if (startPeriod && endPeriod && startPeriod === endPeriod) {
+    return `${startClock} to ${endClock} ${endPeriod}`;
+  }
+  return `${startClock} ${startPeriod} to ${endClock} ${endPeriod}`;
+}
+
 export function formatDayHeading(date: Date, timeZone: string): string {
   return new Intl.DateTimeFormat('en-US', {
     timeZone,

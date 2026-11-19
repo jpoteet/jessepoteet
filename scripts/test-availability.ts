@@ -7,8 +7,17 @@ import { BOOKING_LINKS, resolveBookingMode } from '../src/config/availability';
 import { eventsToMergedBusy, mergeBusyIntervals } from '../src/lib/availability/busy';
 import { buildMockAvailabilityResponse } from '../src/lib/availability/mock';
 import { parseAvailabilityAsk } from '../src/lib/availability/parseQuery';
-import { generateSlots, nextOpening } from '../src/lib/availability/slots';
-import { zonedLocalToUtc } from '../src/lib/availability/time';
+import {
+  generateSlots,
+  nextOpening,
+  packNonOverlappingSlots,
+} from '../src/lib/availability/slots';
+import {
+  formatTimeRangeInZone,
+  minutesInZone,
+  parseInstant,
+  zonedLocalToUtc,
+} from '../src/lib/availability/time';
 import { localAskFallback, validateAskResult } from '../functions/_lib/ask';
 
 let failed = 0;
@@ -94,6 +103,51 @@ assert(
 assert(!!nextOpening(payload.busy, payload.meta, 30, fixedNow), 'nextOpening finds a slot');
 assert(!JSON.stringify(payload).includes('Private meeting'), 'mock response has no event titles');
 assert(!JSON.stringify(payload).includes('cal-personal'), 'mock response has no calendar ids');
+
+const slots90 = generateSlots(payload.busy, payload.meta, {
+  durationMinutes: 90,
+  visitorTimeZone: tz,
+  now: fixedNow,
+  rangeStartKey: payload.meta.rangeStart,
+  rangeEndKey: payload.meta.rangeEnd,
+});
+assert(slots90.length > 0, `90m slots exist (got ${slots90.length})`);
+assert(
+  slots90.every((s) => {
+    const startM = minutesInZone(parseInstant(s.start), tz);
+    const durationMs =
+      parseInstant(s.end).getTime() - parseInstant(s.start).getTime();
+    return (
+      startM + 90 <= payload.meta.openHours.endMinutes &&
+      durationMs === 90 * 60 * 1000
+    );
+  }),
+  '90m slots are full duration and fit before 2pm MT',
+);
+assert(
+  slots90.every((s) => minutesInZone(parseInstant(s.start), tz) <= 12 * 60 + 30),
+  '90m cannot start after 12:30 PM MT',
+);
+
+const packed90 = packNonOverlappingSlots(slots90);
+assert(packed90.length > 0, 'packed 90m slots exist');
+assert(packed90.length < slots90.length, 'packing reduces overlapping 90m starts');
+for (let i = 1; i < packed90.length; i++) {
+  assert(
+    parseInstant(packed90[i].start).getTime() >= parseInstant(packed90[i - 1].end).getTime(),
+    `packed slots do not overlap at index ${i}`,
+  );
+}
+
+const rangeLabel = formatTimeRangeInZone(
+  zonedLocalToUtc(2026, 11, 23, 9 * 60, tz),
+  zonedLocalToUtc(2026, 11, 23, 10 * 60 + 30, tz),
+  tz,
+);
+assert(
+  /9:00 to 10:30\s*AM/i.test(rangeLabel),
+  `range label is "9:00 to 10:30 AM" (got ${rangeLabel})`,
+);
 
 assert(!resolveBookingMode(null).enabled, 'null book param is find-only');
 assert(!resolveBookingMode('').enabled, 'empty book param is find-only');
