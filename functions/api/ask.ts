@@ -8,6 +8,7 @@
  */
 
 import {
+  clampHistory,
   clampInput,
   localAskFallback,
   rateLimitAllow,
@@ -85,12 +86,14 @@ export async function onRequestPost(context: {
   const durations = Array.isArray(body.durations)
     ? body.durations.map(Number).filter((n) => [15, 30, 60, 90].includes(n))
     : [15, 30, 60, 90];
+  const history = clampHistory(body.history);
 
   const aiResult = await runAskAi(context.env, {
     text,
     timeZone,
     today,
     durations: durations.length ? durations : [15, 30, 60, 90],
+    history,
   });
 
   if (aiResult) {
