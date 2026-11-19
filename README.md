@@ -49,7 +49,7 @@ Custom domain: `jessepoteet.com` on the Cloudflare Pages project **jessepoteet**
 
 Set these in the Cloudflare Pages project for **Production** and **Preview**. Never commit secrets.
 
-With `wrangler.toml` present (`pages_build_output_dir` + `keep_vars = true`), **encrypted Secrets still work**. Prefer **Secret** (encrypted) over plain-text Variable for tokens. If `/api/availability` returns `missing_token` after a config deploy, the secret was missing, plain-text-only, or only set on one environment.
+With `wrangler.toml` present (`pages_build_output_dir` + bindings), **encrypted Secrets still work**. Plain-text dashboard Variables do not (this file owns config). Pages does **not** support `keep_vars` — do not add it. Prefer **Secret** (Encrypt) over plain-text Variable for tokens. If `/api/availability` returns `missing_token`, the token was missing, was plain-text-only (wiped when wrangler.toml took over), or only set on one environment.
 
 | Variable | Required | Purpose |
 | --- | --- | --- |
