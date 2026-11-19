@@ -1,7 +1,7 @@
 ---
 /**
  * Standalone full-viewport layout for /availability.
- * No site header, nav, or footer. App-like chrome only.
+ * No site header, nav, or footer. App chrome is a dedicated top bar.
  */
 import BaseHead from '@/components/BaseHead.astro';
 
@@ -33,10 +33,25 @@ const { title, description, image, noindex } = Astro.props;
     >
       Skip to content
     </a>
-    <a href="/" class="avail-wordmark" aria-label="Jesse Poteet home">
-      <span class="avail-wordmark-mark" aria-hidden="true">JP</span>
-      <span class="avail-wordmark-name">Jesse Poteet</span>
-    </a>
+    <header class="avail-chrome">
+      <a href="/" class="avail-wordmark" aria-label="Jesse Poteet home">
+        <span class="avail-wordmark-mark" aria-hidden="true">JP</span>
+        <span class="avail-wordmark-name">Jesse Poteet</span>
+      </a>
+      <div class="avail-chrome-right">
+        <div class="avail-hud" data-hud aria-hidden="false">
+          <span class="avail-hud-item"
+            ><span class="avail-hud-key">UTC</span>
+            <span data-clock-utc class="avail-mono">--:--:--</span></span
+          >
+          <span class="avail-hud-sep" aria-hidden="true"></span>
+          <span class="avail-hud-item"
+            ><span class="avail-hud-key">MT</span>
+            <span data-clock-mt class="avail-mono">--:--:--</span></span
+          >
+        </div>
+      </div>
+    </header>
     <main id="main" class="avail-app-main">
       <slot />
     </main>

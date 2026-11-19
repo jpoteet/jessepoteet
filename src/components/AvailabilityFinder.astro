@@ -4,11 +4,15 @@ import { BOOKING_LINKS, personalAvailability } from '@/config/availability';
 interface Props {
   durations?: readonly number[];
   defaultDuration?: number;
+  headline?: string;
+  lead?: string;
 }
 
 const {
   durations = personalAvailability.durations,
   defaultDuration = personalAvailability.defaultDuration,
+  headline = personalAvailability.headline,
+  lead = personalAvailability.lead,
 } = Astro.props;
 
 const defaultIndex = Math.max(0, durations.indexOf(defaultDuration));
@@ -23,140 +27,146 @@ const placeholders = [
 
 <div
   id="availability-finder"
-  class="availability-finder avail-panel avail-tilt-root"
+  class="availability-finder avail-app-grid"
   data-booking-links={JSON.stringify(BOOKING_LINKS)}
   data-default-duration={String(defaultDuration)}
   data-durations={JSON.stringify(durations)}
   data-placeholders={JSON.stringify(placeholders)}
 >
-  <div class="avail-panel-inner">
-    <form class="avail-ask" data-ask-form>
-      <label class="avail-ask-label" for="avail-ask-input">Ask in plain English</label>
-      <div class="avail-ask-row">
-        <span class="avail-ask-prompt" aria-hidden="true">›</span>
-        <input
-          id="avail-ask-input"
-          class="avail-ask-input"
-          type="text"
-          autocomplete="off"
-          spellcheck="false"
-          placeholder={placeholders[0]}
-          data-ask-input
-        />
-        <button type="submit" class="avail-ask-go">Parse</button>
-      </div>
-      <div class="avail-ask-chips" data-ask-chips hidden></div>
-      <p class="avail-ask-msg" data-ask-msg hidden></p>
-    </form>
+  <aside class="avail-rail">
+    <div class="avail-rail-scroll">
+      <header class="avail-hero-block">
+        <p class="avail-greeting" data-greeting>Hey there</p>
+        <h1 class="avail-brand">{headline}</h1>
+        <p class="avail-lead">{lead}</p>
+        <p class="avail-funline" data-funline>Quiet mornings. Clear calendar. Real work. ☀️</p>
+      </header>
 
-    <div class="avail-status-row" aria-live="polite">
-      <div class="avail-live" data-live data-state="loading">
-        <span class="avail-live-dot" aria-hidden="true"></span>
-        <span data-live-label>Connecting…</span>
+      <div class="avail-hero-stat" data-hero>
+        <div class="avail-hero-top">
+          <p class="avail-hero-label">Next opening</p>
+          <p class="avail-tminus avail-mono" data-tminus>opens in --</p>
+        </div>
+        <p class="avail-hero-value" data-next-opening aria-live="polite">Loading…</p>
+        <p class="avail-hero-meta" data-next-meta></p>
       </div>
-      <div class="avail-chip avail-mono" data-sync hidden>synced 0m</div>
-      <div class="avail-chip" data-zone-chip>Detecting zone…</div>
-      <div class="avail-chip avail-chip-book" data-booking-badge hidden>Booking enabled</div>
+
+      <form class="avail-ask" data-ask-form>
+        <label class="avail-ask-label" for="avail-ask-input">Ask in plain English</label>
+        <div class="avail-ask-row">
+          <span class="avail-ask-prompt" aria-hidden="true">›</span>
+          <input
+            id="avail-ask-input"
+            class="avail-ask-input"
+            type="text"
+            autocomplete="off"
+            spellcheck="false"
+            placeholder={placeholders[0]}
+            data-ask-input
+          />
+          <button type="submit" class="avail-ask-go">Parse</button>
+        </div>
+        <div class="avail-ask-chips" data-ask-chips hidden></div>
+        <p class="avail-ask-msg" data-ask-msg hidden></p>
+      </form>
+
+      <div class="avail-status-row" aria-live="polite">
+        <div class="avail-live" data-live data-state="loading">
+          <span class="avail-live-dot" aria-hidden="true"></span>
+          <span data-live-label>Connecting…</span>
+        </div>
+        <div class="avail-chip avail-mono" data-sync hidden>synced 0m</div>
+        <div class="avail-chip" data-zone-chip>Detecting zone…</div>
+        <div class="avail-chip avail-chip-book" data-booking-badge hidden>Booking enabled</div>
+      </div>
+
+      <section aria-labelledby="length-heading">
+        <h2 id="length-heading" class="avail-section-label">How long?</h2>
+        <div
+          class="avail-chip-row"
+          role="group"
+          aria-label="Meeting length"
+          data-duration-segment
+          style={`--seg-count: ${durations.length}; --seg-index: ${defaultIndex};`}
+        >
+          {
+            durations.map((mins, i) => (
+              <button
+                type="button"
+                class={`duration-btn avail-pill avail-chip-tone avail-chip-tone-${i % 8}`}
+                data-duration={mins}
+                data-index={i}
+                aria-pressed={mins === defaultDuration ? 'true' : 'false'}
+              >
+                <span class="avail-mono">{mins}</span> min
+              </button>
+            ))
+          }
+        </div>
+        <p class="avail-hint">
+          Keys <span class="avail-kbd">1</span>
+          <span class="avail-kbd">2</span>
+          <span class="avail-kbd">3</span>
+          <span class="avail-kbd">4</span>
+        </p>
+      </section>
+
+      <section aria-labelledby="window-heading">
+        <h2 id="window-heading" class="avail-section-label">When?</h2>
+        <div class="avail-pills" role="group" aria-label="Date window">
+          <button type="button" class="avail-pill avail-chip-tone avail-chip-tone-0 window-btn" data-window="this-week" aria-pressed="true">This week</button>
+          <button type="button" class="avail-pill avail-chip-tone avail-chip-tone-4 window-btn" data-window="next-week" aria-pressed="false">Next week</button>
+          <button type="button" class="avail-pill avail-chip-tone avail-chip-tone-7 window-btn" data-window="custom" aria-pressed="false">Custom</button>
+        </div>
+
+        <div id="custom-range" class="avail-date-grid hidden" data-custom-range hidden>
+          <label class="avail-date-field">
+            <span>From</span>
+            <input type="date" id="range-start" />
+          </label>
+          <label class="avail-date-field">
+            <span>Through</span>
+            <input type="date" id="range-end" />
+          </label>
+        </div>
+
+        <div class="avail-pills" style="margin-top: 0.65rem;" role="group" aria-label="Morning or afternoon">
+          <button type="button" class="avail-pill avail-chip-tone avail-chip-tone-5 tod-btn" data-tod="all" aria-pressed="true">All</button>
+          <button type="button" class="avail-pill avail-chip-tone avail-chip-tone-3 tod-btn" data-tod="morning" aria-pressed="false">Morning</button>
+          <button type="button" class="avail-pill avail-chip-tone avail-chip-tone-1 tod-btn" data-tod="afternoon" aria-pressed="false">Afternoon</button>
+        </div>
+      </section>
+
+      <div class="avail-book-footer" data-book-footer hidden>
+        <p class="avail-pick-note" data-pick-note hidden></p>
+        <a
+          href="#"
+          class="avail-cta"
+          rel="noopener noreferrer"
+          target="_blank"
+          data-book-btn
+        >
+          Book a time
+          <span aria-hidden="true">↗</span>
+        </a>
+        <p class="avail-cta-note" data-book-note>
+          Opens the scheduling page in a new tab. Nothing is reserved here.
+        </p>
+      </div>
     </div>
+  </aside>
 
-    <div class="avail-hero-stat" data-hero>
-      <div class="avail-hero-top">
-        <p class="avail-hero-label">Next opening</p>
-        <p class="avail-tminus avail-mono" data-tminus>opens in --</p>
-      </div>
-      <p class="avail-hero-value" data-next-opening aria-live="polite">Loading…</p>
-      <p class="avail-hero-meta" data-next-meta></p>
+  <section class="avail-workspace" aria-label="Open times">
+    <div class="avail-workspace-bar">
+      <p class="avail-status" data-status>Checking the calendar…</p>
     </div>
-
-    <div class="avail-divider" aria-hidden="true"></div>
-
-    <section aria-labelledby="length-heading">
-      <h2 id="length-heading" class="avail-section-label">1. How long do you need?</h2>
-      <div
-        class="avail-chip-row"
-        role="group"
-        aria-label="Meeting length"
-        data-duration-segment
-        style={`--seg-count: ${durations.length}; --seg-index: ${defaultIndex};`}
-      >
-        {
-          durations.map((mins, i) => (
-            <button
-              type="button"
-              class={`duration-btn avail-pill avail-chip-tone avail-chip-tone-${i % 8}`}
-              data-duration={mins}
-              data-index={i}
-              aria-pressed={mins === defaultDuration ? 'true' : 'false'}
-            >
-              <span class="avail-mono">{mins}</span> min
-            </button>
-          ))
-        }
-      </div>
-      <p class="avail-hint">
-        Keys <span class="avail-kbd">1</span>
-        <span class="avail-kbd">2</span>
-        <span class="avail-kbd">3</span>
-        <span class="avail-kbd">4</span>
-        switch length
-      </p>
-    </section>
-
-    <div class="avail-divider" aria-hidden="true"></div>
-
-    <section aria-labelledby="window-heading">
-      <h2 id="window-heading" class="avail-section-label">2. When should we look?</h2>
-      <div class="avail-pills" role="group" aria-label="Date window">
-        <button type="button" class="avail-pill avail-chip-tone avail-chip-tone-0 window-btn" data-window="this-week" aria-pressed="true">This week</button>
-        <button type="button" class="avail-pill avail-chip-tone avail-chip-tone-4 window-btn" data-window="next-week" aria-pressed="false">Next week</button>
-        <button type="button" class="avail-pill avail-chip-tone avail-chip-tone-7 window-btn" data-window="custom" aria-pressed="false">Custom range</button>
-      </div>
-
-      <div id="custom-range" class="avail-date-grid hidden" data-custom-range hidden>
-        <label class="avail-date-field">
-          <span>From</span>
-          <input type="date" id="range-start" />
-        </label>
-        <label class="avail-date-field">
-          <span>Through</span>
-          <input type="date" id="range-end" />
-        </label>
-      </div>
-
-      <div class="avail-pills" style="margin-top: 0.75rem;" role="group" aria-label="Morning or afternoon">
-        <button type="button" class="avail-pill avail-chip-tone avail-chip-tone-5 tod-btn" data-tod="all" aria-pressed="true">All times</button>
-        <button type="button" class="avail-pill avail-chip-tone avail-chip-tone-3 tod-btn" data-tod="morning" aria-pressed="false">Morning</button>
-        <button type="button" class="avail-pill avail-chip-tone avail-chip-tone-1 tod-btn" data-tod="afternoon" aria-pressed="false">Afternoon</button>
-      </div>
-    </section>
-
-    <div class="avail-divider" aria-hidden="true"></div>
-
-    <p class="avail-status" data-status>Checking the calendar…</p>
     <div class="avail-skeleton" data-skeleton hidden>
       <div class="avail-skel-line lg"></div>
       <div class="avail-skel-line" style="width: 70%;"></div>
       <div class="avail-skel-line" style="width: 52%;"></div>
     </div>
-    <div id="slot-results" class="mt-4" data-results></div>
-
-    <div class="avail-book-footer" data-book-footer hidden>
-      <p class="avail-pick-note" data-pick-note hidden></p>
-      <a
-        href="#"
-        class="avail-cta"
-        rel="noopener noreferrer"
-        target="_blank"
-        data-book-btn
-      >
-        Book a time
-        <span aria-hidden="true">↗</span>
-      </a>
-      <p class="avail-cta-note" data-book-note>
-        Opens the scheduling page in a new tab. Nothing is reserved here.
-      </p>
-    </div>
-  </div>
+    <div id="slot-results" class="avail-board" data-results></div>
+  </section>
 </div>
 
 <script>
@@ -211,6 +221,25 @@ const placeholders = [
     return host.endsWith('.pages.dev') || host === '127.0.0.1' || host === 'localhost';
   }
 
+  /** Mock screenshots should show Mountain Time open hours (9am–2pm MT). */
+  function resolveVisitorZone() {
+    if (allowMockSlots()) return 'America/Denver';
+    return detectVisitorTimeZone();
+  }
+
+  function greetingForMountain(now = new Date()) {
+    const hour = Number(
+      new Intl.DateTimeFormat('en-US', {
+        timeZone: 'America/Denver',
+        hour: 'numeric',
+        hourCycle: 'h23',
+      }).format(now),
+    );
+    if (hour < 12) return 'Good morning';
+    if (hour < 17) return 'Good afternoon';
+    return 'Good evening';
+  }
+
   function prefersReducedMotion() {
     return window.matchMedia('(prefers-reduced-motion: reduce)').matches;
   }
@@ -235,9 +264,11 @@ const placeholders = [
     let selectedSlotStart: string | null = null;
     let nextOpeningIso: string | null = null;
     let heroAnimToken = 0;
-    const visitorZone = detectVisitorTimeZone();
+    const visitorZone = resolveVisitorZone();
 
     const statusEl = root.querySelector('[data-status]') as HTMLElement;
+    const greetingEl = root.querySelector('[data-greeting]') as HTMLElement | null;
+    const funlineEl = root.querySelector('[data-funline]') as HTMLElement | null;
     const resultsEl = root.querySelector('[data-results]') as HTMLElement;
     const nextEl = root.querySelector('[data-next-opening]') as HTMLElement;
     const nextMetaEl = root.querySelector('[data-next-meta]') as HTMLElement;
@@ -296,6 +327,29 @@ const placeholders = [
 
     zoneChipEl.textContent = friendlyZoneName(visitorZone);
     zoneChipEl.title = `Times shown in ${friendlyZoneName(visitorZone)}. Jesse’s open hours are Mountain Time.`;
+
+    if (greetingEl) {
+      greetingEl.textContent = `${greetingForMountain()} 👋`;
+    }
+
+    const funLines = [
+      'Quiet mornings. Clear calendar. Real work. ☀️',
+      'Probably outside when the inbox goes quiet. 🎣',
+      'Coffee first. Then the next open slot. ☕',
+      'Colorado light, then deep work. 🏔️',
+      'Leave a little room for the river. 🌲',
+    ];
+    if (funlineEl && !prefersReducedMotion()) {
+      let fi = 0;
+      window.setInterval(() => {
+        fi = (fi + 1) % funLines.length;
+        funlineEl.style.opacity = '0';
+        window.setTimeout(() => {
+          funlineEl.textContent = funLines[fi];
+          funlineEl.style.opacity = '1';
+        }, 180);
+      }, 5200);
+    }
 
     const todayKey = dateKeyInZone(new Date(), visitorZone);
     rangeStartInput.min = todayKey;
@@ -545,13 +599,13 @@ const placeholders = [
         if (hint) detail += ` The next day with room is ${hint.label}.`;
         else detail += ' There is not another opening in the loaded range either.';
         statusEl.innerHTML = `<div class="avail-empty"><strong>Quiet for that filter</strong>${escapeHtml(detail)}</div>`;
-        resultsEl.className = 'mt-4';
+        resultsEl.className = 'avail-board';
         resultsEl.innerHTML = '';
         return;
       }
 
-      statusEl.innerHTML = `<span class="avail-status-count">${slots.length}</span> open start${slots.length === 1 ? '' : 's'} in this window.`;
-      resultsEl.className = 'avail-board mt-4';
+      statusEl.innerHTML = `<span class="avail-status-count">${slots.length}</span> open start${slots.length === 1 ? '' : 's'} · Mountain Time open window 9am–2pm`;
+      resultsEl.className = 'avail-board';
       resultsEl.innerHTML = groups
         .map((group, index) => {
           const dayDate = parseInstant(group.slots[0].start);

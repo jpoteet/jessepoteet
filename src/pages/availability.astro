@@ -1,7 +1,6 @@
 ---
 import AvailabilityLayout from '@/layouts/AvailabilityLayout.astro';
 import AvailabilityFinder from '@/components/AvailabilityFinder.astro';
-import AvailabilityTools from '@/components/AvailabilityTools.astro';
 import { personalAvailability } from '@/config/availability';
 import '@/styles/availability-product.css';
 
@@ -16,34 +15,20 @@ const profile = personalAvailability;
       <span class="avail-blob avail-blob-b"></span>
       <span class="avail-blob avail-blob-c"></span>
     </div>
+    <div class="avail-floats" aria-hidden="true">
+      <span class="avail-float" style="left: 6%; top: 22%; animation-delay: 0s">🎣</span>
+      <span class="avail-float" style="left: 92%; top: 28%; animation-delay: 1.1s">☕</span>
+      <span class="avail-float" style="left: 4%; top: 78%; animation-delay: 2.2s">🏔️</span>
+      <span class="avail-float" style="left: 90%; top: 72%; animation-delay: 0.7s">🌲</span>
+    </div>
 
-    <div class="avail-app-frame">
-      <header class="avail-enter avail-app-header" style="--enter-delay: 0.04s">
-        <div class="avail-topbar">
-          <div>
-            <p class="avail-kicker">{profile.eyebrow}</p>
-            <h1 class="avail-brand">{profile.headline}</h1>
-          </div>
-          <div class="avail-hud" data-hud aria-hidden="false">
-            <span class="avail-hud-item"><span class="avail-hud-key">UTC</span> <span data-clock-utc class="avail-mono">--:--:--</span></span>
-            <span class="avail-hud-sep" aria-hidden="true"></span>
-            <span class="avail-hud-item"><span class="avail-hud-key">MT</span> <span data-clock-mt class="avail-mono">--:--:--</span></span>
-          </div>
-        </div>
-        <p class="avail-lead">{profile.lead}</p>
-        <p class="avail-funline" data-funline>Quiet mornings. Clear calendar. Real work. ☀️</p>
-      </header>
-
-      <div class="avail-enter" style="--enter-delay: 0.1s">
-        <AvailabilityTools />
-      </div>
-
-      <div class="avail-enter" style="--enter-delay: 0.16s">
-        <AvailabilityFinder
-          durations={profile.durations}
-          defaultDuration={profile.defaultDuration}
-        />
-      </div>
+    <div class="avail-app-shell">
+      <AvailabilityFinder
+        durations={profile.durations}
+        defaultDuration={profile.defaultDuration}
+        headline={profile.headline}
+        lead={profile.lead}
+      />
     </div>
   </div>
 </AvailabilityLayout>
@@ -58,13 +43,6 @@ const profile = personalAvailability;
 
 <script is:inline>
   (function () {
-    var funLines = [
-      'Quiet mornings. Clear calendar. Real work. ☀️',
-      'Probably outside when the inbox goes quiet. 🎣',
-      'Coffee first. Then the next open slot. ☕',
-      'Colorado light, then deep work. 🏔️',
-      'Leave a little room for the river. 🌲',
-    ];
     function clock(zone) {
       return new Intl.DateTimeFormat('en-GB', {
         timeZone: zone,
@@ -82,20 +60,6 @@ const profile = personalAvailability;
     }
     tickClocks();
     setInterval(tickClocks, 1000);
-
-    var funEl = document.querySelector('[data-funline]');
-    var reduce = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
-    if (funEl && !reduce) {
-      var i = 0;
-      setInterval(function () {
-        i = (i + 1) % funLines.length;
-        funEl.style.opacity = '0';
-        setTimeout(function () {
-          funEl.textContent = funLines[i];
-          funEl.style.opacity = '1';
-        }, 180);
-      }, 5200);
-    }
   })();
 </script>
 
